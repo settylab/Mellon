@@ -26,7 +26,7 @@
    :caption: Links:
 
     Setty Lab <http://setty-lab.org>
-    Github Repo <https://github.com/settylab/crowding>
+    Github Repo <https://github.com/settylab/Crowding>
 
 
 Indices
