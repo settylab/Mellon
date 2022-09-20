@@ -1,15 +1,15 @@
 from jax.config import config
 config.update("jax_enable_x64", True)
-from jax.numpy import dot, sqrt, ones_like
+from jax.numpy import dot, sqrt, ones_like, eye
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-
+from .util import stabilize
 
 DEFAULT_SIGMA2 = 1e-6
 
 
-def _full_conditional_mean(x, z, mu, L):
+def _full_conditional_mean(x, z, mu, L, cov_func):
     """
     Builds the mean function of the conditioned full rank gp.
 
@@ -95,18 +95,18 @@ def _modified_conditional_mean(x, xu, log_densities_x, mu, cov_func, sigma2=DEFA
         return mu + dot(Kus, weights)
     return mean
 
-def build_conditional_mean(rank, mu, x=None, xu=None, pre_transformation=None,
-                           log_density_x=None, L=None, cov_func=None, sigma2=None):
+def compute_conditional_mean(rank, mu, cov_func, x=None, landmarks=None, pre_transformation=None,
+                           log_density_x=None, L=None, sigma2=None):
     R"""
     Builds the mean function of the conditioned GP. Runs a different routine depending
-    on the rank. Each routine requires the rank and mu, but each routine requires different
-    optional arguments. If rank is equal to the number of data points, the mean is computed
-    by conditioning on each data point. In this case, only x and pre_transformation
-    must be provided. If rank is equal to the number of landmark points, the mean is
-    computed by conditioning on each inducing point. In this case, only xu, pre_transformation,
-    and cov_func must be provided. Otherwise, the mean is computed by inferring the mean at
+    on the rank. Each routine requires the rank, mu, and cov_func, but each routine requires
+    different optional arguments. If rank is equal to the number of data points, the mean is
+    computed by conditioning on each data point. In this case, only x and pre_transformation
+    must be provided. If rank is equal to the number of landmark points, the mean is computed
+    by conditioning on each inducing point. In this case, only landmarks and pre_transformation
+    must be provided. Otherwise, the mean is computed by inferring the mean at
     at the landmark points and conditioning on the inferred values. In this case, only x, xu,
-    log_density_x, cov_func, and sigma2 must be provided.
+    log_density_x, and sigma2 must be provided.
 
     :param rank: The rank of the covariance matrix, or the percentage of the eigenvalues
         included in the eigenvectors used to construct L.
@@ -115,8 +115,8 @@ def build_conditional_mean(rank, mu, x=None, xu=None, pre_transformation=None,
     :type mu: float
     :param x: Points.
     :type x: array-like
-    :param xu: Landmark points.
-    :type xu: array-like
+    :param landmarks: Points to quantize the data.
+    :type landmarks: array-like
     :param pre_transformation: pre-transformation values.
     :type pre_transformation: array-like
     :param log_densities_x: Log density at each point in x.
@@ -132,11 +132,11 @@ def build_conditional_mean(rank, mu, x=None, xu=None, pre_transformation=None,
     :rtype: function
     """
     if rank == x.shape[0]:
-        conditional_mean = full_conditional_mean(x, pre_transformation, mu, L)
-    elif rank == xu.shape[0]:
-        conditional_mean = standard_conditional_mean(xu, pre_transformation, mu, cov_func)
+        conditional_mean = _full_conditional_mean(x, pre_transformation, mu, L, cov_func)
+    elif rank == landmarks.shape[0]:
+        conditional_mean = _standard_conditional_mean(landmarks, pre_transformation, mu, cov_func)
     else:
-        conditional_mean = modified_conditional_mean(x, xu, log_density_x,
-                                                     mu, cov_func, sigma2=sigma2)
+        conditional_mean = _modified_conditional_mean(x, landmarks, log_density_x,
+                                                      mu, cov_func, sigma2=sigma2)
     return conditional_mean
     

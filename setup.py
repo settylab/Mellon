@@ -21,6 +21,6 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
     ],
-    long_description = (this_directory / "README.md").read_text(),
-    long_description_content_type='text/markdown',
+    long_description = (this_directory / "README.rst").read_text(),
+    long_description_content_type='text/x-rst',
 )

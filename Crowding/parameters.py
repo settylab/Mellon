@@ -31,7 +31,7 @@ def compute_nn(x, k=1):
     return nn
 
 
-def compute_landmark_points(x, n_landmarks=DEFAULT_N_LANDMARKS):
+def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     R"""
     Sets the landmark points as k-means centroids.
     
@@ -79,7 +79,7 @@ def compute_initial_value(nn_distances, d, mu, L):
     R"""
     Computes the initial value for Maximum A Posteriori optimization with Ridge regression,
     such that the initial value :math:`z` minimizes
-    :math:`||Lz + mu - mle(nn_distances, d)|| + ||z||`.
+    :math:`||Lz + mu - mle(nn\text{_}distances, d)|| + ||z||`.
 
     :param nn_distances: Observed nearest neighbor distances.
     :type nn_distances: array-like

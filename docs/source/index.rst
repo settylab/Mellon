@@ -4,7 +4,7 @@
 .. toctree::
    :hidden:
    :maxdepth: 2
-   :caption: API:
+   :caption: Core API:
 
    model
    cov
@@ -12,14 +12,16 @@
 .. toctree::
    :hidden:
    :maxdepth: 2
-   :caption: Backend:
+   :caption: Advanced Use:
 
-   util
    parameters
+   util
+   base_cov
    decomposition
    conditional
    inference
-   base_cov
+
+.. include:: ../../README.rst
 
 .. toctree::
    :hidden:

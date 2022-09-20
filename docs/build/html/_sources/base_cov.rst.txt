@@ -1,5 +1,5 @@
 base_cov
--------------------
+-------------------------
 
 .. automodule:: Crowding.base_cov
    :members:

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="inference" href="inference.html" /><link rel="prev" title="decomposition" href="decomposition.html" />
 
     <meta name="generator" content="sphinx-5.1.1, furo 2022.09.15"/>
-        <title>conditional - Crowding 0.4.5 documentation</title>
+        <title>conditional - Crowding 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=9ec31e2665bf879c1d47d93a8ec4893870ee1e45" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">Crowding 0.4.5 documentation</div></a>
+      <a href="index.html"><div class="brand">Crowding 1.0.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">Crowding 0.4.5 documentation</span>
+  <span class="sidebar-brand-text">Crowding 1.0.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -154,19 +154,19 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">API:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Core API:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="model.html">model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Backend:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Advanced Use:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decomposition.html">decomposition</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">conditional</a></li>
 <li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -208,17 +208,17 @@
           <section id="module-Crowding.conditional">
 <span id="conditional"></span><h1>conditional<a class="headerlink" href="#module-Crowding.conditional" title="Permalink to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.conditional.build_conditional_mean">
-<span class="sig-prename descclassname"><span class="pre">Crowding.conditional.</span></span><span class="sig-name descname"><span class="pre">build_conditional_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_density_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.conditional.build_conditional_mean" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="Crowding.conditional.compute_conditional_mean">
+<span class="sig-prename descclassname"><span class="pre">Crowding.conditional.</span></span><span class="sig-name descname"><span class="pre">compute_conditional_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_density_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.conditional.compute_conditional_mean" title="Permalink to this definition">#</a></dt>
 <dd><p>Builds the mean function of the conditioned GP. Runs a different routine depending
-on the rank. Each routine requires the rank and mu, but each routine requires different
-optional arguments. If rank is equal to the number of data points, the mean is computed
-by conditioning on each data point. In this case, only x and pre_transformation
-must be provided. If rank is equal to the number of landmark points, the mean is
-computed by conditioning on each inducing point. In this case, only xu, pre_transformation,
-and cov_func must be provided. Otherwise, the mean is computed by inferring the mean at
+on the rank. Each routine requires the rank, mu, and cov_func, but each routine requires
+different optional arguments. If rank is equal to the number of data points, the mean is
+computed by conditioning on each data point. In this case, only x and pre_transformation
+must be provided. If rank is equal to the number of landmark points, the mean is computed
+by conditioning on each inducing point. In this case, only landmarks and pre_transformation
+must be provided. Otherwise, the mean is computed by inferring the mean at
 at the landmark points and conditioning on the inferred values. In this case, only x, xu,
-log_density_x, cov_func, and sigma2 must be provided.</p>
+log_density_x, and sigma2 must be provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -226,7 +226,7 @@ log_density_x, cov_func, and sigma2 must be provided.</p>
 included in the eigenvectors used to construct L.</p></li>
 <li><p><strong>mu</strong> (<em>float</em>) – Original Gaussian process mean.</p></li>
 <li><p><strong>x</strong> (<em>array-like</em>) – Points.</p></li>
-<li><p><strong>xu</strong> (<em>array-like</em>) – Landmark points.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em>) – Points to quantize the data.</p></li>
 <li><p><strong>pre_transformation</strong> (<em>array-like</em>) – pre-transformation values.</p></li>
 <li><p><strong>log_densities_x</strong> (<em>array-like</em>) – Log density at each point in x.</p></li>
 <li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>,

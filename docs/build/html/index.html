@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="model" href="model.html" />
 
     <meta name="generator" content="sphinx-5.1.1, furo 2022.09.15"/>
-        <title>Crowding 0.4.5 documentation</title>
+        <title>Crowding 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=9ec31e2665bf879c1d47d93a8ec4893870ee1e45" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="#"><div class="brand">Crowding 0.4.5 documentation</div></a>
+      <a href="#"><div class="brand">Crowding 1.0.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
   
   
-  <span class="sidebar-brand-text">Crowding 0.4.5 documentation</span>
+  <span class="sidebar-brand-text">Crowding 1.0.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -154,19 +154,19 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">API:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Core API:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="model.html">model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Backend:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Advanced Use:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decomposition.html">decomposition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 <li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -209,8 +209,134 @@
 </div>
 <div class="toctree-wrapper compound">
 </div>
+<p>Crowding is a non-parametric density estimator based on the NearestNeighbors distribution.</p>
+<section id="installation">
+<h1>Installation:<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h1>
+<p>To install with pip you can run:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install Crowding
+</pre></div>
+</div>
+</section>
+<section id="basic-usage">
+<h1>Basic Usage:<a class="headerlink" href="#basic-usage" title="Permalink to this heading">#</a></h1>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>import numpy as np
+from Crowding import CrowdingEstimator
+
+x = np.random.rand(100, 10)  # arbitrary training data
+y = np.random.rand(100, 10)  # arbitrary test data
+
+model = CrowdingEstimator()
+model = model.fit(x)
+train_log_density = model.predict(x)
+test_log_density = model.predict(y)
+</pre></div>
+</div>
+</section>
+<section id="parameters">
+<h1>Parameters:<a class="headerlink" href="#parameters" title="Permalink to this heading">#</a></h1>
+<p>Above, all parameters are set automatically. The following code is equivalent.
+Any parameters can be changed as desired.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import CrowdingEstimator, Matern52, \
+                     compute_landmarks, compute_nn, \
+                     compute_mu, compute_ls, compute_L, \
+                     compute_initial_value
+
+d = x.shape[1]
+rank = 0.999
+n_landmarks = 5000
+cov_func = Matern52
+jitter = 1e-6
+sigma2 = 1e-6
+
+landmarks = compute_landmarks(x, n_landmarks)
+nn_distances = compute_nn(x)
+mu = compute_mu(nn_distances, d)
+ls = compute_ls(nn_distances)
+cov_func = cov_func(ls)
+L = compute_L(x, cov_func, landmarks=landmarks, rank=rank, jitter=jitter)
+initial_value = compute_initial_value(nn_distances, d, mu, L)
+
+model = CrowdingEstimator(mu=mu, cov_func=cov_func,
+                          ls=ls, nn_distances=nn_distances, initial_value=initial_value,
+                          L=L, landmarks=landmarks, rank=rank, jitter=jitter, sigma2=sigma2)
+model = model.fit(x)
+train_log_density = model.predict(x)
+test_log_density = model.predict(y)
+</pre></div>
+</div>
+</section>
+<section id="covariance-functions">
+<h1>Covariance Functions:<a class="headerlink" href="#covariance-functions" title="Permalink to this heading">#</a></h1>
+<p>See the cov module for a list of covariance functions already implemented.
+This section shows different ways to use a supplied covariance function
+or define your own.</p>
+<p>The cov_func argument supports a two argument function k(x, y) -&gt; float.</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">Instantiate a predefined covariance function.</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import Matern52
+cov_func = Matern52(ls)
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">Write a function of two variables.</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
+def Matern52_k(x, y):
+    r = distance(x, y) / ls
+    similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
+    return similarity
+cov_func = Matern52_k
+</pre></div>
+</div>
+</div>
+<p>The cov_func argument also supports a one argument function or class type
+that returns a function k(x, y) -&gt; float. In this case, the length scale
+of the covariance function will be set to ls, which is computed automatically
+if not passed as an argument.</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">Pass a predefined covariance function class (Default behavior)</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import Matern52
+cov_func = Matern52
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function k(x, y) -&gt; float</span><a class="headerlink" href="#id4" title="Permalink to this code">#</a></div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance    # distance computes the distance between each point in x
+                                 # and each point in y.
+def Matern52(ls=1.0):
+    def k(x, y):
+        r = distance(x, y) / ls
+        similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
+        return similarity
+    return cov_func
+cov_func = Matern52
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">Inherit from the Covariance base class</span><a class="headerlink" href="#id5" title="Permalink to this code">#</a></div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
+from Crowding import Covariance  # The Covariance base class __call__ method calls k.
+                                 # It also supports adding, multiplying, and exponentiating
+                                 # with the +, *, and ** operators.
+
+class Matern52(Covariance):
+    def __init__(self, ls=1.0):
+        super().__init__()
+        self.ls = ls
+
+    def k(self, x, y):
+        r = distance(x, y) / self.ls
+        similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
+        return similarity
+cov_func = Matern52
+</pre></div>
+</div>
+</div>
 <div class="toctree-wrapper compound">
 </div>
+</section>
 <section id="indices">
 <h1>Indices<a class="headerlink" href="#indices" title="Permalink to this heading">#</a></h1>
 <ul class="simple">

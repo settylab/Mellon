@@ -87,9 +87,9 @@ def inference_functions(nn_distances, d, mu, L):
     :rtype: function, function
     """
     k = L.shape[1]
-    prior = normal(k)
-    likelihood = nearest_neighbors(nn_distances, d)
-    transform = multivariate(mu, L)
+    prior = _normal(k)
+    likelihood = _nearest_neighbors(nn_distances, d)
+    transform = _multivariate(mu, L)
     def loss_func(z):
         return -(prior(z) + likelihood(transform(z)))
     return loss_func, transform

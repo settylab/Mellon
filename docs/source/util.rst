@@ -1,5 +1,5 @@
 util
------------------------------
+--------------------
 
 .. automodule:: Crowding.util
    :members:

@@ -20,7 +20,7 @@ copyright = '2022, Setty Lab'
 author = 'Setty Lab'
 
 # The full version, including alpha/beta/rc tags
-release = '0.4.5'
+release = '1.0.0'
 
 
 # -- General configuration ---------------------------------------------------

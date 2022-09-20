@@ -103,14 +103,14 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER
     W = stabilize(cov_func(xu, xu), jitter)
     C = cov_func(x, xu)
     Q, R = qr(C, mode='reduced')
-    s, v = eigendecomposition(W, rank=xu.shape[0])
+    s, v = _eigendecomposition(W, rank=xu.shape[0])
     T = R @ v
-    S, V = eigendecomposition(T / s @ T.T, rank=rank)
+    S, V = _eigendecomposition(T / s @ T.T, rank=rank)
     L = Q @ V * sqrt(S)
     return L
 
 
-def build_L(x, cov_func, xu=None, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
+def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^T \approx K`, where
     :math:`K` is the full rank covariance matrix. The rank is less than or
@@ -120,9 +120,9 @@ def build_L(x, cov_func, xu=None, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
     :type x: array-like
     :param cov_func: Covariance function.
     :type cov_func: function
-    :param xu: Landmark points. If None, computes a full rank decompostion.
+    :param landmarks: Points to summarize the data. If None, computes a full rank decompostion.
         Defaults to None.
-    :type xu: array-like
+    :type landmarks: array-like
     :param rank: The rank of the covariance matrix. If rank is equal to
         the number of datapoints, the covariance matrix is exact and full rank. If rank
         is equal to the number of landmark points, the standard Nystrom approximation is
@@ -136,13 +136,15 @@ def build_L(x, cov_func, xu=None, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
     :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
     :rtype: array-like
     """
-    if (xu is None) or (rank == x.shape[0]):
-        return full_rank(x, cov_func, jitter=jitter)
-    elif rank == xu.shape[0]:
-        return standard_low_rank(x, cov_func, xu, jitter=jitter)
-    elif (rank > 0) and (rank < 1):
-        return modified_low_rank(x, cov_func, xu, rank=rank, jitter=jitter)
+    n = x.shape[0]
+    n_landmarks = landmarks.shape[0]
+    if (landmarks is None) or (rank == n):
+        return _full_rank(x, cov_func, jitter=jitter)
+    elif rank == landmarks.shape[0]:
+        return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
+    elif (rank > 0) and (rank <= n_landmarks):
+        return _modified_low_rank(x, cov_func, landmarks, rank=rank, jitter=jitter)
     else:
-        raise IllegalArgumentException(f"""rank={rank} must be a float 0 < rank < 1 or
-                                          an int 1 <= rank <= n, where n is the
-                                          number of datapoints""")
+        raise ValueError(f"""rank={rank} must be a float 0 < rank < 1 or
+                             an int 1 <= rank <= {n_landmarks}, the number of
+                             landmarks, or {n}, the number of datapoints.""")
