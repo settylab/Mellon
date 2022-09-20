@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="base_cov" href="base_cov.html" /><link rel="prev" title="conditional" href="conditional.html" />
 
     <meta name="generator" content="sphinx-5.1.1, furo 2022.09.15"/>
-        <title>inference - crowding 0.4.5 documentation</title>
+        <title>inference - Crowding 0.4.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=9ec31e2665bf879c1d47d93a8ec4893870ee1e45" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">crowding 0.4.5 documentation</div></a>
+      <a href="index.html"><div class="brand">Crowding 0.4.5 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">crowding 0.4.5 documentation</span>
+  <span class="sidebar-brand-text">Crowding 0.4.5 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -205,28 +205,30 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-crowding.inference">
-<span id="inference"></span><h1>inference<a class="headerlink" href="#module-crowding.inference" title="Permalink to this heading">#</a></h1>
+          <section id="module-Crowding.inference">
+<span id="inference"></span><h1>inference<a class="headerlink" href="#module-Crowding.inference" title="Permalink to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="crowding.inference.inference_functions">
-<span class="sig-prename descclassname"><span class="pre">crowding.inference.</span></span><span class="sig-name descname"><span class="pre">inference_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nn_distances</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crowding.inference.inference_functions" title="Permalink to this definition">#</a></dt>
-<dd><p>Builds the Bayesian loss function -(prior(z) + likelihood(transform(z))).
-Transform maps z ~ Normal(0, I) -&gt; f ~ Multivariate_Normal(mu, K’), where I
-is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^T\)</span>.</p>
-<p>Returns the loss function and transform.</p>
+<dt class="sig sig-object py" id="Crowding.inference.inference_functions">
+<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">inference_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nn_distances</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.inference_functions" title="Permalink to this definition">#</a></dt>
+<dd><p>Builds the Bayesian loss function -(prior(<span class="math notranslate nohighlight">\(z\)</span>) +
+likelihood(transform(<span class="math notranslate nohighlight">\(z\)</span>))). Transform maps <span class="math notranslate nohighlight">\(z \sim
+\text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')\)</span>,
+where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^T\)</span>,
+where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.
+Returns the loss function and transform.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nn_distances</strong> (<em>function</em>) – The observed nearest neighbor distances.</p></li>
+<li><p><strong>nn_distances</strong> (<em>function</em>) – Observed nearest neighbor distances.</p></li>
 <li><p><strong>d</strong> (<em>int</em>) – The dimensionality of the data</p></li>
-<li><p><strong>mu</strong> (<em>float</em>) – The Gaussian process mean.</p></li>
-<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(K \approx L L^T\)</span>, where K is the
+<li><p><strong>mu</strong> (<em>float</em>) – Gaussian process mean.</p></li>
+<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the
 covariance matrix.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return loss_func, transform_func<span class="colon">:</span></dt>
-<dd class="field-even"><p>The Bayesian loss function and the
-transform function z -&gt; f.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>loss_func, transform_func - The Bayesian loss function and the
+transform function <span class="math notranslate nohighlight">\(z \rightarrow f\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>function, function</p>
@@ -235,8 +237,8 @@ transform function z -&gt; f.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="crowding.inference.run_inference">
-<span class="sig-prename descclassname"><span class="pre">crowding.inference.</span></span><span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crowding.inference.run_inference" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="Crowding.inference.run_inference">
+<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.run_inference" title="Permalink to this definition">#</a></dt>
 <dd><p>Minimizes function with a starting guess of initial_value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -294,7 +296,7 @@ transform function z -&gt; f.</p>
           </div>
           <div class="right-details">
             <div class="icons">
-              <a class="muted-link " href="https://github.com/settylab/crowding" aria-label="GitHub">
+              <a class="muted-link " href="https://github.com/settylab/Crowding" aria-label="GitHub">
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
                 </svg>

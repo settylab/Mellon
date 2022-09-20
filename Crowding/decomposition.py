@@ -5,7 +5,7 @@ from jax.numpy import dot, sqrt
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
-from util import stabilize, DEFAULT_JITTER
+from .util import stabilize, DEFAULT_JITTER
 
 
 DEFAULT_RANK = 0.999
@@ -13,7 +13,7 @@ DEFAULT_RANK = 0.999
 
 def _eigendecomposition(A, rank=DEFAULT_RANK):
     R"""
-    Decompose A into its largest rank eigenvectors and eigenvalues.
+    Decompose :math:`A` into its largest rank eigenvectors and eigenvalues.
 
     :param A: A square matrix.
     :type A: array-like
@@ -22,7 +22,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK):
     such that the eigenvalues of the included eigenvectors account for the
     specified percentage of the total eigenvalues. Defaults to 0.999.
     :type rank: int or float
-    :return s, v: The top eigenvalues and eigenvectors.
+    :return: :math:`s, v` - The top eigenvalues and eigenvectors.
     :rtype: array-like, array-like
     """
     s, v = eigh(A)
@@ -38,7 +38,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK):
 
 def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
     R"""
-    Compute L such that :math:`L L^T = K`, where K is the full rank covariance matrix.
+    Compute :math:`L` such that :math:`L L^T = K`, where :math:`K` is the full rank covariance matrix.
 
     :param x: Points.
     :type x: array-like
@@ -46,7 +46,7 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
     :type cov_func: function
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return L: L such that :math:`L L^T = K`.
+    :return: :math:`L` - A matrix such that :math:`L L^T = K`.
     :rtype: array-like
     """
     W = stabilize(cov_func(x, x), jitter)
@@ -56,8 +56,9 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
 
 def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     R"""
-    Compute a low rank L such that :math:`L L^T \approx K`, where K is the full rank
-    covariance matrix. The rank is equal to the number of landmark points.
+    Compute a low rank :math:`L` such that :math:`L L^T \approx K`, where :math:`K`
+    is the full rank covariance matrix. The rank is equal to the number of
+    landmark points.
 
     :param x: Points.
     :type x: array-like
@@ -67,7 +68,7 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     :type xu: array-like
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return L: L such that :math:`L L^T \approx K`.
+    :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
     :rtype: array-like
     """
     W = stabilize(cov_func(xu, xu), jitter)
@@ -79,8 +80,8 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
 
 def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
     R"""
-    Compute a low rank L such that :math:`L L^T ~= K`, where K is the full rank
-    covariance matrix. The rank is less than or equal to the number of
+    Compute a low rank :math:`L` such that :math:`L L^T ~= K`, where :math:`K` is the
+    full rank covariance matrix. The rank is less than or equal to the number of
     landmark points.
 
     :param x: Points.
@@ -96,7 +97,7 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER
     :type rank: int or float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return L: L such that :math:`L L^T \approx K`.
+    :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
     :rtype: array-like
     """
     W = stabilize(cov_func(xu, xu), jitter)
@@ -111,9 +112,9 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER
 
 def build_L(x, cov_func, xu=None, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
     R"""
-    Compute a low rank L such that :math:`L L^T \approx K`, where K is the full rank
-    covariance matrix. The rank is less than or equal to the number of
-    landmark points.
+    Compute a low rank :math:`L` such that :math:`L L^T \approx K`, where
+    :math:`K` is the full rank covariance matrix. The rank is less than or
+    equal to the number of landmark points.
 
     :param x: Points.
     :type x: array-like
@@ -132,7 +133,7 @@ def build_L(x, cov_func, xu=None, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
     :type rank: int or float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return L: L such that :math:`L L^T \approx K`.
+    :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
     :rtype: array-like
     """
     if (xu is None) or (rank == x.shape[0]):

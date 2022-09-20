@@ -10,18 +10,18 @@ from .util import DEFAULT_JITTER
 DEFAULT_COV_FUNC = Matern52
 
 
-class Crowding:
+class CrowdingEstimator:
     R"""
     A non-parametric density estimator.
-    Crowding performs Bayesian inference, with a Gaussian process prior and Nearest
+    CrowdingEstimator performs Bayesian inference, with a Gaussian process prior and Nearest
     Neighbors likelihood.
 
     :param mu: Mean of the Gaussian process
     :type mu: float
     :param cov_func: Gaussian process covariance function. Supports a two argument
-        function or callable k(x, y) -> float or a one argument function or class type
+        function or callable k(x, y) :math:`\rightarrow` float or a one argument function or class type
         that takes a length scale argument and returns a function or callable
-        k(x, y) -> float. See usage. Defaults to the type Matern52.
+        k(x, y) :math:`\rightarrow` float. See usage. Defaults to the type Matern52.
     :type cov_func: function or type
     :param ls: Length scale of the Gaussian process covariance function. If None,
         automatically selects the length scale based on the nearest neighbor distances.
@@ -33,12 +33,11 @@ class Crowding:
         Defaults to None.
     :type nn_distances: array-like or None
     :param initial_value: Initial guess for Maximum A Posteriori optimization. If None, finds
-        :math:`z` that minimizes :math:`||Lz + mu - mle|| + ||z||`, where :math:`\text{mle} =
-        \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(r)`,
-        where :math:`d` is the dimensionality of the data and :math:`r` is the nearest
-        neighbor distances.
+        :math:`z` that minimizes :math:`||Lz + mu - mle|| + ||z||`, where :math:`mle =
+        \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`,
+        where :math:`d` is the dimensionality of the data.
     :type initial_value: array-like or None
-    :param L: A matrix :math:`L` such that :math:`L L^T \approx K`.
+    :param L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
     :type L: array-like
     :param landmarks: Points to quantize the data for the approximate covariance
         matrix. If landmarks is an int, landmark points are selected as k-means centroids with
@@ -72,10 +71,11 @@ class Crowding:
     :ivar sigma2: White noise variance for the case the rank is reduced further
         than the number of landmark points.
     :ivar initial_value: Initial guess for Maximum A Posteriori optimization.
-    :ivar L: A matrix L such that :math:`L L^T \approx K`, the covariance matrix.
+    :ivar L: A matrix that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
     :ivar optimize_result: All results from the optimization.
-    :ivar pre_transformation: z ~ Normal(0, I) before transformation to Normal(mu, K'),
-        where I is the identity matrix and K is the approximate covariance matrix.
+    :ivar pre_transformation: :math:`z \sim \text{Normal}(0, I)` before
+        transformation to Normal:math:`(mu, K')`, where :math:`I` is the identity matrix
+        and :math:`K'` is the approximate covariance matrix.
     :ivar loss: Bayesian loss.
     :ivar log_density: Log density at the training points.
     :ivar log_density_func: Computes the log density at arbitrary prediction points.
@@ -105,18 +105,12 @@ class Crowding:
         self.log_density_func = None
 
     def _set_nn(self, k=1):
-        R"""
-        Computes the distance to the kth nearest neighbor for each training instance.
-        """
         if self.nn_distances is None:
             x = self.x
             self.nn_distances = compute_nn(x)
         return self.nn_distances
 
     def _set_landmark_points(self):
-        R"""
-        Sets the landmark points as k-means centroids.
-        """
         if (self.landmark_points is None) and (self.rank != n):
             x = self.x
             n_landmarks = self.n_landmarks
@@ -124,9 +118,6 @@ class Crowding:
         return self.landmark_points
 
     def _set_mu(self):
-        R"""
-        Sets mu equal to the 1th percentile of mle(nn_distances, d) - 10.
-        """
         if self.mu is None:
             nn_distances = self.nn_distances
             d = self.x.shape[1]
@@ -134,18 +125,12 @@ class Crowding:
         return self.mu
 
     def _set_ls(self):
-        R"""
-        Sets ls equal to the geometric mean of the nearest neighbor distances times a constant.
-        """
         if self.ls is None:
             nn_distances = self.nn_distances
             self.ls = compute_ls(nn_distances)
         return self.ls
 
     def _set_cov_func(self):
-        R"""
-        Prepares the covariance function to the form k(x, y) -> float.
-        """
         if len(signature(self.cov_func).parameters) != 2:
             ls = self.ls
             cov_func = self.cov_func(ls)
@@ -153,11 +138,6 @@ class Crowding:
         return self.cov_func
 
     def _set_initial_value(self):
-        R"""
-        Computes the initial value for Maximum A Posteriori optimization with Ridge regression,
-        such that the initial value z minimizes ||Lr + mu - mle(r, d)|| + ||z||,
-        where r = nn_distances.
-        """
         if self.nn_distances is None:
             nn_distances = self.nn_distances
             d = self.x.shape[1]
@@ -167,9 +147,6 @@ class Crowding:
         return self.initial_value
 
     def _set_L(self):
-        R"""
-        Computes a matrix L such that L L^T ~= K, the covariance matrix.
-        """
         if self.L is None:
             x = self.x
             cov_func = self.cov_func
@@ -180,10 +157,6 @@ class Crowding:
         return self.L
 
     def _prepare_inference(self):
-        R"""
-        Constructs the loss function and the transform function from the pre-transformation
-        iid Normal distributions to a Multivariate distribution.
-        """
         nn_distances = self.nn_distances
         d = self.x.shape[1]
         mu = self.mu
@@ -192,9 +165,6 @@ class Crowding:
         return self.loss_func, self.transform
 
     def _inference(self):
-        R"""
-        Performs Bayesian inference.
-        """
         function = self.loss_func
         initial_value = self.initial_value
         results = run_inference(function, initial_value)
@@ -204,18 +174,12 @@ class Crowding:
         return self.optimize_result, self.pre_transformation, self.loss
 
     def _set_log_density_x(self):
-        """
-        Constructs the optimized log density at the training points. 
-        """
         pre_transformation = self.pre_transformation
         transform = self.transform
         self.log_density_x = transform(pre_transformation)
         return self.log_density_x
 
     def _set_log_density_func_(self):
-        """
-        Constructs the log density function for arbitrary prediction points.
-        """
         rank = self.rank
         x = self.x
         xu = self.xu
@@ -238,7 +202,7 @@ class Crowding:
 
         :param x: Training instances to estimate density function.
         :type x: array-like
-        :return self: A fitted instance of this estimator.
+        :return: self - A fitted instance of this estimator.
         :rtype: Object
         """
         self.x_ = x
@@ -248,7 +212,7 @@ class Crowding:
         self._set_ls()
         self._set_cov_func()
         self._set_L()
-        self._set_initial_value() # add as param
+        self._set_initial_value()
         self._set_loss_func()
         self._inference()
         self._set_log_density_x()
@@ -263,7 +227,7 @@ class Crowding:
 
         :param x: New data to predict.
         :type x: array-like
-        :return log_density: The log density at each test point in x.
+        :return: log_density - The log density at each test point in x.
         :rtype: array-like
         """
         return self.log_density_func(x)
@@ -274,7 +238,7 @@ class Crowding:
 
         :param x: Training instances to estimate density function.
         :type x: array-like
-        :return log_density_x: The log density at each training point in x.
+        :return: log_density_x - The log density at each training point in x.
         """
         self.fit(x)
         return self.log_density_x

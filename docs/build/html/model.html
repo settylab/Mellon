@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="cov" href="cov.html" /><link rel="prev" title="Indices" href="index.html" />
 
     <meta name="generator" content="sphinx-5.1.1, furo 2022.09.15"/>
-        <title>model - crowding 0.4.5 documentation</title>
+        <title>model - Crowding 0.4.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=9ec31e2665bf879c1d47d93a8ec4893870ee1e45" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">crowding 0.4.5 documentation</div></a>
+      <a href="index.html"><div class="brand">Crowding 0.4.5 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">crowding 0.4.5 documentation</span>
+  <span class="sidebar-brand-text">Crowding 0.4.5 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -208,20 +208,20 @@
           <section id="model">
 <h1>model<a class="headerlink" href="#model" title="Permalink to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="crowding.Crowding">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crowding.</span></span><span class="sig-name descname"><span class="pre">Crowding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=&lt;class</span> <span class="pre">'crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2=1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crowding.Crowding" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="Crowding.CrowdingEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.</span></span><span class="sig-name descname"><span class="pre">CrowdingEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=&lt;class</span> <span class="pre">'Crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2=1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.CrowdingEstimator" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A non-parametric density estimator.
-Crowding performs Bayesian inference, with a Gaussian process prior and Nearest
+CrowdingEstimator performs Bayesian inference, with a Gaussian process prior and Nearest
 Neighbors likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mu</strong> (<em>float</em>) – Mean of the Gaussian process</p></li>
 <li><p><strong>cov_func</strong> (<em>function</em><em> or </em><em>type</em>) – Gaussian process covariance function. Supports a two argument
-function or callable k(x, y) -&gt; float or a one argument function or class type
+function or callable k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float or a one argument function or class type
 that takes a length scale argument and returns a function or callable
-k(x, y) -&gt; float. See usage. Defaults to the type Matern52.</p></li>
+k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float. See usage. Defaults to the type Matern52.</p></li>
 <li><p><strong>ls</strong> (<em>float</em>) – Length scale of the Gaussian process covariance function. If None,
 automatically selects the length scale based on the nearest neighbor distances.
 If cov_func is a function with two arguments, ls is ignored. Defaults to None.</p></li>
@@ -230,11 +230,10 @@ data point. If None, computes the nearest neighbor distances automatically, with
 a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
 Defaults to None.</p></li>
 <li><p><strong>initial_value</strong> (<em>array-like</em><em> or </em><em>None</em>) – Initial guess for Maximum A Posteriori optimization. If None, finds
-<span class="math notranslate nohighlight">\(z\)</span> that minimizes <span class="math notranslate nohighlight">\(||Lz + mu - mle|| + ||z||\)</span>, where <span class="math notranslate nohighlight">\(\text{mle} =
-\log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(r)\)</span>,
-where <span class="math notranslate nohighlight">\(d\)</span> is the dimensionality of the data and <span class="math notranslate nohighlight">\(r\)</span> is the nearest
-neighbor distances.</p></li>
-<li><p><strong>L</strong> (<em>array-like</em>) – A matrix <span class="math notranslate nohighlight">\(L\)</span> such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>.</p></li>
+<span class="math notranslate nohighlight">\(z\)</span> that minimizes <span class="math notranslate nohighlight">\(||Lz + mu - mle|| + ||z||\)</span>, where <span class="math notranslate nohighlight">\(mle =
+\log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span>,
+where <span class="math notranslate nohighlight">\(d\)</span> is the dimensionality of the data.</p></li>
+<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
 <li><p><strong>landmarks</strong> (<em>array-like</em><em> or </em><em>int</em>) – Points to quantize the data for the approximate covariance
 matrix. If landmarks is an int, landmark points are selected as k-means centroids with
 k=landmarks. Defaults to the minimum between 5000 and the number of training instances.</p></li>
@@ -267,10 +266,11 @@ for numerical stability.</p></li>
 <li><p><strong>sigma2</strong> – White noise variance for the case the rank is reduced further
 than the number of landmark points.</p></li>
 <li><p><strong>initial_value</strong> – Initial guess for Maximum A Posteriori optimization.</p></li>
-<li><p><strong>L</strong> – A matrix L such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, the covariance matrix.</p></li>
+<li><p><strong>L</strong> – A matrix that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
 <li><p><strong>optimize_result</strong> – All results from the optimization.</p></li>
-<li><p><strong>pre_transformation</strong> – z ~ Normal(0, I) before transformation to Normal(mu, K’),
-where I is the identity matrix and K is the approximate covariance matrix.</p></li>
+<li><p><strong>pre_transformation</strong> – <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I)\)</span> before
+transformation to Normal:math:<cite>(mu, K’)</cite>, where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix
+and <span class="math notranslate nohighlight">\(K'\)</span> is the approximate covariance matrix.</p></li>
 <li><p><strong>loss</strong> – Bayesian loss.</p></li>
 <li><p><strong>log_density</strong> – Log density at the training points.</p></li>
 <li><p><strong>log_density_func</strong> – Computes the log density at arbitrary prediction points.</p></li>
@@ -278,15 +278,15 @@ where I is the identity matrix and K is the approximate covariance matrix.</p></
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="crowding.Crowding.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crowding.Crowding.fit" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="Crowding.CrowdingEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.CrowdingEstimator.fit" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform Bayesian Inference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – Training instances to estimate density function.</p>
 </dd>
-<dt class="field-even">Return self<span class="colon">:</span></dt>
-<dd class="field-even"><p>A fitted instance of this estimator.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>self - A fitted instance of this estimator.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Object</p>
@@ -295,22 +295,22 @@ where I is the identity matrix and K is the approximate covariance matrix.</p></
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="crowding.Crowding.fit_predict">
-<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crowding.Crowding.fit_predict" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="Crowding.CrowdingEstimator.fit_predict">
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.CrowdingEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform Bayesian Inference and return the log density at training points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – Training instances to estimate density function.</p>
 </dd>
-<dt class="field-even">Return log_density_x<span class="colon">:</span></dt>
-<dd class="field-even"><p>The log density at each training point in x.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>log_density_x - The log density at each training point in x.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="crowding.Crowding.predict">
-<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crowding.Crowding.predict" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="Crowding.CrowdingEstimator.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.CrowdingEstimator.predict" title="Permalink to this definition">#</a></dt>
 <dd><p>Predict the log density at each point in x. Note that in the case that the rank
 is reduced below the number of landmark points, predictions at the original
 training points may differ slightly from fit_predict due to the sigma2 noise.</p>
@@ -318,8 +318,8 @@ training points may differ slightly from fit_predict due to the sigma2 noise.</p
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – New data to predict.</p>
 </dd>
-<dt class="field-even">Return log_density<span class="colon">:</span></dt>
-<dd class="field-even"><p>The log density at each test point in x.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>log_density - The log density at each test point in x.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>array-like</p>
@@ -369,7 +369,7 @@ training points may differ slightly from fit_predict due to the sigma2 noise.</p
           </div>
           <div class="right-details">
             <div class="icons">
-              <a class="muted-link " href="https://github.com/settylab/crowding" aria-label="GitHub">
+              <a class="muted-link " href="https://github.com/settylab/Crowding" aria-label="GitHub">
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
                 </svg>

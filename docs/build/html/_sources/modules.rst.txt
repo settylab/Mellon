@@ -1,14 +1,14 @@
-crowding
+Crowding
 ========
 
 .. toctree::
    :maxdepth: 4
 
-   model
-   cov
-   util
-   parameters
-   decomposition
-   conditional
-   inference
    base_cov
+   conditional
+   cov
+   decomposition
+   inference
+   model
+   parameters
+   util

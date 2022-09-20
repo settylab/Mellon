@@ -1,7 +1,7 @@
 parameters
 ---------------------
 
-.. automodule:: crowding.parameters
+.. automodule:: Crowding.parameters
    :members:
    :undoc-members:
    :show-inheritance:

@@ -19,8 +19,11 @@ def _full_conditional_mean(x, z, mu, L):
     :type z: array-like
     :param mu: Original Gaussian process mean.
     :type mu: float
-    :param L: :math:`L` such that :math:`L L^T \approx K`, where K is the covariance matrix.
+    :param L: A matrix such that :math:`L L^T \approx K`, where :math:`K`
+        is the covariance matrix.
     :type L: array-like
+    :return: conditional_mean - Conditioned Gaussian process mean function.
+    :rtype: function
     """
     weights = solve_triangular(L.T, z, lower=True)
     def mean(Xnew):
@@ -42,6 +45,8 @@ def _standard_conditional_mean(xu, z, mu, cov_func):
     :type mu: float
     :param cov_func: Gaussian process covariance function.
     :type cov_func: function
+    :return: conditional_mean - Conditioned Gaussian process mean function.
+    :rtype: function
     """
     K = cov_func(xu, xu)
     L = cholesky(stabilize(K))
@@ -69,6 +74,8 @@ def _modified_conditional_mean(x, xu, log_densities_x, mu, cov_func, sigma2=DEFA
     :type cov_func: function
     :param sigma2: White noise variance. Defaults to 1e-6.
     :type sigma2: float
+    :return: conditional_mean - Conditioned Gaussian process mean function.
+    :rtype: function
     """
     Kuu = cov_func(xu, xu)
     Kuf = cov_func(xu, x)
@@ -114,13 +121,14 @@ def build_conditional_mean(rank, mu, x=None, xu=None, pre_transformation=None,
     :type pre_transformation: array-like
     :param log_densities_x: Log density at each point in x.
     :type log_densities_x: array-like
-    :param L: L such that :math:`L L^T \approx K`, where K is the covariance matrix.
+    :param L: A matrix such that :math:`L L^T \approx K`,
+        where K is the covariance matrix.
     :type L: array-like
     :param cov_func: Gaussian process covariance function.
     :type cov_func: function
     :param sigma2: White noise variance. Defaults to 1e-6.
     :type sigma2: float
-    :return conditional_mean: Conditioned Gaussian process mean function.
+    :return: conditional_mean - Conditioned Gaussian process mean function.
     :rtype: function
     """
     if rank == x.shape[0]:

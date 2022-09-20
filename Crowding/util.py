@@ -12,28 +12,31 @@ def stabilize(A, jitter=DEFAULT_JITTER):
     R"""
     Add a small jitter to the diagonal for numerical stability.
 
+    :param A: A square matrix.
     :param jitter: The amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return A': A with a small jitter added to the diagonal.
+    :return: :math:`A'` - The matrix :math:`A` with a small jitter added to the diagonal.
     :rtype: array-like
     """
     n = A.shape[0]
     return A + eye(n) * jitter
 
 
-def mle(r, d):
+def mle(nn_distances, d):
     R"""
-    Nearest Neighbor distribution maximum likelihood estimate log density
-    given observed nearest neighbor distances r in dimensions d.
+    Nearest Neighbor distribution maximum likelihood estimate for log density
+    given observed nearest neighbor distances :math:`nn\text{_}distances` in
+    dimensions :math:`d`: :math:`mle = \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) -
+    d \cdot \log(nn\text{_}distances)`
 
-    :param r: Observed nearest neighbor distances.
-    :type r: array-like
+    :param nn_distances: Observed nearest neighbor distances.
+    :type nn_distances: array-like
     :param d: Number of dimensions.
     :type d: int
-    :return A': mle at each point.
+    :return: :math:`mle` - Maximum likelihood estimate at each point.
     :rtype: array-like
     """
-    return gammaln(d/2 + 1) - (d/2)*log(pi) - d*log(r)
+    return gammaln(d/2 + 1) - (d/2)*log(pi) - d*log(nn_distances)
 
 
 def distance(x, y):
@@ -44,7 +47,7 @@ def distance(x, y):
     :type x: array-like
     :param y: A set of points.
     :type y: array-like
-    :return distances: The distance between each point in x and y.
+    :return: :math:`distances` - The distance between each point in x and y.
     :rtype: array-like
     """
     n = x.shape[0]
