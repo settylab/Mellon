@@ -47,7 +47,7 @@ def distance(x, y):
     :type x: array-like
     :param y: A set of points.
     :type y: array-like
-    :return: :math:`distances` - The distance between each point in x and y.
+    :return: distances - The distance between each point in x and y.
     :rtype: array-like
     """
     n = x.shape[0]

@@ -1,7 +1,7 @@
 model
 ---------------------
 
-.. autoclass:: Crowding.CrowdingEstimator
+.. autoclass:: Crowding.model.CrowdingEstimator
    :members:
    :undoc-members:
    :show-inheritance:

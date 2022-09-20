@@ -71,13 +71,13 @@ class CrowdingEstimator:
     :ivar sigma2: White noise variance for the case the rank is reduced further
         than the number of landmark points.
     :ivar initial_value: Initial guess for Maximum A Posteriori optimization.
-    :ivar L: A matrix that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
+    :ivar L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
     :ivar optimize_result: All results from the optimization.
     :ivar pre_transformation: :math:`z \sim \text{Normal}(0, I)` before
         transformation to Normal:math:`(mu, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
     :ivar loss: Bayesian loss.
-    :ivar log_density: Log density at the training points.
+    :ivar log_density_x: Log density at the training points.
     :ivar log_density_func: Computes the log density at arbitrary prediction points.
     """
     def __init__(self, mu=None, cov_func=DEFAULT_COV_FUNC, ls=None, nn_distances=None,
@@ -101,7 +101,7 @@ class CrowdingEstimator:
         self.optimize_result = None
         self.pre_transformation = None
         self.loss = None
-        self.log_density = None
+        self.log_density_x = None
         self.log_density_func = None
 
     def _set_nn(self, k=1):
