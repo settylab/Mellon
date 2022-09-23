@@ -1,5 +1,3 @@
-from jax.config import config
-config.update("jax_enable_x64", True)
 from jax.numpy import repeat, newaxis, tensordot, sqrt, exp, square, eye, float64
 from jax.numpy import sum as arraysum
 from .base_cov import Covariance

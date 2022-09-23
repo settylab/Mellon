@@ -154,19 +154,16 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Core API:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="model.html">model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Advanced Use:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
 <li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decomposition.html">decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 <li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -207,8 +204,6 @@
         <article role="main">
           <div class="toctree-wrapper compound">
 </div>
-<div class="toctree-wrapper compound">
-</div>
 <p>Crowding is a non-parametric density estimator based on the NearestNeighbors distribution.</p>
 <section id="installation">
 <h1>Installation:<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h1>
@@ -237,71 +232,142 @@ test_log_density = model.predict(y)
 <p>Above, all parameters are set automatically. The following code is equivalent.
 Any parameters can be changed as desired.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import CrowdingEstimator, Matern52, \
-                     compute_landmarks, compute_nn, \
-                     compute_mu, compute_ls, compute_L, \
-                     compute_initial_value
+                     compute_landmarks, compute_nn_distances, compute_d, compute_mu, \
+                     compute_ls, compute_cov_func, compute_initial_value
 
-d = x.shape[1]
-rank = 0.999
+
+cov_func_curry = Matern52
+
+# Higher n_landmarks is always better, but is more expensive.
 n_landmarks = 5000
-cov_func = Matern52
+
+# Higher rank is always better, but is more expensive.
+rank = 0.999
+
+# Generally unnecessary, but it clarifies the ambiguous case where rank = 1 or 1.0.
+method = &#39;auto&#39;
+
+# Increase if the covariance matrix is not positive definite.
 jitter = 1e-6
+
 sigma2 = 1e-6
 
-landmarks = compute_landmarks(x, n_landmarks)
-nn_distances = compute_nn(x)
+# Landmark points should summarize the training data. The best way to choose
+# landmark points is an open problem.
+landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
+
+nn_distances = compute_nn_distances(x)
+
+# The data may vary in fewer dimensions at a local scale.
+d = compute_d(x)
+
+# mu should be smaller than the density at most datapoints so the
+# log density function decays to mu away from the data. You can use the mle
+# function from the util module as an initial noisy log density estimation.
 mu = compute_mu(nn_distances, d)
+
+# Higher length scale produces a smoother function.
 ls = compute_ls(nn_distances)
-cov_func = cov_func(ls)
-L = compute_L(x, cov_func, landmarks=landmarks, rank=rank, jitter=jitter)
+
+cov_func = compute_cov_func(cov_func_curry, ls)
+
+L = compute_L(x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter)
+
+# The initial_value should be in the same basin as the global minimum.
 initial_value = compute_initial_value(nn_distances, d, mu, L)
 
-model = CrowdingEstimator(mu=mu, cov_func=cov_func,
-                          ls=ls, nn_distances=nn_distances, initial_value=initial_value,
-                          L=L, landmarks=landmarks, rank=rank, jitter=jitter, sigma2=sigma2)
+model = CrowdingEstimator(cov_func_curry=cov_func_curry, n_landmarks=n_landmarks, \
+                          rank=rank, method=method, jitter=jitter, sigma2=sigma2, \
+                          landmarks=landmarks, nn_distances=nn_distances, d=d, \
+                          mu=mu, ls=ls, cov_func=cov_func, L=L, \
+                          initial_value=initial_value)
 model = model.fit(x)
 train_log_density = model.predict(x)
 test_log_density = model.predict(y)
 </pre></div>
 </div>
 </section>
+<section id="updating-parameters">
+<h1>Updating Parameters:<a class="headerlink" href="#updating-parameters" title="Permalink to this heading">#</a></h1>
+<p>After fitting the model, you may want to change some parameters without recomputing
+every step. For example, suppose you want to increase mu by 5.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>model = model.fit(x)
+
+model.recursive_setattr(&#39;mu&#39;, model.mu + 5)
+model = model.fit(x)
+</pre></div>
+</div>
+<p>recursive_setattr will update the attribute to the given value and set any attributes
+of model that depend on the updated attribute to None. This means that when the model
+is fit again, only the attributes that depend on the updated attribute will be recomputed.</p>
+<p>However, recursive_setattr will not set attributes to None if their value was set
+explicitly, either as a parameter or through assignment. For example, initial_value
+depends on mu, but the call recursive_setattr(‘mu’, model.mu + 5) will not affect
+initial_value in any of the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>initial_value = np.random.normal(0, 1, size=100)  # arbitrary initial_value
+model = Crowding(initial_value=initial_value)
+model = model.fit(x)
+
+model.recursive_setattr(&#39;mu&#39;, model.mu + 5)
+model = model.fit(x)
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>model = Crowding()
+model = model.fit(x)
+
+initial_value = np.random.normal(0, 1, size=100)  # arbitrary initial_value
+model.recursive_setattr(&#39;initial_value&#39;, initial_value)  # Will update initial_value
+model = model.fit(x)
+
+model.recursive_setattr(&#39;mu&#39;, model.mu + 5)  # Will update mu, but not initial_value
+model = model.fit(x)
+</pre></div>
+</div>
+<section id="attribute-dependencies">
+<h2>Attribute Dependencies:<a class="headerlink" href="#attribute-dependencies" title="Permalink to this heading">#</a></h2>
+<p>When an attribute is explicitly updated, here are the attributes that will be reset if they were implicitly computed:</p>
+<p>x : [landmarks,  nn_distances,  d,  mu,  ls,  cov_func,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>cov_func_curry : [cov_func,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>n_landmarks : [landmarks,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>rank : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>method : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>jitter : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>sigma2 : [log_density_func]</p>
+<p>landmarks : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>nn_distances : [mu,  ls,  cov_func,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>d : [mu,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>mu : [initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>ls : [cov_func,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>cov_func : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>L : [initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>initial_value : [optimize_result, pre_transformation, loss, log_density_func]</p>
+<p>transform : [loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>loss_func : [optimize_result, pre_transformation, loss, log_density_func]</p>
+<p>optimize_result : [pre_transformation, loss, log_density_func]</p>
+<p>pre_transformation : [log_density_func]</p>
+<p>loss : []</p>
+<p>log_density_x : [log_density_func]</p>
+<p>log_density_func : []</p>
+</section>
+</section>
 <section id="covariance-functions">
 <h1>Covariance Functions:<a class="headerlink" href="#covariance-functions" title="Permalink to this heading">#</a></h1>
 <p>See the cov module for a list of covariance functions already implemented.
 This section shows different ways to use a supplied covariance function
 or define your own.</p>
-<p>The cov_func argument supports a two argument function k(x, y) -&gt; float.</p>
-<div class="literal-block-wrapper docutils container" id="id1">
-<div class="code-block-caption"><span class="caption-text">Instantiate a predefined covariance function.</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import Matern52
-cov_func = Matern52(ls)
-</pre></div>
-</div>
-</div>
-<div class="literal-block-wrapper docutils container" id="id2">
-<div class="code-block-caption"><span class="caption-text">Write a function of two variables.</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
-def Matern52_k(x, y):
-    r = distance(x, y) / ls
-    similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
-    return similarity
-cov_func = Matern52_k
-</pre></div>
-</div>
-</div>
-<p>The cov_func argument also supports a one argument function or class type
+<p>The cov_func_curry argument supports a one argument function or class type
 that returns a function k(x, y) -&gt; float. In this case, the length scale
 of the covariance function will be set to ls, which is computed automatically
 if not passed as an argument.</p>
-<div class="literal-block-wrapper docutils container" id="id3">
-<div class="code-block-caption"><span class="caption-text">Pass a predefined covariance function class (Default behavior)</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">Pass a predefined covariance function class (Default behavior)</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import Matern52
 cov_func = Matern52
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id4">
-<div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function k(x, y) -&gt; float</span><a class="headerlink" href="#id4" title="Permalink to this code">#</a></div>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function k(x, y) -&gt; float</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance    # distance computes the distance between each point in x
                                  # and each point in y.
 def Matern52(ls=1.0):
@@ -314,8 +380,8 @@ cov_func = Matern52
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id5">
-<div class="code-block-caption"><span class="caption-text">Inherit from the Covariance base class</span><a class="headerlink" href="#id5" title="Permalink to this code">#</a></div>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">Inherit from the Covariance base class</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
 from Crowding import Covariance  # The Covariance base class __call__ method calls k.
                                  # It also supports adding, multiplying, and exponentiating
@@ -331,6 +397,51 @@ class Matern52(Covariance):
         similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
         return similarity
 cov_func = Matern52
+</pre></div>
+</div>
+</div>
+<p>Alternatively, the cov_func argument supports a two argument function k(x, y) -&gt; float.</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">Instantiate a predefined covariance function.</span><a class="headerlink" href="#id4" title="Permalink to this code">#</a></div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import Matern52
+
+ls = 1.0  # Set ls as desired.
+cov_func = Matern52(ls)
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">Write a function of two variables.</span><a class="headerlink" href="#id5" title="Permalink to this code">#</a></div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
+
+ls = 1.0  # Set ls as desired.
+def Matern52_k(x, y):
+    r = distance(x, y) / ls
+    similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
+    return similarity
+cov_func = Matern52_k
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">Instatiate a type that inherits from the Covariance base class.</span><a class="headerlink" href="#id6" title="Permalink to this code">#</a></div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
+from Crowding import Covariance  # The Covariance base class __call__ method calls k.
+                                 # It also supports adding, multiplying, and exponentiating
+                                 # with the +, *, and ** operators.
+
+class Matern52(Covariance):
+    def __init__(self, ls=1.0):
+        super().__init__()
+        self.ls = ls
+
+    def k(self, x, y):
+        r = distance(x, y) / self.ls
+        similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
+        return similarity
+
+ls = 1.0  # Set ls as desired.
+cov_func = Matern52(ls)
 </pre></div>
 </div>
 </div>

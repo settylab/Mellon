@@ -1,17 +1,16 @@
-from jax.config import config
-config.update("jax_enable_x64", True)
 from jax.numpy import dot, sqrt, ones_like, eye
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize
 
+
 DEFAULT_SIGMA2 = 1e-6
 
 
 def _full_conditional_mean(x, z, mu, L, cov_func):
     """
-    Builds the mean function of the conditioned full rank gp.
+    Builds the mean function of the conditioned full rank Gaussian process.
 
     :param x: Points.
     :type x: array-like
@@ -36,7 +35,7 @@ def _standard_conditional_mean(xu, z, mu, cov_func):
     """
     Builds the mean function of the conditioned low rank gp, where rank
     is equal to the number of landmark points.
-    
+
     :param x: Landmark points.
     :type x: array-like
     :param z: pre-transformation values.
@@ -61,7 +60,7 @@ def _modified_conditional_mean(x, xu, log_densities_x, mu, cov_func, sigma2=DEFA
     """
     Builds the mean function of the conditioned low rank gp, where rank
     is less than the number of inducing points.
-    
+
     :param x: Points.
     :type x: array-like
     :param xu: Landmark points.
@@ -96,15 +95,22 @@ def _modified_conditional_mean(x, xu, log_densities_x, mu, cov_func, sigma2=DEFA
     return mean
 
 def compute_conditional_mean(rank, mu, cov_func, x=None, landmarks=None, pre_transformation=None,
-                           log_density_x=None, L=None, sigma2=None):
+                           log_density_x=None, L=None, sigma2=DEFAULT_SIGMA2):
     R"""
-    Builds the mean function of the conditioned GP. Runs a different routine depending
-    on the rank. Each routine requires the rank, mu, and cov_func, but each routine requires
-    different optional arguments. If rank is equal to the number of data points, the mean is
-    computed by conditioning on each data point. In this case, only x and pre_transformation
-    must be provided. If rank is equal to the number of landmark points, the mean is computed
+    Builds the mean function of the Gaussian process, conditioned on the log_density values.
+    Returns a function equivalent to the predict function of the model. 
+
+    Runs a different routine depending on the rank. Each routine requires the rank, mu, and
+    cov_func, but each routine requires different optional arguments.
+
+    If rank is equal to the number of data points, the mean is computed by conditioning on each
+    data point. In this case, only x and pre_transformation must be provided.
+
+    If rank is equal to the number of landmark points, the mean is computed
     by conditioning on each inducing point. In this case, only landmarks and pre_transformation
-    must be provided. Otherwise, the mean is computed by inferring the mean at
+    must be provided.
+
+    Otherwise, the mean is computed by inferring the mean at
     at the landmark points and conditioning on the inferred values. In this case, only x, xu,
     log_density_x, and sigma2 must be provided.
 

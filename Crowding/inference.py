@@ -1,5 +1,3 @@
-from jax.config import config
-config.update("jax_enable_x64", True)
 from jax.numpy import log, pi, exp, quantile
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
@@ -63,36 +61,47 @@ def _nearest_neighbors(r, d):
         return arraysum(B - A)
     return logpdf
 
-
-def inference_functions(nn_distances, d, mu, L):
+def compute_transform(mu, L):
     R"""
-    Builds the Bayesian loss function -(prior(:math:`z`) +
-    likelihood(transform(:math:`z`))). Transform maps :math:`z \sim
+    Computes a function transform that maps :math:`z \sim
     \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
     where :math:`I` is the identity matrix and :math:`K \approx K' = L L^T`,
     where :math:`K` is the covariance matrix.
-    Returns the loss function and transform.
 
-    :param nn_distances: Observed nearest neighbor distances.
-    :type nn_distances: function
-    :param d: The dimensionality of the data
-    :type d: int
     :param mu: Gaussian process mean.
     :type mu: float
     :param L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the
         covariance matrix.
     :type L: array-like
-    :return: loss_func, transform_func - The Bayesian loss function and the
-        transform function :math:`z \rightarrow f`.
+    :return: transform - The transform function :math:`z \rightarrow f`.
+    """
+    return _multivariate(mu, L)
+
+
+def compute_loss_func(nn_distances, d, transform, k):
+    R"""
+    Computes the Bayesian loss function -(prior(:math:`z`) +
+    likelihood(transform(:math:`z`))). 
+
+    :param nn_distances: Observed nearest neighbor distances.
+    :type nn_distances: array-like
+    :param d: The dimensionality of the data
+    :type d: int
+    :param transform: maps :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
+        where :math:`I` is the identity matrix and :math:`K \approx K' = L L^T`,
+        where :math:`K` is the covariance matrix.
+    :type transform: function
+    :param k: dimension of transform input
+    :type k: int
+    :return: loss_func - The Bayesian loss function
     :rtype: function, function
     """
-    k = L.shape[1]
     prior = _normal(k)
     likelihood = _nearest_neighbors(nn_distances, d)
-    transform = _multivariate(mu, L)
     def loss_func(z):
         return -(prior(z) + likelihood(transform(z)))
     return loss_func, transform
+
 
 def run_inference(loss_func, initial_value):
     R"""
@@ -102,7 +111,49 @@ def run_inference(loss_func, initial_value):
     :type loss_func: function
     :param initial_value: Initial guess.
     :type initial_value: array-like
-    :return: Results of the optimization.
+    :return: optimize_result - Results of the optimization.
     :rtype: OptStep
     """
     return ScipyMinimize(fun=loss_func, method="L-BFGS-B").run(initial_value)
+
+
+def compute_pre_transformation(optimize_result):
+    R"""
+    Computes :math:`z \sim \text{Normal}(0, I)` before transformation to
+    :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
+    and :math:`K'` is the approximate covariance matrix.
+
+    :param optimize_result: Results of the optimization.
+    :type optimize_result: OptStep
+    :return: pre_transformation - :math:`z \sim \text{Normal}(0, I)`
+    :rtype: array-like
+    """
+    return optimize_result.params
+
+
+def compute_loss(optimize_result):
+    R"""
+    Computes the Bayesian loss from the optimization result.
+
+    :param optimize_result: Results of the optimization.
+    :type optimize_result: OptStep
+    :return: loss - The Bayesian loss.
+    :rtype: float
+    """
+    return optimize_result.state.fun_val
+
+
+def compute_log_density_x(pre_transformation, transform):
+    R"""
+    Computes the log density at the training points.
+
+    :param pre_transformation: :math:`z \sim \text{Normal}(0, I)`
+    :type pre_transformation: array-like
+    :param transform: A function
+        :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
+        where :math:`I` is the identity matrix and :math:`K \approx K' = L L^T`,
+        where :math:`K` is the covariance matrix.
+    :type transform: function
+    :return: log_density_x - The log density at the training points.
+    """
+    return transform(pre_transformation)

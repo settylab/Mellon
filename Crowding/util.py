@@ -1,5 +1,3 @@
-from jax.config import config
-config.update("jax_enable_x64", True)
 from jax.numpy import eye, log, pi, repeat, newaxis, tensordot, sqrt
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln

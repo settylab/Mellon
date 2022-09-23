@@ -1,10 +1,13 @@
 from inspect import signature
 from .conditional import compute_conditional_mean, DEFAULT_SIGMA2
 from .cov import Matern52
-from .decomposition import compute_L, DEFAULT_RANK
-from .inference import inference_functions, run_inference
-from .parameters import compute_nn, compute_landmarks, compute_mu, \
-                        compute_ls, compute_initial_value, DEFAULT_N_LANDMARKS
+from .decomposition import compute_L, DEFAULT_RANK, DEFAULT_METHOD
+from .inference import compute_transform, compute_loss_func, run_inference, \
+                       compute_pre_transformation, compute_loss, \
+                       compute_log_density_x
+from .parameters import compute_landmarks, compute_nn_distances, compute_d, compute_mu, \
+                        compute_ls, compute_cov_func, compute_initial_value, \
+                        DEFAULT_N_LANDMARKS
 from .util import DEFAULT_JITTER
 
 
@@ -14,36 +17,20 @@ DEFAULT_COV_FUNC = Matern52
 class CrowdingEstimator:
     R"""
     A non-parametric density estimator.
-    CrowdingEstimator performs Bayesian inference, with a Gaussian process prior and Nearest
-    Neighbors likelihood.
+    CrowdingEstimator performs Bayesian inference with a Gaussian process prior and Nearest
+    Neighbor likelihood. All intermediate computations are cached as instance variables, so
+    the user can access intermediate results and change some parameters without recomputing
+    every step. See usage.
 
-    :param mu: Mean of the Gaussian process
-    :type mu: float
-    :param cov_func: Gaussian process covariance function. Supports a two argument
-        function k(x, y) :math:`\rightarrow` float or a one argument function
-        or class type that takes a length scale argument and returns a function
-        k(x, y) :math:`\rightarrow` float. Defaults to the type Matern52.
-    :type cov_func: function or type
-    :param ls: Length scale of the Gaussian process covariance function. If None,
-        automatically selects the length scale based on the nearest neighbor distances.
-        If cov_func is a function with two arguments, ls is ignored. Defaults to None.
-    :type ls: float
-    :param nn_distances: Precomputed nearest neighbor distances at each
-        data point. If None, computes the nearest neighbor distances automatically, with
-        a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
-        Defaults to None.
-    :type nn_distances: array-like or None
-    :param initial_value: Initial guess for Maximum A Posteriori optimization. If None, finds
-        :math:`z` that minimizes :math:`||Lz + mu - mle|| + ||z||`, where :math:`mle =
-        \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`,
-        where :math:`d` is the dimensionality of the data.
-    :type initial_value: array-like or None
-    :param L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
-    :type L: array-like
-    :param landmarks: Points to quantize the data for the approximate covariance
-        matrix. If landmarks is an int, landmark points are selected as k-means centroids with
-        k=landmarks. Defaults to the minimum between 5000 and the number of training instances.
-    :type landmarks: array-like or int
+    :param cov_func_curry: Generator of the Gaussian process covariance function.
+        Must be a curry that takes one length scale argument and returns a
+        covariance function of the form k(x, y) :math:`\rightarrow` float.
+        Defaults to the type Matern52.
+    :type cov_func_curry: function or type
+    :param n_landmarks: Number of landmark points. If less than 1 or greater than or
+        equal to the number of training points, does not compute or use inducing points.
+        Defaults to 5000.
+    :type n_landmarks: int
     :param rank: The rank of the covariance matrix. If rank is equal to
         the number of datapoints, the covariance matrix is exact and full rank. If rank
         is equal to the number of landmark points, the standard Nystrom approximation is
@@ -52,6 +39,14 @@ class CrowdingEstimator:
         eigenvectors account for the specified percentage of the total eigenvalues.
         Defaults to 0.999.
     :type rank: int or float
+    :param method: Explicitly specifies whether rank is to be interpreted as a
+        fixed number of eigenvectors or a percent of eigenvalues to include
+        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
+        If 'auto', interprets rank as a fixed number of eigenvectors if it is
+        an int and interprets rank as a percent of eigenvalues if it is a float.
+        Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
+        Defaults to 'auto'.
+    :type method: str
     :param jitter: A small amount to add to the diagonal of the covariance
         matrix for numerical stabilitity. Defaults to 1e-6.
     :type jitter: float
@@ -59,149 +54,260 @@ class CrowdingEstimator:
         than the number of landmark points. Ignored in other cases. Must be greater
         than 0. Defaults to 1e-6.
     :type sigma2: float
-    :ivar mu: Gaussian process mean.
-    :ivar cov_func: Gaussian process covariance function.
-    :ivar ls: Gaussian process covariance function length scale.
-    :ivar nn_distances: Nearest neighbor distances for each data point.
-    :ivar landmarks: Points to quantize the data.
+    :param landmarks: Points to quantize the data for the approximate covariance. If None,
+        landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
+        is greater than or equal to the number of training points. Defaults to None.
+    :type landmarks: array-like
+    :param nn_distances: Precomputed nearest neighbor distances at each
+        data point. If None, computes the nearest neighbor distances automatically, with
+        a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
+        Defaults to None.
+    :type nn_distances: array-like or None
+    :param d: Local dimensionality of the data. Defaults to axis 1
+        of the training data points.
+    :type d: int
+    :param mu: Mean of the Gaussian process.
+    :type mu: float
+    :param ls: Length scale of the Gaussian process covariance function. If None,
+        automatically selects the length scale based on the nearest neighbor distances.
+        If cov_func is a function with two arguments, ls is ignored. Defaults to None.
+    :type ls: float
+    :param cov_func: Gaussian process covariance function of the form
+        k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
+        function cov_func = cov_func_curry(ls).
+    :type cov_func: function
+    :param L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
+    :type L: array-like
+    :param initial_value: Initial guess for Maximum A Posteriori optimization. If None, finds
+        :math:`z` that minimizes :math:`||Lz + mu - mle|| + ||z||`, where :math:`mle =
+        \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`,
+        where :math:`d` is the dimensionality of the data.
+    :type initial_value: array-like or None
+    :ivar cov_func_curry: Generator of the Gaussian process covariance function.
     :ivar n_landmarks: Number of landmark points.
     :ivar rank: Rank of approximate covariance matrix or percentage of
         eigenvalues included in approximate covariance matrix.
+    :ivar method: Method to interpret the rank as a fixed number of eigenvectors
+        or a percentage of eigenvalues.
     :ivar jitter: A small amount added to the diagonal of the covariance matrix
         for numerical stability.
     :ivar sigma2: White noise variance for the case the rank is reduced further
         than the number of landmark points.
-    :ivar initial_value: Initial guess for Maximum A Posteriori optimization.
+    :ivar landmarks: Points to quantize the data.
+    :ivar nn_distances: Nearest neighbor distances for each data point.
+    :ivar d: Local dimensionality of the data.
+    :ivar mu: Gaussian process mean.
+    :ivar ls: Gaussian process covariance function length scale.
+    :ivar cov_func: Gaussian process covariance function.
     :ivar L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
+    :ivar initial_value: Initial guess for Maximum A Posteriori optimization.
+    :ivar x: The training data.
+    :ivar transform: A function :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')`.
+    :ivar loss_func: Bayesian loss function.
     :ivar optimize_result: All results from the optimization.
     :ivar pre_transformation: :math:`z \sim \text{Normal}(0, I)` before
         transformation to :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
-    :ivar loss: Bayesian loss.
+    :ivar loss: Bayesian loss on the training data.
     :ivar log_density_x: Log density at the training points.
     :ivar log_density_func: Computes the log density at arbitrary prediction points.
     """
-    def __init__(self, mu=None, cov_func=DEFAULT_COV_FUNC, ls=None, nn_distances=None,
-                 initial_value=None, L=None, landmarks=DEFAULT_N_LANDMARKS,
-                 rank=DEFAULT_RANK, jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2):
-        self.mu = mu
-        self.cov_func = cov_func
-        self.ls = ls
-        self.nn_distances = nn_distances
-        if type(landmarks) is int:
-            self.landmarks = None
-            self.n_landmarks = landmarks
-        else:
-            self.landmarks = landmarks
-            self.n_landmarks = landmarks.shape[1]
+    def __init__(self, cov_func_curry=DEFAULT_COV_FUNC, \
+                 n_landmarks=DEFAULT_N_LANDMARKS, \
+                 rank=DEFAULT_RANK, method=DEFAULT_METHOD, \
+                 jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2, \
+                 landmarks=None, nn_distances=None, d=None, mu=None, \
+                 ls=None, cov_func=None, \
+                 L=None, initial_value=None):
+        self._implicit = set()
+        self.cov_func_curry = cov_func_curry
+        self.n_landmarks = n_landmarks
         self.rank = rank
+        self.method = method
         self.jitter = jitter
         self.sigma2 = sigma2
-        self.initial_value = initial_value
+        self.landmarks = landmarks
+        self.nn_distances = nn_distances
+        self.d = d
+        self.mu = mu
+        self.ls = ls
+        self.cov_func = cov_func
         self.L = L
+        self.initial_value = initial_value
+        self.x = None
+        self.transform = None
+        self.loss_func = None
         self.optimize_result = None
         self.pre_transformation = None
         self.loss = None
         self.log_density_x = None
         self.log_density_func = None
+        self._dependencies = {'x': ['d', 'nn_distances', 'landmarks', 'L', 'log_density_func'],
+                              'd': ['mu', 'initial_value', 'loss_func'],
+                              'mu': ['initial_value', 'transform', 'log_density_func'],
+                              'cov_func_curry': ['cov_func'],
+                              'cov_func': ['L', 'log_density_func'],
+                              'ls': ['cov_func'],
+                              'nn_distances': ['ls', 'mu', 'initial_value', 'loss_func'],
+                              'initial_value': ['optimize_result'],
+                              'n_landmarks': ['landmarks'],
+                              'landmarks': ['L', 'log_density_func'],
+                              'rank': ['L', 'log_density_func'],
+                              'method': ['L'],
+                              'jitter': ['L'],
+                              'sigma2': ['log_density_func'],
+                              'L': ['initial_value', 'transform', 'log_density_func'],
+                              'transform': ['loss_func', 'log_density_x'],
+                              'loss_func': ['optimize_result'],
+                              'optimize_result': ['pre_transformation', 'loss'],
+                              'pre_transformation': ['log_density_func'],
+                              'loss': [],
+                              'log_density_x': ['log_density_func'],
+                              'log_density_func': [],
+                              }
 
-    def _n(self):
-        return self.x.shape[0]
+    def _set_x(self, x):
+        self.recursive_setattr('x', x)
+        return self.x
 
-    def _d(self):
-        return self.x.shape[1]
-
-    def _set_nn(self, k=1):
-        if self.nn_distances is None:
-            x = self.x
-            self.nn_distances = compute_nn(x)
-        return self.nn_distances
-
-    def _set_landmarks(self):
-        if (self.landmarks is None) and (self.rank != self._n()):
+    def _compute_landmarks(self):
+        if (self.landmarks is None):
             x = self.x
             n_landmarks = self.n_landmarks
-            self.landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
+            landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
+            self._implicit_setattr('landmarks', landmarks)
         return self.landmarks
 
-    def _set_mu(self):
+    def _compute_nn_distances(self):
+        if self.nn_distances is None:
+            x = self.x
+            nn_distances = compute_nn_distances(x)
+            self._implicit_setattr('nn_distances', nn_distances)
+        return self.nn_distances
+
+    def _compute_d(self):
+        if self.d is None:
+            d = compute_d(x)
+            if d > 50:
+                message = f"""Detected dimensionality of the data is over 50,
+                which is likely to cause numerical instability issues.
+                Consider running a dimensionality reduction algorithm, or
+                if this number of dimensions is intended, explicitly pass
+                d={self.d} as a parameter."""
+                raise ValueError(message)
+            self.d = d   
+            self._implicit.add('d')
+            self._implicit_setattr()
+        return self.d
+
+    def _compute_mu(self):
         if self.mu is None:
             nn_distances = self.nn_distances
-            d = self._d()
-            self.mu = compute_mu(nn_distances, d)
+            d = self.d
+            mu = compute_mu(nn_distances, d)
+            self._implicit_setattr('mu', mu)
         return self.mu
 
-    def _set_ls(self):
+    def _compute_ls(self):
         if self.ls is None:
             nn_distances = self.nn_distances
-            self.ls = compute_ls(nn_distances)
+            ls = compute_ls(nn_distances)
+            self._implicit_setattr('ls', ls)
         return self.ls
 
-    def _set_cov_func(self):
-        if len(signature(self.cov_func).parameters) != 2:
+    def _compute_cov_func(self):
+        if self.cov_func is None:
             ls = self.ls
-            cov_func = self.cov_func(ls)
-            self.cov_func = cov_func
+            cov_func_curry(ls)
+            cov_func = compute_cov_func(cov_func_curry, ls)
+            self._implicit_setattr('cov_func', cov_func)
         return self.cov_func
 
-    def _set_L(self):
+    def _compute_L(self):
         if self.L is None:
             x = self.x
             cov_func = self.cov_func
             landmarks = self.landmarks
             rank = self.rank
             jitter = self.jitter
-            self.L = compute_L(x, cov_func, landmarks=landmarks,
-                                    rank=rank, jitter=jitter)
+            L = compute_L(x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter)
+            self._implicit_setattr('L', L)
         return self.L
 
-    def _set_initial_value(self):
+    def _compute_initial_value(self):
         if self.initial_value is None:
             nn_distances = self.nn_distances
-            d = self._d()
+            d = self.d
             mu = self.mu
             L = self.L
-            self.initial_value = compute_initial_value(nn_distances, d, mu, L)
+            initial_value = compute_initial_value(nn_distances, d, mu, L)
+            self._implicit_setattr('initial_value', initial_value)
         return self.initial_value
 
-    def _prepare_inference(self):
-        nn_distances = self.nn_distances
-        d = self._d()
-        mu = self.mu
-        L = self.L
-        self.loss_func, self.transform = inference_functions(nn_distances, d, mu, L)
-        return self.loss_func, self.transform
+    def _compute_transform(self):
+        if self.transform is None:
+            mu = self.mu
+            L = self.L
+            transform = compute_transform(mu, L)
+            self._implicit_setattr('transform', transform)
+        return self.transform
 
-    def _inference(self):
-        function = self.loss_func
-        initial_value = self.initial_value
-        results = run_inference(function, initial_value)
-        self.optimize_result = results
-        self.pre_transformation = results.params
-        self.loss = results.state.fun_val
-        return self.optimize_result, self.pre_transformation, self.loss
+    def _compute_loss_func(self):
+        if self.loss_func is None:
+            nn_distances = self.nn_distances
+            d = self.d
+            transform = self.transform
+            k = self.initial_value.shape[0]
+            loss_func = compute_loss_func(nn_distances, d, transform, k)
+            self._implicit_setattr('loss_func', loss_func)
+        return self.loss_func
 
-    def _set_log_density_x(self):
-        pre_transformation = self.pre_transformation
-        transform = self.transform
-        self.log_density_x = transform(pre_transformation)
+    def _run_inference(self):
+        if self.optimize_result is None:
+            function = self.loss_func
+            initial_value = self.initial_value
+            optimize_result = run_inference(function, initial_value)
+            self._implicit_setattr('optimize_result', optimize_result)
+        return self.optimize_result
+
+    def _compute_pre_transformation(self):
+        if self.pre_transformation is None:
+            optimize_result = self.optimize_result
+            pre_transformation = compute_pre_transformation(optimize_result)
+            self._implicit_setattr('pre_transformation', pre_transformation)
+        return self.pre_transformation
+
+    def _compute_loss(self):
+        if self.loss is None:
+            optimize_result = self.optimize_result
+            loss = compute_loss(optimize_result)
+            self._implicit_setattr('loss', loss)
+        return self.loss
+
+    def _compute_log_density_x(self):
+        if self.log_density_x is None:
+            pre_transformation = self.pre_transformation
+            transform = self.transform
+            log_density_x = compute_log_density_x(pre_transformation, transform)
+            self._implicit_setattr('log_density_x', log_density_x)
         return self.log_density_x
 
-    def _set_log_density_func_(self):
-        rank = self.rank
-        x = self.x
-        landmarks = self.landmarks
-        pre_transformation = self.pre_transformation
-        mu = self.mu
-        L = self.L
-        log_density_x = self.log_density_x
-        cov_func = self.cov_func
-        sigma2 = self.sigma2
-        log_density_func = compute_conditional_mean(rank, mu, cov_func, x=x, landmarks=landmarks, 
-                                                  pre_transformation=pre_transformation,
-                                                  log_density_x=log_density_x,
-                                                  L=L, sigma2=sigma2)
-        self.log_density_func = log_density_func
+    def _compute_log_density_func_(self):
+        if self.log_density_func is None:
+            rank = self.rank
+            x = self.x
+            landmarks = self.landmarks
+            pre_transformation = self.pre_transformation
+            mu = self.mu
+            L = self.L
+            log_density_x = self.log_density_x
+            cov_func = self.cov_func
+            sigma2 = self.sigma2
+            log_density_func = compute_conditional_mean(rank, mu, cov_func, x=x, landmarks=landmarks, 
+                                                        pre_transformation=pre_transformation,
+                                                        log_density_x=log_density_x,
+                                                        L=L, sigma2=sigma2)
+            self._implicit_setattr('log_density_func', log_density_func)
         return self.log_density_func
 
     def fit(self, x):
@@ -213,18 +319,22 @@ class CrowdingEstimator:
         :return: self - A fitted instance of this estimator.
         :rtype: Object
         """
-        self.x = x
-        self._set_nn()
-        self._set_landmarks()
-        self._set_mu()
-        self._set_ls()
-        self._set_cov_func()
-        self._set_L()
-        self._set_initial_value()
-        self._prepare_inference()
-        self._inference()
-        self._set_log_density_x()
-        self._set_log_density_func_()
+        self._set_x(x)
+        self._compute_landmarks()
+        self._compute_nn()
+        self._compute_d()
+        self._compute_mu()
+        self._compute_ls()
+        self._compute_cov_func()
+        self._compute_L()
+        self._compute_initial_value()
+        self._compute_transform()
+        self._compute_loss_func()
+        self._run_inference()
+        self._compute_pre_transformation()
+        self._compute_loss()
+        self._compute_log_density_x()
+        self._compute_log_density_func_()
         return self
 
     def predict(self, x):
@@ -242,7 +352,7 @@ class CrowdingEstimator:
 
     def fit_predict(self, x):
         R"""
-        Perform Bayesian Inference and return the log density at training points.
+        Perform Bayesian inference and return the log density at training points.
 
         :param x: Training instances to estimate density function.
         :type x: array-like
@@ -250,3 +360,60 @@ class CrowdingEstimator:
         """
         self.fit(x)
         return self.log_density_x
+
+    def recursive_setattr(self, attribute, value):
+        R"""
+        If value is different from the current value of attribute,
+        sets attribute to value and sets any other attributes that depend
+        on attribute and were computed implicitly to None. If value is 
+        the current value of attribute, has no effect. Equality
+        is determined by the 'is' keyword.
+
+        :param attribute: The name of the attribute.
+        :type attribute: string
+        :param value: The value to set attribute to.
+        :type value: anything
+        """
+        if self.attribute is value:
+            return
+        visited = set()
+        self._step(attribute, visited)
+        setattr(self, attribute, value)
+
+    def _step(self, attribute, visited):
+        R"""
+        Recursive helper for recursive_setattr.
+        """
+        if attribute in visited:
+            return
+        else:
+            visited.add(attribute)
+        if attribute in self._implicit:
+            setattr(self, attribute, None)
+        for next_attribute in self._dependencies[attribute]:
+            self._step(next_attribute, visited)
+
+    def _implicit_setattr(self, attribute, value):
+        R"""
+        Sets attribute to value and adds attribute to the set of implicit attributes.
+
+        :param attribute: The name of the attribute.
+        :type attribute: string
+        :param value: The value to set attribute to.
+        :type value: anything
+        """
+        self.__dict__[attribute] = value
+        self._implicit.add(attribute)
+
+    def __setattr__(self, attribute, value):
+        R"""
+        Sets attribute to value and discards attribute from the set of implicit attributes.
+        Overrides the special function __setattr__.
+
+        :param attribute: The name of the attribute.
+        :type attribute: string
+        :param value: The value to set attribute to.
+        :type value: anything
+        """
+        self.__dict__[attribute] = value
+        self._implicit.discard(attribute)

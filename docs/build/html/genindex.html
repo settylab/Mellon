@@ -152,19 +152,16 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Core API:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="model.html">model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Advanced Use:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
 <li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="decomposition.html">decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 <li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -206,7 +203,7 @@
           
 <section class="genindex-section">
   <h1 id="index">Index</h1>
-  <div class="genindex-jumpbox"><a href="#A"><strong>A</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#K"><strong>K</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a></div>
+  <div class="genindex-jumpbox"><a href="#A"><strong>A</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#K"><strong>K</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a></div>
 </section>
 <section id="A" class="genindex-section">
   <h2>A</h2>
@@ -224,17 +221,31 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="conditional.html#Crowding.conditional.compute_conditional_mean">compute_conditional_mean() (in module Crowding.conditional)</a>
 </li>
+        <li><a href="parameters.html#Crowding.parameters.compute_cov_func">compute_cov_func() (in module Crowding.parameters)</a>
+</li>
+        <li><a href="parameters.html#Crowding.parameters.compute_d">compute_d() (in module Crowding.parameters)</a>
+</li>
         <li><a href="parameters.html#Crowding.parameters.compute_initial_value">compute_initial_value() (in module Crowding.parameters)</a>
 </li>
         <li><a href="decomposition.html#Crowding.decomposition.compute_L">compute_L() (in module Crowding.decomposition)</a>
 </li>
         <li><a href="parameters.html#Crowding.parameters.compute_landmarks">compute_landmarks() (in module Crowding.parameters)</a>
 </li>
+        <li><a href="inference.html#Crowding.inference.compute_log_density_x">compute_log_density_x() (in module Crowding.inference)</a>
+</li>
+        <li><a href="inference.html#Crowding.inference.compute_loss">compute_loss() (in module Crowding.inference)</a>
+</li>
+        <li><a href="inference.html#Crowding.inference.compute_loss_func">compute_loss_func() (in module Crowding.inference)</a>
+</li>
         <li><a href="parameters.html#Crowding.parameters.compute_ls">compute_ls() (in module Crowding.parameters)</a>
 </li>
         <li><a href="parameters.html#Crowding.parameters.compute_mu">compute_mu() (in module Crowding.parameters)</a>
 </li>
-        <li><a href="parameters.html#Crowding.parameters.compute_nn">compute_nn() (in module Crowding.parameters)</a>
+        <li><a href="parameters.html#Crowding.parameters.compute_nn_distances">compute_nn_distances() (in module Crowding.parameters)</a>
+</li>
+        <li><a href="inference.html#Crowding.inference.compute_pre_transformation">compute_pre_transformation() (in module Crowding.inference)</a>
+</li>
+        <li><a href="inference.html#Crowding.inference.compute_transform">compute_transform() (in module Crowding.inference)</a>
 </li>
         <li><a href="base_cov.html#Crowding.base_cov.Covariance">Covariance (class in Crowding.base_cov)</a>
 </li>
@@ -245,6 +256,8 @@
           <li><a href="base_cov.html#module-Crowding.base_cov">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     Crowding.conditional
 
@@ -252,8 +265,6 @@
           <li><a href="conditional.html#module-Crowding.conditional">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     Crowding.cov
 
@@ -340,16 +351,6 @@
   </tr></table>
 </section>
 
-<section id="I" class="genindex-section">
-  <h2>I</h2>
-  <table style="width: 100%" class="indextable genindextable"><tr>
-    <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="inference.html#Crowding.inference.inference_functions">inference_functions() (in module Crowding.inference)</a>
-</li>
-    </ul></td>
-  </tr></table>
-</section>
-
 <section id="K" class="genindex-section">
   <h2>K</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
@@ -431,6 +432,8 @@
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="model.html#Crowding.model.CrowdingEstimator.recursive_setattr">recursive_setattr() (Crowding.model.CrowdingEstimator method)</a>
+</li>
         <li><a href="inference.html#Crowding.inference.run_inference">run_inference() (in module Crowding.inference)</a>
 </li>
     </ul></td>

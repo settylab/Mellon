@@ -1,5 +1,4 @@
-from jax.config import config
-config.update("jax_enable_x64", True)
+import warnings
 from jax.numpy import cumsum, searchsorted, count_nonzero, eye, ones_like
 from jax.numpy import dot, sqrt
 from jax.numpy import sum as arraysum
@@ -9,9 +8,51 @@ from .util import stabilize, DEFAULT_JITTER
 
 
 DEFAULT_RANK = 0.999
+DEFAULT_METHOD = 'auto'
 
 
-def _eigendecomposition(A, rank=DEFAULT_RANK):
+def _select_method(rank, full):
+    R"""
+    Checks if rank is a float 0 < rank <= 1.0 or an int 1 <= rank <= full.
+    Returns True in the first case. Raises an error otherwise.
+    :param rank: The rank of the decomposition, or if rank is a float greater
+    than 0 and less than 1, the rank is reduced further using the QR decomposition
+    such that the eigenvalues of the included eigenvectors account for the
+    specified percentage of the total eigenvalues. Defaults to 0.999.
+    :type rank: int or float
+    :param full: size of the exact matrix.
+    :type full: int
+    """
+    percent = (type(rank) is float) and (0 < rank) and (rank <= 1)
+    fixed = (type(rank) is int) and (1 <= rank) and (rank <= full)
+    if not (percent or fixed):
+        message = """rank must be a float 0.0 < rank <= 1.0 or
+            an int 1 <= rank <= q. q equals the number of landmarks
+            or the number of data points if there are no landmarks."""
+        raise ValueError(message)
+    if rank == 1:  # true if rank is 1.0 or 1
+        if percent:
+            message = """rank is 1.0, which is ambiguous. Because
+                rank is a float, it is interpreted as the percentage of
+                eigenvalues to include in the low rank approximation.
+                To bypass this warning, explictly set method='percent'.
+                If this is not the intended behavior, explicitly set
+                method='fixed'."""
+        else:
+            message = """rank is 1, which is ambiguous. Because
+                rank is an int, it is interpreted as the number of
+                eigenvectors to include in the low rank approximation.
+                To bypass this warning, explictly set method='fixed'.
+                If this is not the intended behavior, explicitly set
+                method='percent'."""
+        raise warnings.warn(message, UserWarning)
+    if percent:
+        return 'percent'
+    else:
+        return 'fixed'
+
+
+def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     R"""
     Decompose :math:`A` into its largest rank eigenvectors and eigenvalues.
 
@@ -22,11 +63,22 @@ def _eigendecomposition(A, rank=DEFAULT_RANK):
     such that the eigenvalues of the included eigenvectors account for the
     specified percentage of the total eigenvalues. Defaults to 0.999.
     :type rank: int or float
+    :param method: Explicitly specifies whether rank is to be interpreted as a
+        fixed number of eigenvectors or a percent of eigenvalues to include
+        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
+        If 'auto', interprets rank as a fixed number of eigenvectors if it is
+        an int and interprets rank as a percent of eigenvalues if it is a float.
+        Defaults to 'auto'.
+    :type method: str
     :return: :math:`s, v` - The top eigenvalues and eigenvectors.
     :rtype: array-like, array-like
     """
+
+    if method == 'auto':
+        full = A.shape[0]
+        method = _select_method(rank, full)
     s, v = eigh(A)
-    if rank < 1:
+    if method == 'percent':
         # automatically choose rank to capture some percent of the eigenvalues
         target = arraysum(s) * rank
         rank = searchsorted(cumsum(s[::-1]), target)
@@ -54,6 +106,40 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
     return L
 
 
+def _full_decomposition_low_rank(x, cov_func, rank=DEFAULT_RANK,
+                                 method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
+    R"""
+    Compute a low rank :math:`L` such that :math:`L L^T ~= K`, where :math:`K` is the
+    full rank covariance matrix. The rank is less than or equal to the number of
+    landmark points.
+
+    :param x: Points.
+    :type x: array-like
+    :param cov_func: Covariance function.
+    :type cov_func: function
+    :param rank: The rank of the decomposition, or if rank is a float greater
+        than 0 and less than 1, the eigenvalues of the included eigenvectors
+        account for the specified percentage of the total eigenvalues.
+        Defaults to 0.999.
+    :type rank: int or float
+    :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
+    :type jitter: float
+    :param method: Explicitly specifies whether rank is to be interpreted as a
+        fixed number of eigenvectors or a percent of eigenvalues to include
+        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
+        If 'auto', interprets rank as a fixed number of eigenvectors if it is
+        an int and interprets rank as a percent of eigenvalues if it is a float.
+        Defaults to 'auto'.
+    :type method: str
+    :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
+    :rtype: array-like
+    """
+    W = cov_func(x, x)
+    s, v = _eigendecomposition(W, rank=DEFAULT_RANK, method=method)
+    L = v * sqrt(s)
+    return L
+
+
 def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^T \approx K`, where :math:`K`
@@ -78,7 +164,8 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     return L
 
 
-def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
+def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK,
+                       method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^T ~= K`, where :math:`K` is the
     full rank covariance matrix. The rank is less than or equal to the number of
@@ -97,24 +184,31 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER
     :type rank: int or float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
+    :param method: Explicitly specifies whether rank is to be interpreted as a
+        fixed number of eigenvectors or a percent of eigenvalues to include
+        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
+        If 'auto', interprets rank as a fixed number of eigenvectors if it is
+        an int and interprets rank as a percent of eigenvalues if it is a float.
+        Defaults to 'auto'.
+    :type method: str
     :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
     :rtype: array-like
     """
     W = stabilize(cov_func(xu, xu), jitter)
     C = cov_func(x, xu)
     Q, R = qr(C, mode='reduced')
-    s, v = _eigendecomposition(W, rank=xu.shape[0])
+    s, v = _eigendecomposition(W, rank=xu.shape[0], method='fixed')
     T = R @ v
-    S, V = _eigendecomposition(T / s @ T.T, rank=rank)
+    S, V = _eigendecomposition(T / s @ T.T, rank=rank, method=method)
     L = Q @ V * sqrt(S)
     return L
 
 
-def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK, jitter=DEFAULT_JITTER):
+def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK,
+              method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
     R"""
-    Compute a low rank :math:`L` such that :math:`L L^T \approx K`, where
-    :math:`K` is the full rank covariance matrix. The rank is less than or
-    equal to the number of landmark points.
+    Compute an :math:`L` such that :math:`L L^T \approx K`, where
+    :math:`K` is the covariance matrix.
 
     :param x: Points.
     :type x: array-like
@@ -131,20 +225,27 @@ def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK, jitter=DEFAULT_JIT
         eigenvectors account for the specified percentage of the total eigenvalues.
         Defaults to 0.999.
     :type rank: int or float
+    :param method: Explicitly specifies whether rank is to be interpreted as a
+        fixed number of eigenvectors or a percent of eigenvalues to include
+        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
+        If 'auto', interprets rank as a fixed number of eigenvectors if it is
+        an int and interprets rank as a percent of eigenvalues if it is a float.
+        Defaults to 'auto'.
+    :type method: str
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
     :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
     :rtype: array-like
     """
-    n = x.shape[0]
-    n_landmarks = landmarks.shape[0]
-    if (landmarks is None) or (rank == n):
-        return _full_rank(x, cov_func, jitter=jitter)
-    elif rank == landmarks.shape[0]:
-        return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
-    elif (rank > 0) and (rank <= n_landmarks):
-        return _modified_low_rank(x, cov_func, landmarks, rank=rank, jitter=jitter)
+    if landmarks is None:
+        n = x.shape[0]
+        if type(rank) is int and rank == n:
+            return _full_rank(x, cov_func, jitter=jitter)
+        else:
+            return _full_decomposition_low_rank(x, cov_func, rank=rank, method=method, jitter=jitter)
     else:
-        raise ValueError(f"""rank={rank} must be a float 0 < rank < 1 or
-                             an int 1 <= rank <= {n_landmarks}, the number of
-                             landmarks, or {n}, the number of datapoints.""")
+        n_landmarks = landmarks.shape[0]
+        if type(rank) is int and rank == n_landmarks:
+            return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
+        else:
+            return _modified_low_rank(x, cov_func, landmarks, rank=rank, method=method, jitter=jitter)
