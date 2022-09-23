@@ -270,7 +270,7 @@ If cov_func is supplied explictly, ls has no effect. Defaults to None.</p></li>
 k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float. If None, automatically generates the covariance
 function cov_func = cov_func_curry(ls). Defaults to None.</p></li>
 <li><p><strong>L</strong> (<em>array-like</em><em> or </em><em>None</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.
-If None, automatically computes L. Defaults to L.</p></li>
+If None, automatically computes L. Defaults to None.</p></li>
 <li><p><strong>initial_value</strong> (<em>array-like</em><em> or </em><em>None</em>) – Initial guess for Maximum A Posteriori optimization. If None, finds
 <span class="math notranslate nohighlight">\(z\)</span> that minimizes <span class="math notranslate nohighlight">\(||Lz + mu - mle|| + ||z||\)</span>, where <span class="math notranslate nohighlight">\(mle =
 \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span>,

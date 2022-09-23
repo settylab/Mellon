@@ -91,7 +91,7 @@ class CrowdingEstimator:
         function cov_func = cov_func_curry(ls). Defaults to None.
     :type cov_func: function or None
     :param L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
-        If None, automatically computes L. Defaults to L.
+        If None, automatically computes L. Defaults to None.
     :type L: array-like or None
     :param initial_value: Initial guess for Maximum A Posteriori optimization. If None, finds
         :math:`z` that minimizes :math:`||Lz + mu - mle|| + ||z||`, where :math:`mle =
@@ -216,9 +216,7 @@ class CrowdingEstimator:
                 if this number of dimensions is intended, explicitly pass
                 d={self.d} as a parameter."""
                 raise ValueError(message)
-            self.d = d   
-            self._implicit.add('d')
-            self._implicit_setattr()
+            self._implicit_setattr('d', d)
         return self.d
 
     def _compute_mu(self):
