@@ -225,23 +225,6 @@ where <span class="math notranslate nohighlight">\(K\)</span> is the covariance 
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.compute_loss">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimize_result</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_loss" title="Permalink to this definition">#</a></dt>
-<dd><p>Computes the Bayesian loss from the optimization result.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>optimize_result</strong> (<em>OptStep</em>) – Results of the optimization.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>loss - The Bayesian loss.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="Crowding.inference.compute_loss_func">
 <span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_loss_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nn_distances</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_loss_func" title="Permalink to this definition">#</a></dt>
 <dd><p>Computes the Bayesian loss function -(prior(<span class="math notranslate nohighlight">\(z\)</span>) +
@@ -262,25 +245,6 @@ where <span class="math notranslate nohighlight">\(K\)</span> is the covariance 
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>function, function</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.compute_pre_transformation">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_pre_transformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimize_result</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_pre_transformation" title="Permalink to this definition">#</a></dt>
-<dd><p>Computes <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I)\)</span> before transformation to
-<span class="math notranslate nohighlight">\(\text{Normal}(mu, K')\)</span>, where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix
-and <span class="math notranslate nohighlight">\(K'\)</span> is the approximate covariance matrix.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>optimize_result</strong> (<em>OptStep</em>) – Results of the optimization.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>pre_transformation - <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I)\)</span></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array-like</p>
 </dd>
 </dl>
 </dd></dl>
@@ -308,20 +272,24 @@ covariance matrix.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="Crowding.inference.run_inference">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.run_inference" title="Permalink to this definition">#</a></dt>
-<dd><p>Minimizes function with a starting guess of initial_value.</p>
+<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.run_inference" title="Permalink to this definition">#</a></dt>
+<dd><p>Minimizes function with a starting guess of initial_value using
+adam and exponentially decaying learning rate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>loss_func</strong> (<em>function</em>) – Loss function to minimize.</p></li>
 <li><p><strong>initial_value</strong> (<em>array-like</em>) – Initial guess.</p></li>
+<li><p><strong>n_iter</strong> (<em>integer</em>) – Number of optimization iterations. Defaults to 100.</p></li>
+<li><p><strong>init_learn_rate</strong> (<em>float</em>) – Initial learn rate. Defaults to 1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>optimize_result - Results of the optimization.</p>
+<dd class="field-even"><p>result, loss, opt_state - Results of the optimization, history of
+loss values, and final state of the optimizer.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>OptStep</p>
+<dd class="field-odd"><p>array-like, array-like, Object</p>
 </dd>
 </dl>
 </dd></dl>

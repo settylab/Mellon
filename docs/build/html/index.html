@@ -326,26 +326,28 @@ model = model.fit(x)
 <section id="attribute-dependencies">
 <h2>Attribute Dependencies:<a class="headerlink" href="#attribute-dependencies" title="Permalink to this heading">#</a></h2>
 <p>When an attribute is explicitly updated, here are the attributes that will be reset if they were implicitly computed:</p>
-<p>x : [landmarks,  nn_distances,  d,  mu,  ls,  cov_func,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>cov_func_curry : [cov_func,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>n_landmarks : [landmarks,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>rank : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>method : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>jitter : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
+<p>x : [landmarks, nn_distances, d, mu, ls, cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>cov_func_curry : [cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>n_landmarks : [landmarks, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>rank : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>method : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>jitter : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
 <p>sigma2 : [log_density_func]</p>
-<p>landmarks : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>nn_distances : [mu,  ls,  cov_func,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>d : [mu,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>mu : [initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>ls : [cov_func,  L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>cov_func : [L,  initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>L : [initial_value,  transform,  loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>initial_value : [optimize_result, pre_transformation, loss, log_density_func]</p>
-<p>transform : [loss_func,  optimize_result,  pre_transformation,  loss,  log_density_x,  log_density_func]</p>
-<p>loss_func : [optimize_result, pre_transformation, loss, log_density_func]</p>
-<p>optimize_result : [pre_transformation, loss, log_density_func]</p>
-<p>pre_transformation : [log_density_func]</p>
-<p>loss : []</p>
+<p>n_iter : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>init_learn_rate : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>inference_func : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>landmarks : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>nn_distances : [mu, ls, cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>d : [mu, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>mu : [initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>ls : [cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>cov_func : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>L : [initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>initial_value : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>transform : [loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>loss_func : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
+<p>optimize_result : []</p>
+<p>pre_transformation : [log_density_x, log_density_func]</p>
 <p>log_density_x : [log_density_func]</p>
 <p>log_density_func : []</p>
 </section>

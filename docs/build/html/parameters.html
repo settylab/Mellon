@@ -262,10 +262,14 @@ such that the initial value <span class="math notranslate nohighlight">\(z\)</sp
 <dl class="py function">
 <dt class="sig sig-object py" id="Crowding.parameters.compute_landmarks">
 <span class="sig-prename descclassname"><span class="pre">Crowding.parameters.</span></span><span class="sig-name descname"><span class="pre">compute_landmarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.parameters.compute_landmarks" title="Permalink to this definition">#</a></dt>
-<dd><p>Computes the landmark points as k-means centroids.</p>
+<dd><p>Computes the landmark points as k-means centroids. If n_landmarks is less
+than 1 or greater than or equal to the number of training instances, returns None.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – Training instances.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – Training instances.</p></li>
+<li><p><strong>n_landmarks</strong> (<em>int</em>) – Number of landmark points.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>landmark_points - k-means centroids.</p>
