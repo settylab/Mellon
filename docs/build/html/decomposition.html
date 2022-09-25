@@ -219,7 +219,7 @@ Defaults to None.</p></li>
 <li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the covariance matrix. If rank is equal to
 the number of datapoints, the covariance matrix is exact and full rank. If rank
 is equal to the number of landmark points, the standard Nystrom approximation is
-used. If rank is a float greater than 0 and less than 1, the rank is reduced
+used. If rank is a float 0.0 <span class="math notranslate nohighlight">\(\le\)</span> rank <span class="math notranslate nohighlight">\(\le\)</span> 1.0, the rank is reduced
 further using the QR decomposition such that the eigenvalues of the included
 eigenvectors account for the specified percentage of the total eigenvalues.
 Defaults to 0.999.</p></li>

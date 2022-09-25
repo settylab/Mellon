@@ -11,11 +11,11 @@ DEFAULT_RANK = 0.999
 DEFAULT_METHOD = 'auto'
 
 
-def _select_method(rank, full):
+def _check_method(rank, full, method):
     R"""
     Checks if rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0 or an int
-    1 0.0 :math:`\le` rank :math:`\le` 1.0 full. Returns True in the first case.
-    Raises an error otherwise.
+    1 :math:`\le` rank :math:`\le` full. Raises an error if neither is true
+    or if method doesn't match the detected method.
 
     :param rank: The rank of the decomposition, or if rank is a float greater
     than 0 and less than 1, the rank is reduced further using the QR decomposition
@@ -24,15 +24,27 @@ def _select_method(rank, full):
     :type rank: int or float
     :param full: The size of the exact matrix.
     :type full: int
+    :param method: The method to interpret the rank.
+    :type method: str
+    :return: method - The detected method.
+    :rtype: str
     """
     percent = (type(rank) is float) and (0 < rank) and (rank <= 1)
     fixed = (type(rank) is int) and (1 <= rank) and (rank <= full)
     if not (percent or fixed):
-        message = """rank must be a float 0.0 < rank <= 1.0 or
+        message = """rank must be a float 0.0 <=rank <= 1.0 or
             an int 1 <= rank <= q. q equals the number of landmarks
             or the number of data points if there are no landmarks."""
         raise ValueError(message)
-    if rank == 1:  # true if rank is 1.0 or 1
+    elif percent and not (method == 'percent' or method == 'auto'):
+        message = f"""The argument method={method} does not match the rank={rank}.
+                      The detected method from the rank is 'percent'."""
+        raise ValueError(message)
+    elif fixed and not (method == 'fixed' or method == 'auto'):
+        message = f"""The argument method={method} does not match the rank={rank}.
+                      The detected method from the rank is 'fixed'."""
+        raise ValueError(message)
+    elif rank == 1:  # true if rank is 1.0 or 1
         if percent:
             message = """rank is 1.0, which is ambiguous. Because
                 rank is a float, it is interpreted as the percentage of
@@ -76,15 +88,14 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     :rtype: array-like, array-like
     """
 
-    if method == 'auto':
-        full = A.shape[0]
-        method = _select_method(rank, full)
+    full = A.shape[0]
+    method = _select_method(rank, full, method)
     s, v = eigh(A)
     if method == 'percent':
         # automatically choose rank to capture some percent of the eigenvalues
         target = arraysum(s) * rank
         rank = searchsorted(cumsum(s[::-1]), target)
-    p = min(count_nonzero(s > 0), rank)
+    p = min(count_nonzero(s > 0), rank)  # stability
     s_ = s[-p:]
     v_ = v[:, -p:]
     return s_, v_

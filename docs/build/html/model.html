@@ -224,10 +224,10 @@ Defaults to the type Matern52.</p></li>
 equal to the number of training points, does not compute or use inducing points.
 Defaults to 5000.</p></li>
 <li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the approximate covariance matrix.
-If rank is an int, an <span class="math notranslate nohighlight">\(n \times rank\)</span> matrix
+If rank is an int, an <span class="math notranslate nohighlight">\(n \times\)</span> rank matrix
 <span class="math notranslate nohighlight">\(L\)</span> is computed such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, the exact
 <span class="math notranslate nohighlight">\(n \times n\)</span> covariance matrix.
-If rank is a float greater than 0.0 and less than or equal to 1.0, the rank/size
+If rank is a float 0.0 <span class="math notranslate nohighlight">\(\le\)</span> rank <span class="math notranslate nohighlight">\(\le\)</span> 1.0, the rank/size
 of <span class="math notranslate nohighlight">\(L\)</span> is selected such that the included eigenvalues of the covariance
 between landmark points, or data points if not using landmark points, account
 for the specified percentage of the total eigenvalues. Defaults to 0.999.</p></li>
@@ -275,7 +275,7 @@ where <span class="math notranslate nohighlight">\(d\)</span> is the dimensional
 <dd class="field-even"><ul class="simple">
 <li><p><strong>cov_func_curry</strong> – The generator of the Gaussian process covariance function.</p></li>
 <li><p><strong>n_landmarks</strong> – The number of landmark points.</p></li>
-<li><p><strong>rank</strong> – Th rank of approximate covariance matrix or percentage of
+<li><p><strong>rank</strong> – The rank of approximate covariance matrix or percentage of
 eigenvalues included in approximate covariance matrix.</p></li>
 <li><p><strong>method</strong> – The method to interpret the rank as a fixed number of eigenvectors
 or a percentage of eigenvalues.</p></li>

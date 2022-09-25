@@ -30,10 +30,7 @@ class CrowdingEstimator:
         equal to the number of training points, does not compute or use inducing points.
         Defaults to 5000.
     :type n_landmarks: int
-    :param rank: The rank of the approximate covariance matrix. If using landmark points
-        and rank is greater than n_landmarks, the actual rank is n_landmarks. If not using
-        landmarks and rank is greater than the number of data points, the actual rank is
-        the number of data points.
+    :param rank: The rank of the approximate covariance matrix.
         If rank is an int, an :math:`n \times` rank matrix
         :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
         :math:`n \times n` covariance matrix.
