@@ -13,8 +13,10 @@ DEFAULT_METHOD = 'auto'
 
 def _select_method(rank, full):
     R"""
-    Checks if rank is a float 0 < rank <= 1.0 or an int 1 <= rank <= full.
-    Returns True in the first case. Raises an error otherwise.
+    Checks if rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0 or an int
+    1 0.0 :math:`\le` rank :math:`\le` 1.0 full. Returns True in the first case.
+    Raises an error otherwise.
+
     :param rank: The rank of the decomposition, or if rank is a float greater
     than 0 and less than 1, the rank is reduced further using the QR decomposition
     such that the eigenvalues of the included eigenvectors account for the
@@ -58,10 +60,10 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
 
     :param A: A square matrix.
     :type A: array-like
-    :param rank: The rank of the decomposition, or if rank is a float greater
-    than 0 and less than 1, the rank is reduced further using the QR decomposition
-    such that the eigenvalues of the included eigenvectors account for the
-    specified percentage of the total eigenvalues. Defaults to 0.999.
+    :param rank: The rank of the decomposition, or if rank is a float
+        0.0 :math:`\le` rank :math:`\le` 1.0, the rank is reduced further using the QR
+        decomposition such that the eigenvalues of the included eigenvectors account for
+        the specified percentage of the total eigenvalues. Defaults to 0.999.
     :type rank: int or float
     :param method: Explicitly specifies whether rank is to be interpreted as a
         fixed number of eigenvectors or a percent of eigenvalues to include
@@ -178,10 +180,10 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK,
     :type cov_func: function
     :param xu: The landmark points.
     :type xu: array-like
-    :param rank: The rank of the decomposition, or if rank is a float greater
-        than 0 and less than 1, the rank is reduced further using the QR decomposition
-        such that the eigenvalues of the included eigenvectors account for the
-        specified percentage of the total eigenvalues. Defaults to 0.999.
+    :param rank: The rank of the decomposition, or if rank is a float
+        0.0 :math:`\le` rank :math:`\le` 1.0, the rank is reduced further using
+        the QR decomposition such that the eigenvalues of the included eigenvectors
+        account for the specified percentage of the total eigenvalues. Defaults to 0.999.
     :type rank: int or float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
@@ -221,7 +223,7 @@ def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK,
     :param rank: The rank of the covariance matrix. If rank is equal to
         the number of datapoints, the covariance matrix is exact and full rank. If rank
         is equal to the number of landmark points, the standard Nystrom approximation is
-        used. If rank is a float greater than 0 and less than 1, the rank is reduced
+        used. If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank is reduced
         further using the QR decomposition such that the eigenvalues of the included
         eigenvectors account for the specified percentage of the total eigenvalues.
         Defaults to 0.999.

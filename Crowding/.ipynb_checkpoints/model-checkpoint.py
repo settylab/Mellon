@@ -30,11 +30,14 @@ class CrowdingEstimator:
         equal to the number of training points, does not compute or use inducing points.
         Defaults to 5000.
     :type n_landmarks: int
-    :param rank: The rank of the approximate covariance matrix.
-        If rank is an int, an :math:`n \times rank` matrix
+    :param rank: The rank of the approximate covariance matrix. If using landmark points
+        and rank is greater than n_landmarks, the actual rank is n_landmarks. If not using
+        landmarks and rank is greater than the number of data points, the actual rank is
+        the number of data points.
+        If rank is an int, an :math:`n \times` rank matrix
         :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
         :math:`n \times n` covariance matrix.
-        If rank is a float greater than 0.0 and less than or equal to 1.0, the rank/size
+        If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
         of :math:`L` is selected such that the included eigenvalues of the covariance
         between landmark points, or data points if not using landmark points, account
         for the specified percentage of the total eigenvalues. Defaults to 0.999.
@@ -92,7 +95,7 @@ class CrowdingEstimator:
     :type initial_value: array-like or None
     :ivar cov_func_curry: The generator of the Gaussian process covariance function.
     :ivar n_landmarks: The number of landmark points.
-    :ivar rank: Th rank of approximate covariance matrix or percentage of
+    :ivar rank: The rank of approximate covariance matrix or percentage of
         eigenvalues included in approximate covariance matrix.
     :ivar method: The method to interpret the rank as a fixed number of eigenvectors
         or a percentage of eigenvalues.
