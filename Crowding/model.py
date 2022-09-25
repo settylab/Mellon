@@ -18,8 +18,8 @@ class CrowdingEstimator:
     A non-parametric density estimator.
     CrowdingEstimator performs Bayesian inference with a Gaussian process prior and Nearest
     Neighbor likelihood. All intermediate computations are cached as instance variables, so
-    the user can access intermediate results and change some parameters without recomputing
-    every step. See usage.
+    the user can view intermediate results and save computation time by passing precomputed
+    values as arguments to a new model.
 
     :param cov_func_curry: The generator of the Gaussian process covariance function.
         Must be a curry that takes one length scale argument and returns a
@@ -30,9 +30,8 @@ class CrowdingEstimator:
         equal to the number of training points, does not compute or use inducing points.
         Defaults to 5000.
     :type n_landmarks: int
-    :param rank: The rank of the approximate covariance matrix. Rank must be smaller than
-        n_landmarks, or smaller than the number of data points :math:`n` if not using
-        landmark points. If rank is an int, an :math:`n \times rank` matrix
+    :param rank: The rank of the approximate covariance matrix.
+        If rank is an int, an :math:`n \times rank` matrix
         :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
         :math:`n \times n` covariance matrix.
         If rank is a float greater than 0.0 and less than or equal to 1.0, the rank/size
@@ -55,7 +54,7 @@ class CrowdingEstimator:
         than the number of landmark points. Ignored in other cases. Must be greater
         than 0. Defaults to 1e-6.
     :type sigma2: float
-    :param n_iter: The umber of optimization iterations. Defaults to 100.
+    :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: int
     :param init_learn_rate: The initial learn rate. Defaults to 1.
     :type init_learn_rate: float
@@ -86,7 +85,7 @@ class CrowdingEstimator:
     :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
         If None, automatically computes L. Defaults to None.
     :type L: array-like or None
-    :param initial_value: The initial guess for Maximum A Posteriori optimization. If None, finds
+    :param initial_value: The initial guess for optimization. If None, finds
         :math:`z` that minimizes :math:`||Lz + mu - mle|| + ||z||`, where :math:`mle =
         \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`,
         where :math:`d` is the dimensionality of the data. Defaults to None.
@@ -101,6 +100,8 @@ class CrowdingEstimator:
         for numerical stability.
     :ivar sigma2: White noise variance for the case the rank is reduced further
         than the number of landmark points.
+    :ivar n_iter: The number of optimization iterations.
+    :ivar init_learn_rate: The initial learn rate.
     :ivar landmarks: The points to quantize the data.
     :ivar nn_distances: The nearest neighbor distances for each data point.
     :ivar d: The local dimensionality of the data.
@@ -111,7 +112,7 @@ class CrowdingEstimator:
     :ivar initial_value: Initial guess for Maximum A Posteriori optimization.
     :ivar x: The training data.
     :ivar transform: A function :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')`.
-    :ivar loss_func: The ayesian loss function.
+    :ivar loss_func: The Bayesian loss function.
     :ivar pre_transformation: The optimized parameters :math:`z \sim \text{Normal}(0, I)` before
         transformation to :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
@@ -307,9 +308,12 @@ class CrowdingEstimator:
         and initial_value attributes and set pre_transformation to the optimized
         parameters.
 
-        :param loss_func: The Bayesian loss function.
+        :param loss_func: The Bayesian loss function. If None, uses the stored
+            loss_func attribute.
         :type loss_func: function
-        :param initial_value: The initial guess for optimization.
+        :param initial_value: The initial guess for optimization. If None, uses
+            the stored initial_value attribute.
+        :type initial_value: array-like
         :return: pre_transformation - The optimized parameters.
         :rtype: array-like
         """

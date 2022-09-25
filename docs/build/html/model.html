@@ -211,8 +211,8 @@
 <p>A non-parametric density estimator.
 CrowdingEstimator performs Bayesian inference with a Gaussian process prior and Nearest
 Neighbor likelihood. All intermediate computations are cached as instance variables, so
-the user can access intermediate results and change some parameters without recomputing
-every step. See usage.</p>
+the user can view intermediate results and save computation time by passing precomputed
+values as arguments to a new model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -223,9 +223,8 @@ Defaults to the type Matern52.</p></li>
 <li><p><strong>n_landmarks</strong> (<em>int</em>) – The number of landmark points. If less than 1 or greater than or
 equal to the number of training points, does not compute or use inducing points.
 Defaults to 5000.</p></li>
-<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the approximate covariance matrix. Rank must be smaller than
-n_landmarks, or smaller than the number of data points <span class="math notranslate nohighlight">\(n\)</span> if not using
-landmark points. If rank is an int, an <span class="math notranslate nohighlight">\(n \times rank\)</span> matrix
+<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the approximate covariance matrix.
+If rank is an int, an <span class="math notranslate nohighlight">\(n \times rank\)</span> matrix
 <span class="math notranslate nohighlight">\(L\)</span> is computed such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, the exact
 <span class="math notranslate nohighlight">\(n \times n\)</span> covariance matrix.
 If rank is a float greater than 0.0 and less than or equal to 1.0, the rank/size
@@ -244,7 +243,7 @@ matrix for numerical stabilitity. Defaults to 1e-6.</p></li>
 <li><p><strong>sigma2</strong> (<em>float</em>) – The white noise variance for the case the rank is reduced further
 than the number of landmark points. Ignored in other cases. Must be greater
 than 0. Defaults to 1e-6.</p></li>
-<li><p><strong>n_iter</strong> (<em>int</em>) – The umber of optimization iterations. Defaults to 100.</p></li>
+<li><p><strong>n_iter</strong> (<em>int</em>) – The number of optimization iterations. Defaults to 100.</p></li>
 <li><p><strong>init_learn_rate</strong> (<em>float</em>) – The initial learn rate. Defaults to 1.</p></li>
 <li><p><strong>landmarks</strong> (<em>array-like</em><em> or </em><em>None</em>) – The points to quantize the data for the approximate covariance. If None,
 landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
@@ -266,7 +265,7 @@ k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float.
 function cov_func = cov_func_curry(ls). Defaults to None.</p></li>
 <li><p><strong>L</strong> (<em>array-like</em><em> or </em><em>None</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.
 If None, automatically computes L. Defaults to None.</p></li>
-<li><p><strong>initial_value</strong> (<em>array-like</em><em> or </em><em>None</em>) – The initial guess for Maximum A Posteriori optimization. If None, finds
+<li><p><strong>initial_value</strong> (<em>array-like</em><em> or </em><em>None</em>) – The initial guess for optimization. If None, finds
 <span class="math notranslate nohighlight">\(z\)</span> that minimizes <span class="math notranslate nohighlight">\(||Lz + mu - mle|| + ||z||\)</span>, where <span class="math notranslate nohighlight">\(mle =
 \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span>,
 where <span class="math notranslate nohighlight">\(d\)</span> is the dimensionality of the data. Defaults to None.</p></li>
@@ -284,6 +283,8 @@ or a percentage of eigenvalues.</p></li>
 for numerical stability.</p></li>
 <li><p><strong>sigma2</strong> – White noise variance for the case the rank is reduced further
 than the number of landmark points.</p></li>
+<li><p><strong>n_iter</strong> – The number of optimization iterations.</p></li>
+<li><p><strong>init_learn_rate</strong> – The initial learn rate.</p></li>
 <li><p><strong>landmarks</strong> – The points to quantize the data.</p></li>
 <li><p><strong>nn_distances</strong> – The nearest neighbor distances for each data point.</p></li>
 <li><p><strong>d</strong> – The local dimensionality of the data.</p></li>
@@ -294,7 +295,7 @@ than the number of landmark points.</p></li>
 <li><p><strong>initial_value</strong> – Initial guess for Maximum A Posteriori optimization.</p></li>
 <li><p><strong>x</strong> – The training data.</p></li>
 <li><p><strong>transform</strong> – A function <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')\)</span>.</p></li>
-<li><p><strong>loss_func</strong> – The ayesian loss function.</p></li>
+<li><p><strong>loss_func</strong> – The Bayesian loss function.</p></li>
 <li><p><strong>pre_transformation</strong> – The optimized parameters <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I)\)</span> before
 transformation to <span class="math notranslate nohighlight">\(\text{Normal}(mu, K')\)</span>, where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix
 and <span class="math notranslate nohighlight">\(K'\)</span> is the approximate covariance matrix.</p></li>
@@ -412,8 +413,10 @@ parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>loss_func</strong> (<em>function</em>) – The Bayesian loss function.</p></li>
-<li><p><strong>initial_value</strong> – The initial guess for optimization.</p></li>
+<li><p><strong>loss_func</strong> (<em>function</em>) – The Bayesian loss function. If None, uses the stored
+loss_func attribute.</p></li>
+<li><p><strong>initial_value</strong> (<em>array-like</em>) – The initial guess for optimization. If None, uses
+the stored initial_value attribute.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
