@@ -20,7 +20,7 @@ def _select_method(rank, full):
     such that the eigenvalues of the included eigenvectors account for the
     specified percentage of the total eigenvalues. Defaults to 0.999.
     :type rank: int or float
-    :param full: size of the exact matrix.
+    :param full: The size of the exact matrix.
     :type full: int
     """
     percent = (type(rank) is float) and (0 < rank) and (rank <= 1)
@@ -90,15 +90,16 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
 
 def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
     R"""
-    Compute :math:`L` such that :math:`L L^T = K`, where :math:`K` is the full rank covariance matrix.
+    Compute :math:`L` such that :math:`L L^\top = K`, where :math:`K`
+    is the full rank covariance matrix.
 
-    :param x: Points.
+    :param x: The training instances.
     :type x: array-like
-    :param cov_func: Covariance function.
+    :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return: :math:`L` - A matrix such that :math:`L L^T = K`.
+    :return: :math:`L` - A matrix such that :math:`L L^\top = K`.
     :rtype: array-like
     """
     W = stabilize(cov_func(x, x), jitter)
@@ -109,13 +110,13 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
 def _full_decomposition_low_rank(x, cov_func, rank=DEFAULT_RANK,
                                  method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
     R"""
-    Compute a low rank :math:`L` such that :math:`L L^T ~= K`, where :math:`K` is the
+    Compute a low rank :math:`L` such that :math:`L L^\top ~= K`, where :math:`K` is the
     full rank covariance matrix. The rank is less than or equal to the number of
     landmark points.
 
-    :param x: Points.
+    :param x: The training instances.
     :type x: array-like
-    :param cov_func: Covariance function.
+    :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
     :param rank: The rank of the decomposition, or if rank is a float greater
         than 0 and less than 1, the eigenvalues of the included eigenvectors
@@ -131,7 +132,7 @@ def _full_decomposition_low_rank(x, cov_func, rank=DEFAULT_RANK,
         an int and interprets rank as a percent of eigenvalues if it is a float.
         Defaults to 'auto'.
     :type method: str
-    :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
+    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
     W = cov_func(x, x)
@@ -142,19 +143,19 @@ def _full_decomposition_low_rank(x, cov_func, rank=DEFAULT_RANK,
 
 def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     R"""
-    Compute a low rank :math:`L` such that :math:`L L^T \approx K`, where :math:`K`
+    Compute a low rank :math:`L` such that :math:`L L^\top \approx K`, where :math:`K`
     is the full rank covariance matrix. The rank is equal to the number of
     landmark points.
 
-    :param x: Points.
+    :param x: The training instances.
     :type x: array-like
-    :param cov_func: Covariance function.
+    :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
-    :param xu: Landmark points.
+    :param xu: The landmark points.
     :type xu: array-like
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
+    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
     W = stabilize(cov_func(xu, xu), jitter)
@@ -167,15 +168,15 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
 def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK,
                        method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
     R"""
-    Compute a low rank :math:`L` such that :math:`L L^T ~= K`, where :math:`K` is the
+    Compute a low rank :math:`L` such that :math:`L L^\top ~= K`, where :math:`K` is the
     full rank covariance matrix. The rank is less than or equal to the number of
     landmark points.
 
-    :param x: Points.
+    :param x: The training instances.
     :type x: array-like
-    :param cov_func: Covariance function.
+    :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
-    :param xu: Landmark points.
+    :param xu: The landmark points.
     :type xu: array-like
     :param rank: The rank of the decomposition, or if rank is a float greater
         than 0 and less than 1, the rank is reduced further using the QR decomposition
@@ -191,7 +192,7 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK,
         an int and interprets rank as a percent of eigenvalues if it is a float.
         Defaults to 'auto'.
     :type method: str
-    :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
+    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
     W = stabilize(cov_func(xu, xu), jitter)
@@ -207,14 +208,14 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK,
 def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK,
               method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
     R"""
-    Compute an :math:`L` such that :math:`L L^T \approx K`, where
+    Compute an :math:`L` such that :math:`L L^\top \approx K`, where
     :math:`K` is the covariance matrix.
 
-    :param x: Points.
+    :param x: The training instances.
     :type x: array-like
-    :param cov_func: Covariance function.
+    :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
-    :param landmarks: Points to summarize the data. If None, computes a full rank decompostion.
+    :param landmarks: The landmark points. If None, computes a full rank decompostion.
         Defaults to None.
     :type landmarks: array-like
     :param rank: The rank of the covariance matrix. If rank is equal to
@@ -234,7 +235,7 @@ def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK,
     :type method: str
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return: :math:`L` - A matrix such that :math:`L L^T \approx K`.
+    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
     if landmarks is None:

@@ -214,7 +214,7 @@
 <li><p><strong>pre_transformation</strong> (<em>array-like</em>) – <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I)\)</span></p></li>
 <li><p><strong>transform</strong> (<em>function</em>) – A function
 <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')\)</span>,
-where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^T\)</span>,
+where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^\top\)</span>,
 where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
 </ul>
 </dd>
@@ -232,10 +232,10 @@ likelihood(transform(<span class="math notranslate nohighlight">\(z\)</span>))).
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nn_distances</strong> (<em>array-like</em>) – Observed nearest neighbor distances.</p></li>
-<li><p><strong>d</strong> (<em>int</em>) – The dimensionality of the data</p></li>
-<li><p><strong>transform</strong> (<em>function</em>) – maps <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')\)</span>,
-where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^T\)</span>,
+<li><p><strong>nn_distances</strong> (<em>array-like</em>) – The observed nearest neighbor distances.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – The dimensionality of the data.</p></li>
+<li><p><strong>transform</strong> (<em>function</em>) – Maps <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')\)</span>,
+where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^\top\)</span>,
 where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
 <li><p><strong>k</strong> (<em>int</em>) – dimension of transform input</p></li>
 </ul>
@@ -254,13 +254,13 @@ where <span class="math notranslate nohighlight">\(K\)</span> is the covariance 
 <span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_transform" title="Permalink to this definition">#</a></dt>
 <dd><p>Computes a function transform that maps <span class="math notranslate nohighlight">\(z \sim
 \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')\)</span>,
-where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^T\)</span>,
+where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^\top\)</span>,
 where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mu</strong> (<em>float</em>) – Gaussian process mean.</p></li>
-<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the
+<li><p><strong>mu</strong> (<em>float</em>) – The Gaussian process mean.</p></li>
+<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the
 covariance matrix.</p></li>
 </ul>
 </dd>
@@ -278,14 +278,14 @@ adam and exponentially decaying learning rate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>loss_func</strong> (<em>function</em>) – Loss function to minimize.</p></li>
-<li><p><strong>initial_value</strong> (<em>array-like</em>) – Initial guess.</p></li>
-<li><p><strong>n_iter</strong> (<em>integer</em>) – Number of optimization iterations. Defaults to 100.</p></li>
-<li><p><strong>init_learn_rate</strong> (<em>float</em>) – Initial learn rate. Defaults to 1.</p></li>
+<li><p><strong>loss_func</strong> (<em>function</em>) – The loss function to minimize.</p></li>
+<li><p><strong>initial_value</strong> (<em>array-like</em>) – The initial guess.</p></li>
+<li><p><strong>n_iter</strong> (<em>integer</em>) – The number of optimization iterations. Defaults to 100.</p></li>
+<li><p><strong>init_learn_rate</strong> (<em>float</em>) – The initial learn rate. Defaults to 1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>result, loss, opt_state - Results of the optimization, history of
+<dd class="field-even"><p>pre_transformation, loss, opt_state - The optimized parameters, history of
 loss values, and final state of the optimizer.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>

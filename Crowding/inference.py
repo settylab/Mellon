@@ -12,7 +12,7 @@ def _normal(k):
     R"""
     Builds the log pdf of :math:`z \sim \text{Normal}(0, I)`.
 
-    :param k: Size of :math:`z`.
+    :param k: The size of :math:`z`.
     :type k: int
     :return: The log pdf of :math:`z`.
     :rtype: function
@@ -26,11 +26,12 @@ def _multivariate(mu, L):
     R"""
     Builds the transformation function from :math:`z \sim \text{Normal}(0, I)
     \rightarrow f \sim \text{Normal}(mu, K')`, where :math:`I` is the identity matrix
-    and :math:`K \approx K' = L L^T`.
+    and :math:`K \approx K' = L L^\top`.
 
-    :param mu: mean
+    :param mu: The Gaussian process mean.
     :type mu: float
-    :param L: A matrix such that :math:`L L^T \approx K`.
+    :param L: A matrix such that :math:`L L^\top
+    \approx K`.
     :type L: array-like
     :return: A function :math:`z \rightarrow f`.
     :rtype: function
@@ -45,9 +46,9 @@ def _nearest_neighbors(r, d):
     Returns the likelihood function of log densities :math:`p` given the observed
     distances :math:`L(p | r) = P(p | r)`, for number of dimensions :math:`d`.
 
-    :param r: Observed nearest neighbor distances.
+    :param r: The observed nearest neighbor distances.
     :type r: array-like
-    :param d: Number of dimensions.
+    :param d: The local dimensionality.
     :type d: int
     :return: The likelihood function.
     :rtype: function
@@ -69,12 +70,12 @@ def compute_transform(mu, L):
     R"""
     Computes a function transform that maps :math:`z \sim
     \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
-    where :math:`I` is the identity matrix and :math:`K \approx K' = L L^T`,
+    where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
     where :math:`K` is the covariance matrix.
 
-    :param mu: Gaussian process mean.
+    :param mu: The Gaussian process mean.
     :type mu: float
-    :param L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
         covariance matrix.
     :type L: array-like
     :return: transform - The transform function :math:`z \rightarrow f`.
@@ -87,12 +88,12 @@ def compute_loss_func(nn_distances, d, transform, k):
     Computes the Bayesian loss function -(prior(:math:`z`) +
     likelihood(transform(:math:`z`))). 
 
-    :param nn_distances: Observed nearest neighbor distances.
+    :param nn_distances: The observed nearest neighbor distances.
     :type nn_distances: array-like
-    :param d: The dimensionality of the data
+    :param d: The dimensionality of the data.
     :type d: int
-    :param transform: maps :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
-        where :math:`I` is the identity matrix and :math:`K \approx K' = L L^T`,
+    :param transform: Maps :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
+        where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
         where :math:`K` is the covariance matrix.
     :type transform: function
     :param k: dimension of transform input
@@ -113,15 +114,15 @@ def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
     Minimizes function with a starting guess of initial_value using
     adam and exponentially decaying learning rate.
 
-    :param loss_func: Loss function to minimize.
+    :param loss_func: The loss function to minimize.
     :type loss_func: function
-    :param initial_value: Initial guess.
+    :param initial_value: The initial guess.
     :type initial_value: array-like
-    :param n_iter: Number of optimization iterations. Defaults to 100.
+    :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: integer
-    :param init_learn_rate: Initial learn rate. Defaults to 1.
+    :param init_learn_rate: The initial learn rate. Defaults to 1.
     :type init_learn_rate: float
-    :return: result, loss, opt_state - Results of the optimization, history of
+    :return: pre_transformation, loss, opt_state - The optimized parameters, history of
         loss values, and final state of the optimizer.
     :rtype: array-like, array-like, Object
     """
@@ -138,7 +139,7 @@ def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
         return value, opt_state
 
     losses = list()
-    for i in range(100):
+    for i in range(n_iter):
         value, opt_state = step(i, opt_state)
         losses.append(value)
     pre_transformation = get_params(opt_state)
@@ -155,7 +156,7 @@ def compute_log_density_x(pre_transformation, transform):
     :type pre_transformation: array-like
     :param transform: A function
         :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
-        where :math:`I` is the identity matrix and :math:`K \approx K' = L L^T`,
+        where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
         where :math:`K` is the covariance matrix.
     :type transform: function
     :return: log_density_x - The log density at the training points.

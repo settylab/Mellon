@@ -27,11 +27,11 @@ def mle(nn_distances, d):
     dimensions :math:`d`: :math:`mle = \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) -
     d \cdot \log(nn\text{_}distances)`
 
-    :param nn_distances: Observed nearest neighbor distances.
+    :param nn_distances: The observed nearest neighbor distances.
     :type nn_distances: array-like
-    :param d: Number of dimensions.
+    :param d: The local dimensionality of the data.
     :type d: int
-    :return: :math:`mle` - Maximum likelihood estimate at each point.
+    :return: :math:`mle` - The maximum likelihood estimate at each point.
     :rtype: array-like
     """
     return gammaln(d/2 + 1) - (d/2)*log(pi) - d*log(nn_distances)

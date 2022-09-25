@@ -21,9 +21,8 @@ Basic Usage:
    y = np.random.rand(100, 10)  # arbitrary test data
 
    model = CrowdingEstimator()
-   model = model.fit(x)
-   train_log_density = model.predict(x)
-   test_log_density = model.predict(y)
+   log_density_x = model.fit_predict(x)
+   log_density_y = model.predict(y)
 
 Parameters:
 ======================
@@ -83,105 +82,36 @@ Any parameters can be changed as desired.
                              landmarks=landmarks, nn_distances=nn_distances, d=d, \
                              mu=mu, ls=ls, cov_func=cov_func, L=L, \
                              initial_value=initial_value)
-   model = model.fit(x)
-   train_log_density = model.predict(x)
-   test_log_density = model.predict(y)
+   log_density_x = model.fit_predict(x)
+   log_density_y = model.predict(y)
 
-Updating Parameters:
-======================
+Stages API:
+==================
 
-After fitting the model, you may want to change some parameters without recomputing
-every step. For example, suppose you want to increase mu by 5.
-
-.. code-block::
-
-   model = model.fit(x)
-
-   model.recursive_setattr('mu', model.mu + 5)
-   model = model.fit(x)
-
-recursive_setattr will update the attribute to the given value and set any attributes
-of model that depend on the updated attribute to None. This means that when the model
-is fit again, only the attributes that depend on the updated attribute will be recomputed.
-
-However, recursive_setattr will not set attributes to None if their value was set
-explicitly, either as a parameter or through assignment. For example, initial_value
-depends on mu, but the call recursive_setattr('mu', model.mu + 5) will not affect
-initial_value in any of the following:
+Instead of fitting the model with the fit function, you may split training into
+three stages: prepare_inference, run_inference, and process_inference.
 
 .. code-block::
 
-   initial_value = np.random.normal(0, 1, size=100)  # arbitrary initial_value
-   model = Crowding(initial_value=initial_value)
-   model = model.fit(x)
+   model = CrowdingEstimator()
+   model.prepare_inference()
+   model.run_inference()
+   log_density_x = model.process_inference()
 
-   model.recursive_setattr('mu', model.mu + 5)
-   model = model.fit(x)
+This allows you to make intermediate changes. For example, if you would
+like to use your own optimizer, use the I/O of the three stages and
+replace run_inference with your own optimizer:
 
 .. code-block::
 
-   model = Crowding()
-   model = model.fit(x)
+   def optimize(loss_func, initial_value):
+       ...
+       return optimal_parameters
 
-   initial_value = np.random.normal(0, 1, size=100)  # arbitrary initial_value
-   model.recursive_setattr('initial_value', initial_value)  # Will update initial_value
-   model = model.fit(x)
-
-   model.recursive_setattr('mu', model.mu + 5)  # Will update mu, but not initial_value
-   model = model.fit(x)
-
-Attribute Dependencies:
-------------------------
-
-When an attribute is explicitly updated, here are the attributes that will be reset if they were implicitly computed:
-
-x : [landmarks, nn_distances, d, mu, ls, cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-cov_func_curry : [cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-n_landmarks : [landmarks, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-rank : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-method : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-jitter : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-sigma2 : [log_density_func]
-
-n_iter : [optimize_result, pre_transformation, log_density_x, log_density_func]
-
-init_learn_rate : [optimize_result, pre_transformation, log_density_x, log_density_func]
-
-inference_func : [optimize_result, pre_transformation, log_density_x, log_density_func]
-
-landmarks : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-nn_distances : [mu, ls, cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-d : [mu, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-mu : [initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-ls : [cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-cov_func : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-L : [initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-initial_value : [optimize_result, pre_transformation, log_density_x, log_density_func]
-
-transform : [loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]
-
-loss_func : [optimize_result, pre_transformation, log_density_x, log_density_func]
-
-optimize_result : []
-
-pre_transformation : [log_density_x, log_density_func]
-
-log_density_x : [log_density_func]
-
-log_density_func : []
+   model = CrowdingEstimator()
+   loss_func, initial_value = model.prepare_inference()
+   pre_transformation = optimize(loss_func, initial_value)
+   log_density_x = model.process_inference(pre_transformation=pre_transformation)
 
 Covariance Functions:
 ======================
@@ -191,7 +121,7 @@ This section shows different ways to use a supplied covariance function
 or define your own.
 
 The cov_func_curry argument supports a one argument function or class type
-that returns a function k(x, y) -> float. In this case, the length scale
+that returns a function k(x, y) :math:`\rightarrow` float. In this case, the length scale
 of the covariance function will be set to ls, which is computed automatically
 if not passed as an argument.
 
@@ -202,7 +132,7 @@ if not passed as an argument.
    cov_func = Matern52
 
 .. code-block::
-   :caption: Write a function of one variable that returns a function k(x, y) -> float
+   :caption: Write a function of one variable that returns a function k(x, y) :math:`\rightarrow` float
 
    from Crowding import distance    # distance computes the distance between each point in x
                                     # and each point in y.
@@ -219,8 +149,8 @@ if not passed as an argument.
 
    from Crowding import distance
    from Crowding import Covariance  # The Covariance base class __call__ method calls k.
-                                    # It also supports adding, multiplying, and exponentiating
-                                    # with the +, *, and ** operators.
+                                    # It also supports adding, multiplying, and taking the covariance
+                                    # to a power with the +, *, and ** operators.
 
    class Matern52(Covariance):
        def __init__(self, ls=1.0):
@@ -233,7 +163,7 @@ if not passed as an argument.
            return similarity
    cov_func = Matern52
 
-Alternatively, the cov_func argument supports a two argument function k(x, y) -> float.
+Alternatively, the cov_func argument supports a two argument function k(x, y) :math:`\rightarrow` float.
 
 .. code-block::
    :caption: Instantiate a predefined covariance function.

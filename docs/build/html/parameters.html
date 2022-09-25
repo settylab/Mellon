@@ -212,11 +212,11 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cov_func_curry</strong> (<em>function</em><em> or </em><em>type</em>) – The covariance function generator.</p></li>
-<li><p><strong>ls</strong> (<em>float</em>) – Length scale of the covariance function.</p></li>
+<li><p><strong>ls</strong> (<em>float</em>) – The length scale of the covariance function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>cov_func - Gaussian process covariance function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float.</p>
+<dd class="field-even"><p>cov_func - The Gaussian process covariance function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>function</p>
@@ -230,7 +230,7 @@
 <dd><p>Computes the dimensionality of the data equal to the size of axis 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – Training instances.</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -244,10 +244,10 @@ such that the initial value <span class="math notranslate nohighlight">\(z\)</sp
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nn_distances</strong> (<em>array-like</em>) – Observed nearest neighbor distances.</p></li>
-<li><p><strong>d</strong> (<em>int</em>) – Dimensions.</p></li>
-<li><p><strong>mu</strong> (<em>int</em>) – Gaussian Process mean.</p></li>
-<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
+<li><p><strong>nn_distances</strong> (<em>array-like</em>) – The observed nearest neighbor distances.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – The local dimensionality of the data.</p></li>
+<li><p><strong>mu</strong> (<em>int</em>) – The Gaussian Process mean.</p></li>
+<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -267,8 +267,8 @@ than 1 or greater than or equal to the number of training instances, returns Non
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array-like</em>) – Training instances.</p></li>
-<li><p><strong>n_landmarks</strong> (<em>int</em>) – Number of landmark points.</p></li>
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p></li>
+<li><p><strong>n_landmarks</strong> (<em>int</em>) – The number of landmark points.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -286,7 +286,7 @@ than 1 or greater than or equal to the number of training instances, returns Non
 <dd><p>Computes ls equal to the geometric mean of the nearest neighbor distances times a constant.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>nn_distances</strong> (<em>array-like</em>) – Observed nearest neighbor distances.</p>
+<dd class="field-odd"><p><strong>nn_distances</strong> (<em>array-like</em>) – The observed nearest neighbor distances.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>ls - The geometric mean of the nearest neighbor distances times a constant.</p>
@@ -305,7 +305,7 @@ where <span class="math notranslate nohighlight">\(mle =
 \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>nn_distances</strong> (<em>array-like</em>) – Observed nearest neighbor distances.</p>
+<dd class="field-odd"><p><strong>nn_distances</strong> (<em>array-like</em>) – The observed nearest neighbor distances.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>mu - The 1th percentile of <span class="math notranslate nohighlight">\(mle(nn\text{_}distances, d) - 10\)</span>.</p>
@@ -322,10 +322,10 @@ where <span class="math notranslate nohighlight">\(mle =
 <dd><p>Computes the distance to the nearest neighbor for each training instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – Training instances.</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>nn_distances - Nearest neighbor distances.</p>
+<dd class="field-even"><p>nn_distances - The observed nearest neighbor distances.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>array-like</p>

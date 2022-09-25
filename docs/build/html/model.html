@@ -206,7 +206,7 @@
 <span id="model"></span><h1>model<a class="headerlink" href="#module-Crowding.model" title="Permalink to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.model.</span></span><span class="sig-name descname"><span class="pre">CrowdingEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'Crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inference_func=&lt;function</span> <span class="pre">run_inference&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.model.</span></span><span class="sig-name descname"><span class="pre">CrowdingEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'Crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A non-parametric density estimator.
 CrowdingEstimator performs Bayesian inference with a Gaussian process prior and Nearest
@@ -216,20 +216,22 @@ every step. See usage.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cov_func_curry</strong> (<em>function</em><em> or </em><em>type</em>) – Generator of the Gaussian process covariance function.
+<li><p><strong>cov_func_curry</strong> (<em>function</em><em> or </em><em>type</em>) – The generator of the Gaussian process covariance function.
 Must be a curry that takes one length scale argument and returns a
 covariance function of the form k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float.
 Defaults to the type Matern52.</p></li>
-<li><p><strong>n_landmarks</strong> (<em>int</em>) – Number of landmark points. If less than 1 or greater than or
+<li><p><strong>n_landmarks</strong> (<em>int</em>) – The number of landmark points. If less than 1 or greater than or
 equal to the number of training points, does not compute or use inducing points.
 Defaults to 5000.</p></li>
-<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the covariance matrix. If rank is equal to
-the number of datapoints, the covariance matrix is exact and full rank. If rank
-is equal to the number of landmark points, the standard Nystrom approximation is
-used. If rank is a float greater than 0 and less than 1, the rank is reduced
-further using the QR decomposition such that the eigenvalues of the included
-eigenvectors account for the specified percentage of the total eigenvalues.
-Defaults to 0.999.</p></li>
+<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the approximate covariance matrix. Rank must be smaller than
+n_landmarks, or smaller than the number of data points <span class="math notranslate nohighlight">\(n\)</span> if not using
+landmark points. If rank is an int, an <span class="math notranslate nohighlight">\(n \times rank\)</span> matrix
+<span class="math notranslate nohighlight">\(L\)</span> is computed such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, the exact
+<span class="math notranslate nohighlight">\(n \times n\)</span> covariance matrix.
+If rank is a float greater than 0.0 and less than or equal to 1.0, the rank/size
+of <span class="math notranslate nohighlight">\(L\)</span> is selected such that the included eigenvalues of the covariance
+between landmark points, or data points if not using landmark points, account
+for the specified percentage of the total eigenvalues. Defaults to 0.999.</p></li>
 <li><p><strong>method</strong> (<em>str</em>) – Explicitly specifies whether rank is to be interpreted as a
 fixed number of eigenvectors or a percent of eigenvalues to include
 in the low rank approximation. Supports ‘fixed’, ‘percent’, or ‘auto’.
@@ -239,39 +241,32 @@ Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
 Defaults to ‘auto’.</p></li>
 <li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal of the covariance
 matrix for numerical stabilitity. Defaults to 1e-6.</p></li>
-<li><p><strong>sigma2</strong> (<em>float</em>) – White noise variance for the case the rank is reduced further
+<li><p><strong>sigma2</strong> (<em>float</em>) – The white noise variance for the case the rank is reduced further
 than the number of landmark points. Ignored in other cases. Must be greater
 than 0. Defaults to 1e-6.</p></li>
-<li><p><strong>n_iter</strong> (<em>int</em>) – Number of optimization iterations. Defaults to 100.</p></li>
-<li><p><strong>init_learn_rate</strong> (<em>float</em>) – Initial learn rate. Defaults to 1.</p></li>
-<li><p><strong>inference_func</strong> (<em>function</em>) – Function that performs Bayesian inference. The signature
-must be (loss_func, initial_value, n_iter=n_iter,
-init_learn_rate=init_learn_rate) <span class="math notranslate nohighlight">\(\rightarrow\)</span>
-(pre_transformation, optimize_results). pre_transformation is the vector of
-parameters of the optimization at the final step and optimize_results
-contains any other results to save. Defaults to run_inference from the
-inference module.</p></li>
-<li><p><strong>landmarks</strong> (<em>array-like</em><em> or </em><em>None</em>) – Points to quantize the data for the approximate covariance. If None,
+<li><p><strong>n_iter</strong> (<em>int</em>) – The umber of optimization iterations. Defaults to 100.</p></li>
+<li><p><strong>init_learn_rate</strong> (<em>float</em>) – The initial learn rate. Defaults to 1.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em><em> or </em><em>None</em>) – The points to quantize the data for the approximate covariance. If None,
 landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
 is greater than or equal to the number of training points. Defaults to None.</p></li>
-<li><p><strong>nn_distances</strong> (<em>array-like</em><em> or </em><em>None</em>) – Precomputed nearest neighbor distances at each
+<li><p><strong>nn_distances</strong> (<em>array-like</em><em> or </em><em>None</em>) – The nearest neighbor distances at each
 data point. If None, computes the nearest neighbor distances automatically, with
 a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
 Defaults to None.</p></li>
-<li><p><strong>d</strong> (<em>int</em><em> or </em><em>None</em>) – Local dimensionality of the data. If None, sets d to the size of axis 1
+<li><p><strong>d</strong> (<em>int</em><em> or </em><em>None</em>) – The local dimensionality of the data. If None, sets d to the size of axis 1
 of the training data points. Defaults to None.</p></li>
-<li><p><strong>mu</strong> (<em>float</em><em> or </em><em>None</em>) – Mean of the Gaussian process. If None, sets mu to the 1th percentile
+<li><p><strong>mu</strong> (<em>float</em><em> or </em><em>None</em>) – The mean of the Gaussian process. If None, sets mu to the 1th percentile
 of <span class="math notranslate nohighlight">\(mle(nn\text{_}distances, d) - 10\)</span>, where <span class="math notranslate nohighlight">\(mle = \log(\text{gamma}(d/2 + 1))
 - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span>. Defaults to None.</p></li>
-<li><p><strong>ls</strong> (<em>float</em><em> or </em><em>None</em>) – Length scale of the Gaussian process covariance function. If None,
+<li><p><strong>ls</strong> (<em>float</em><em> or </em><em>None</em>) – The length scale of the Gaussian process covariance function. If None,
 sets ls to the geometric mean of the nearest neighbor distances times a constant.
 If cov_func is supplied explictly, ls has no effect. Defaults to None.</p></li>
-<li><p><strong>cov_func</strong> (<em>function</em><em> or </em><em>None</em>) – Gaussian process covariance function of the form
+<li><p><strong>cov_func</strong> (<em>function</em><em> or </em><em>None</em>) – The Gaussian process covariance function of the form
 k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float. If None, automatically generates the covariance
 function cov_func = cov_func_curry(ls). Defaults to None.</p></li>
-<li><p><strong>L</strong> (<em>array-like</em><em> or </em><em>None</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.
+<li><p><strong>L</strong> (<em>array-like</em><em> or </em><em>None</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.
 If None, automatically computes L. Defaults to None.</p></li>
-<li><p><strong>initial_value</strong> (<em>array-like</em><em> or </em><em>None</em>) – Initial guess for Maximum A Posteriori optimization. If None, finds
+<li><p><strong>initial_value</strong> (<em>array-like</em><em> or </em><em>None</em>) – The initial guess for Maximum A Posteriori optimization. If None, finds
 <span class="math notranslate nohighlight">\(z\)</span> that minimizes <span class="math notranslate nohighlight">\(||Lz + mu - mle|| + ||z||\)</span>, where <span class="math notranslate nohighlight">\(mle =
 \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span>,
 where <span class="math notranslate nohighlight">\(d\)</span> is the dimensionality of the data. Defaults to None.</p></li>
@@ -279,44 +274,48 @@ where <span class="math notranslate nohighlight">\(d\)</span> is the dimensional
 </dd>
 <dt class="field-even">Variables<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>cov_func_curry</strong> – Generator of the Gaussian process covariance function.</p></li>
-<li><p><strong>n_landmarks</strong> – Number of landmark points.</p></li>
-<li><p><strong>rank</strong> – Rank of approximate covariance matrix or percentage of
+<li><p><strong>cov_func_curry</strong> – The generator of the Gaussian process covariance function.</p></li>
+<li><p><strong>n_landmarks</strong> – The number of landmark points.</p></li>
+<li><p><strong>rank</strong> – Th rank of approximate covariance matrix or percentage of
 eigenvalues included in approximate covariance matrix.</p></li>
-<li><p><strong>method</strong> – Method to interpret the rank as a fixed number of eigenvectors
+<li><p><strong>method</strong> – The method to interpret the rank as a fixed number of eigenvectors
 or a percentage of eigenvalues.</p></li>
 <li><p><strong>jitter</strong> – A small amount added to the diagonal of the covariance matrix
 for numerical stability.</p></li>
 <li><p><strong>sigma2</strong> – White noise variance for the case the rank is reduced further
 than the number of landmark points.</p></li>
-<li><p><strong>landmarks</strong> – Points to quantize the data.</p></li>
-<li><p><strong>nn_distances</strong> – Nearest neighbor distances for each data point.</p></li>
-<li><p><strong>d</strong> – Local dimensionality of the data.</p></li>
-<li><p><strong>mu</strong> – Gaussian process mean.</p></li>
-<li><p><strong>ls</strong> – Gaussian process covariance function length scale.</p></li>
-<li><p><strong>cov_func</strong> – Gaussian process covariance function.</p></li>
-<li><p><strong>L</strong> – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
+<li><p><strong>landmarks</strong> – The points to quantize the data.</p></li>
+<li><p><strong>nn_distances</strong> – The nearest neighbor distances for each data point.</p></li>
+<li><p><strong>d</strong> – The local dimensionality of the data.</p></li>
+<li><p><strong>mu</strong> – The Gaussian process mean.</p></li>
+<li><p><strong>ls</strong> – The Gaussian process covariance function length scale.</p></li>
+<li><p><strong>cov_func</strong> – The Gaussian process covariance function.</p></li>
+<li><p><strong>L</strong> – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
 <li><p><strong>initial_value</strong> – Initial guess for Maximum A Posteriori optimization.</p></li>
 <li><p><strong>x</strong> – The training data.</p></li>
 <li><p><strong>transform</strong> – A function <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')\)</span>.</p></li>
-<li><p><strong>loss_func</strong> – Bayesian loss function.</p></li>
-<li><p><strong>pre_transformation</strong> – <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I)\)</span> before
+<li><p><strong>loss_func</strong> – The ayesian loss function.</p></li>
+<li><p><strong>pre_transformation</strong> – The optimized parameters <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I)\)</span> before
 transformation to <span class="math notranslate nohighlight">\(\text{Normal}(mu, K')\)</span>, where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix
 and <span class="math notranslate nohighlight">\(K'\)</span> is the approximate covariance matrix.</p></li>
 <li><p><strong>optimize_result</strong> – All results from the optimization. By default is a tuple containing
 the last step of the optimization and the Bayesian losses at each step.</p></li>
-<li><p><strong>log_density_x</strong> – Log density at the training points.</p></li>
-<li><p><strong>log_density_func</strong> – Computes the log density at arbitrary prediction points.</p></li>
+<li><p><strong>log_density_x</strong> – The log density at the training points.</p></li>
+<li><p><strong>log_density_func</strong> – A function that computes the log density at arbitrary prediction points.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.fit" title="Permalink to this definition">#</a></dt>
-<dd><p>Perform Bayesian Inference.</p>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.fit" title="Permalink to this definition">#</a></dt>
+<dd><p>Fit the model from end to end.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – Training instances to estimate density function.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p></li>
+<li><p><strong>build_predict</strong> (<em>bool</em>) – Whether or not to build the prediction function.
+Defaults to True.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>self - A fitted instance of this estimator.</p>
@@ -333,7 +332,7 @@ the last step of the optimization and the Bayesian losses at each step.</p></li>
 <dd><p>Perform Bayesian inference and return the log density at training points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – Training instances to estimate density function.</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>log_density_x - The log density at each training point in x.</p>
@@ -349,7 +348,7 @@ is reduced below the number of landmark points, predictions at the original
 training points may differ slightly from fit_predict due to the sigma2 noise.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – New data to predict.</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The new data to predict.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>log_density - The log density at each test point in x.</p>
@@ -361,19 +360,67 @@ training points may differ slightly from fit_predict due to the sigma2 noise.</p
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.recursive_setattr">
-<span class="sig-name descname"><span class="pre">recursive_setattr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.recursive_setattr" title="Permalink to this definition">#</a></dt>
-<dd><p>If value is different from the current value of attribute,
-sets attribute to value and sets any other attributes that depend
-on attribute and were computed implicitly to None. If value is 
-the current value of attribute, has no effect. Equality
-is determined by the ‘is’ keyword.</p>
+<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.prepare_inference">
+<span class="sig-name descname"><span class="pre">prepare_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.prepare_inference" title="Permalink to this definition">#</a></dt>
+<dd><p>Set all attributes in preparation for optimization, but do not
+perform Bayesian inference. It is not necessary to call this 
+function before calling fit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>loss_func, initial_value - The Bayesian loss function and
+initial guess for optimization.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function, array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.process_inference">
+<span class="sig-name descname"><span class="pre">process_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.process_inference" title="Permalink to this definition">#</a></dt>
+<dd><p>Use the optimized parameters to compute the log density at the
+training points. If build_predict, also build the prediction function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>attribute</strong> (<em>string</em>) – The name of the attribute.</p></li>
-<li><p><strong>value</strong> (<em>anything</em>) – The value to set attribute to.</p></li>
+<li><p><strong>pre_transformation</strong> (<em>array-like</em>) – The optimized parameters. If None, uses the stored
+pre_transformation attribute.</p></li>
+<li><p><strong>build_predict</strong> (<em>bool</em>) – Whether or not to build the prediction function.
+Defaults to True.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>log_density_x - The log density</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.run_inference">
+<span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.run_inference" title="Permalink to this definition">#</a></dt>
+<dd><p>Perform Bayesian inference, optimizing the pre_transformation parameters.
+If you would like to run your own inference procedure, use the loss_function
+and initial_value attributes and set pre_transformation to the optimized
+parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>loss_func</strong> (<em>function</em>) – The Bayesian loss function.</p></li>
+<li><p><strong>initial_value</strong> – The initial guess for optimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>pre_transformation - The optimized parameters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
 </dd>
 </dl>
 </dd></dl>

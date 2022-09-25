@@ -207,14 +207,14 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="Crowding.decomposition.compute_L">
 <span class="sig-prename descclassname"><span class="pre">Crowding.decomposition.</span></span><span class="sig-name descname"><span class="pre">compute_L</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.decomposition.compute_L" title="Permalink to this definition">#</a></dt>
-<dd><p>Compute an <span class="math notranslate nohighlight">\(L\)</span> such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>, where
+<dd><p>Compute an <span class="math notranslate nohighlight">\(L\)</span> such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where
 <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array-like</em>) – Points.</p></li>
-<li><p><strong>cov_func</strong> (<em>function</em>) – Covariance function.</p></li>
-<li><p><strong>landmarks</strong> (<em>array-like</em>) – Points to summarize the data. If None, computes a full rank decompostion.
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p></li>
+<li><p><strong>cov_func</strong> (<em>function</em>) – The Gaussian process covariance function.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points. If None, computes a full rank decompostion.
 Defaults to None.</p></li>
 <li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the covariance matrix. If rank is equal to
 the number of datapoints, the covariance matrix is exact and full rank. If rank
@@ -233,7 +233,7 @@ Defaults to ‘auto’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="math notranslate nohighlight">\(L\)</span> - A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>.</p>
+<dd class="field-even"><p><span class="math notranslate nohighlight">\(L\)</span> - A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>array-like</p>

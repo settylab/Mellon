@@ -209,34 +209,24 @@
 <span class="sig-prename descclassname"><span class="pre">Crowding.conditional.</span></span><span class="sig-name descname"><span class="pre">compute_conditional_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_density_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.conditional.compute_conditional_mean" title="Permalink to this definition">#</a></dt>
 <dd><p>Builds the mean function of the Gaussian process, conditioned on the log_density values.
 Returns a function equivalent to the predict function of the model.</p>
-<p>Runs a different routine depending on the rank. Each routine requires the rank, mu, and
-cov_func, but each routine requires different optional arguments.</p>
-<p>If rank is equal to the number of data points, the mean is computed by conditioning on each
-data point. In this case, only x and pre_transformation must be provided.</p>
-<p>If rank is equal to the number of landmark points, the mean is computed
-by conditioning on each inducing point. In this case, only landmarks and pre_transformation
-must be provided.</p>
-<p>Otherwise, the mean is computed by inferring the mean at
-at the landmark points and conditioning on the inferred values. In this case, only x, xu,
-log_density_x, and sigma2 must be provided.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rank</strong> (<em>int</em>) – The rank of the covariance matrix, or the percentage of the eigenvalues
 included in the eigenvectors used to construct L.</p></li>
-<li><p><strong>mu</strong> (<em>float</em>) – Original Gaussian process mean.</p></li>
-<li><p><strong>x</strong> (<em>array-like</em>) – Points.</p></li>
-<li><p><strong>landmarks</strong> (<em>array-like</em>) – Points to quantize the data.</p></li>
-<li><p><strong>pre_transformation</strong> (<em>array-like</em>) – pre-transformation values.</p></li>
-<li><p><strong>log_densities_x</strong> (<em>array-like</em>) – Log density at each point in x.</p></li>
-<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^T \approx K\)</span>,
+<li><p><strong>mu</strong> (<em>float</em>) – The original Gaussian process mean.</p></li>
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points.</p></li>
+<li><p><strong>pre_transformation</strong> (<em>array-like</em>) – The optimized pre-transformation values.</p></li>
+<li><p><strong>log_densities_x</strong> (<em>array-like</em>) – The log density at each point in x.</p></li>
+<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>,
 where K is the covariance matrix.</p></li>
-<li><p><strong>cov_func</strong> (<em>function</em>) – Gaussian process covariance function.</p></li>
-<li><p><strong>sigma2</strong> (<em>float</em>) – White noise variance. Defaults to 1e-6.</p></li>
+<li><p><strong>cov_func</strong> (<em>function</em>) – The Gaussian process covariance function.</p></li>
+<li><p><strong>sigma2</strong> (<em>float</em>) – The white noise variance. Defaults to 1e-6.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>conditional_mean - Conditioned Gaussian process mean function.</p>
+<dd class="field-even"><p>conditional_mean - The conditioned Gaussian process mean function.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>function</p>

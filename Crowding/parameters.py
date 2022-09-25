@@ -13,11 +13,10 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     R"""
     Computes the landmark points as k-means centroids. If n_landmarks is less
     than 1 or greater than or equal to the number of training instances, returns None.
-    
-    :param x: Training instances.
+
+    :param x: The training instances.
     :type x: array-like
-    
-    :param n_landmarks: Number of landmark points.
+    :param n_landmarks: The number of landmark points.
     :type n_landmarks: int
     :return: landmark_points - k-means centroids.
     :rtype: array-like
@@ -32,9 +31,9 @@ def compute_nn_distances(x):
     R"""
     Computes the distance to the nearest neighbor for each training instance.
 
-    :param x: Training instances.
+    :param x: The training instances.
     :type x: array-like
-    :return: nn_distances - Nearest neighbor distances.
+    :return: nn_distances - The observed nearest neighbor distances.
     :rtype: array-like
     """
     if x.shape[1] >= 20:
@@ -49,7 +48,7 @@ def compute_d(x):
     R"""
     Computes the dimensionality of the data equal to the size of axis 1.
 
-    :param x: Training instances.
+    :param x: The training instances.
     :type x: array-like
     """
     return self.x.shape[1]
@@ -61,9 +60,9 @@ def compute_mu(nn_distances, d):
     where :math:`mle =
     \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`
 
-    :param nn_distances: Observed nearest neighbor distances.
+    :param nn_distances: The observed nearest neighbor distances.
     :type nn_distances: array-like
-    :type d: Dimensions.
+    :type d: The local dimensionality of the data.
     :type d: int
     :return: mu - The 1th percentile of :math:`mle(nn\text{_}distances, d) - 10`.
     :rtype: float
@@ -75,7 +74,7 @@ def compute_ls(nn_distances):
     R"""
     Computes ls equal to the geometric mean of the nearest neighbor distances times a constant.
 
-    :param nn_distances: Observed nearest neighbor distances.
+    :param nn_distances: The observed nearest neighbor distances.
     :type nn_distances: array-like
     :return: ls - The geometric mean of the nearest neighbor distances times a constant.
     :rtype: float
@@ -89,9 +88,9 @@ def compute_cov_func(cov_func_curry, ls):
 
     :param cov_func_curry: The covariance function generator.
     :type cov_func_curry: function or type
-    :param ls: Length scale of the covariance function.
+    :param ls: The length scale of the covariance function.
     :type ls: float
-    :return: cov_func - Gaussian process covariance function k(x, y) :math:`\rightarrow` float.
+    :return: cov_func - The Gaussian process covariance function k(x, y) :math:`\rightarrow` float.
     :rtype: function
     """
     return cov_func_curry(ls)
@@ -103,13 +102,13 @@ def compute_initial_value(nn_distances, d, mu, L):
     such that the initial value :math:`z` minimizes
     :math:`||Lz + mu - mle(nn\text{_}distances, d)|| + ||z||`.
 
-    :param nn_distances: Observed nearest neighbor distances.
+    :param nn_distances: The observed nearest neighbor distances.
     :type nn_distances: array-like
-    :param d: Dimensions.
+    :param d: The local dimensionality of the data.
     :type d: int
-    :param mu: Gaussian Process mean.
+    :param mu: The Gaussian Process mean.
     :type mu: int
-    :param L: A matrix such that :math:`L L^T \approx K`, where :math:`K` is the covariance matrix.
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
     :type L: array-like
     :return: initial_value - The argmin :math:`z`.
     :rtype: array-like

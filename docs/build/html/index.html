@@ -221,9 +221,8 @@ x = np.random.rand(100, 10)  # arbitrary training data
 y = np.random.rand(100, 10)  # arbitrary test data
 
 model = CrowdingEstimator()
-model = model.fit(x)
-train_log_density = model.predict(x)
-test_log_density = model.predict(y)
+log_density_x = model.fit_predict(x)
+log_density_y = model.predict(y)
 </pre></div>
 </div>
 </section>
@@ -281,76 +280,34 @@ model = CrowdingEstimator(cov_func_curry=cov_func_curry, n_landmarks=n_landmarks
                           landmarks=landmarks, nn_distances=nn_distances, d=d, \
                           mu=mu, ls=ls, cov_func=cov_func, L=L, \
                           initial_value=initial_value)
-model = model.fit(x)
-train_log_density = model.predict(x)
-test_log_density = model.predict(y)
+log_density_x = model.fit_predict(x)
+log_density_y = model.predict(y)
 </pre></div>
 </div>
 </section>
-<section id="updating-parameters">
-<h1>Updating Parameters:<a class="headerlink" href="#updating-parameters" title="Permalink to this heading">#</a></h1>
-<p>After fitting the model, you may want to change some parameters without recomputing
-every step. For example, suppose you want to increase mu by 5.</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>model = model.fit(x)
-
-model.recursive_setattr(&#39;mu&#39;, model.mu + 5)
-model = model.fit(x)
+<section id="stages-api">
+<h1>Stages API:<a class="headerlink" href="#stages-api" title="Permalink to this heading">#</a></h1>
+<p>Instead of fitting the model with the fit function, you may split training into
+three stages: prepare_inference, run_inference, and process_inference.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>model = CrowdingEstimator()
+model.prepare_inference()
+model.run_inference()
+log_density_x = model.process_inference()
 </pre></div>
 </div>
-<p>recursive_setattr will update the attribute to the given value and set any attributes
-of model that depend on the updated attribute to None. This means that when the model
-is fit again, only the attributes that depend on the updated attribute will be recomputed.</p>
-<p>However, recursive_setattr will not set attributes to None if their value was set
-explicitly, either as a parameter or through assignment. For example, initial_value
-depends on mu, but the call recursive_setattr(‘mu’, model.mu + 5) will not affect
-initial_value in any of the following:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>initial_value = np.random.normal(0, 1, size=100)  # arbitrary initial_value
-model = Crowding(initial_value=initial_value)
-model = model.fit(x)
+<p>This allows you to make intermediate changes. For example, if you would
+like to use your own optimizer, use the I/O of the three stages and
+replace run_inference with your own optimizer:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>def optimize(loss_func, initial_value):
+    ...
+    return optimal_parameters
 
-model.recursive_setattr(&#39;mu&#39;, model.mu + 5)
-model = model.fit(x)
+model = CrowdingEstimator()
+loss_func, initial_value = model.prepare_inference()
+pre_transformation = optimize(loss_func, initial_value)
+log_density_x = model.process_inference(pre_transformation=pre_transformation)
 </pre></div>
 </div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>model = Crowding()
-model = model.fit(x)
-
-initial_value = np.random.normal(0, 1, size=100)  # arbitrary initial_value
-model.recursive_setattr(&#39;initial_value&#39;, initial_value)  # Will update initial_value
-model = model.fit(x)
-
-model.recursive_setattr(&#39;mu&#39;, model.mu + 5)  # Will update mu, but not initial_value
-model = model.fit(x)
-</pre></div>
-</div>
-<section id="attribute-dependencies">
-<h2>Attribute Dependencies:<a class="headerlink" href="#attribute-dependencies" title="Permalink to this heading">#</a></h2>
-<p>When an attribute is explicitly updated, here are the attributes that will be reset if they were implicitly computed:</p>
-<p>x : [landmarks, nn_distances, d, mu, ls, cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>cov_func_curry : [cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>n_landmarks : [landmarks, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>rank : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>method : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>jitter : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>sigma2 : [log_density_func]</p>
-<p>n_iter : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>init_learn_rate : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>inference_func : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>landmarks : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>nn_distances : [mu, ls, cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>d : [mu, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>mu : [initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>ls : [cov_func, L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>cov_func : [L, initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>L : [initial_value, transform, loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>initial_value : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>transform : [loss_func, optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>loss_func : [optimize_result, pre_transformation, log_density_x, log_density_func]</p>
-<p>optimize_result : []</p>
-<p>pre_transformation : [log_density_x, log_density_func]</p>
-<p>log_density_x : [log_density_func]</p>
-<p>log_density_func : []</p>
-</section>
 </section>
 <section id="covariance-functions">
 <h1>Covariance Functions:<a class="headerlink" href="#covariance-functions" title="Permalink to this heading">#</a></h1>
@@ -358,7 +315,7 @@ model = model.fit(x)
 This section shows different ways to use a supplied covariance function
 or define your own.</p>
 <p>The cov_func_curry argument supports a one argument function or class type
-that returns a function k(x, y) -&gt; float. In this case, the length scale
+that returns a function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float. In this case, the length scale
 of the covariance function will be set to ls, which is computed automatically
 if not passed as an argument.</p>
 <div class="literal-block-wrapper docutils container" id="id1">
@@ -369,7 +326,7 @@ cov_func = Matern52
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id2">
-<div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function k(x, y) -&gt; float</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
+<div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance    # distance computes the distance between each point in x
                                  # and each point in y.
 def Matern52(ls=1.0):
@@ -386,8 +343,8 @@ cov_func = Matern52
 <div class="code-block-caption"><span class="caption-text">Inherit from the Covariance base class</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
 from Crowding import Covariance  # The Covariance base class __call__ method calls k.
-                                 # It also supports adding, multiplying, and exponentiating
-                                 # with the +, *, and ** operators.
+                                 # It also supports adding, multiplying, and taking the covariance
+                                 # to a power with the +, *, and ** operators.
 
 class Matern52(Covariance):
     def __init__(self, ls=1.0):
@@ -402,7 +359,7 @@ cov_func = Matern52
 </pre></div>
 </div>
 </div>
-<p>Alternatively, the cov_func argument supports a two argument function k(x, y) -&gt; float.</p>
+<p>Alternatively, the cov_func argument supports a two argument function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float.</p>
 <div class="literal-block-wrapper docutils container" id="id4">
 <div class="code-block-caption"><span class="caption-text">Instantiate a predefined covariance function.</span><a class="headerlink" href="#id4" title="Permalink to this code">#</a></div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import Matern52
@@ -510,5 +467,6 @@ cov_func = Matern52(ls)
     <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/scripts/furo.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>
