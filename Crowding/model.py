@@ -364,8 +364,7 @@ class CrowdingEstimator:
 
     def predict(self, x):
         R"""
-        Predict the log density at each point in x. Note that in the case that the rank
-        is reduced below the number of landmark points, predictions at the original
+        Predict the log density at each point in x. Note that predictions at the original
         training points may differ slightly from fit_predict due to the sigma2 noise.
 
         :param x: The new data to predict.
