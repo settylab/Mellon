@@ -3,7 +3,10 @@ from jax.numpy.linalg import norm
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle
+from .util import mle, DEFAULT_JITTER
+from .decomposition import _check_method, _eigendecomposition, _full_rank, \
+                            _full_decomposition_low_rank, _standard_low_rank, \
+                            _modified_low_rank, DEFAULT_RANK, DEFAULT_METHOD
 
 
 DEFAULT_N_LANDMARKS = 5000
@@ -51,7 +54,7 @@ def compute_d(x):
     :param x: The training instances.
     :type x: array-like
     """
-    return self.x.shape[1]
+    return x.shape[1]
 
 
 def compute_mu(nn_distances, d):
@@ -94,6 +97,57 @@ def compute_cov_func(cov_func_curry, ls):
     :rtype: function
     """
     return cov_func_curry(ls)
+
+
+def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK,
+              method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
+    R"""
+    Compute an :math:`L` such that :math:`L L^\top \approx K`, where
+    :math:`K` is the covariance matrix.
+
+    :param x: The training instances.
+    :type x: array-like
+    :param cov_func: The Gaussian process covariance function.
+    :type cov_func: function
+    :param landmarks: The landmark points. If None, computes a full rank decompostion.
+        Defaults to None.
+    :type landmarks: array-like
+    :param rank: The rank of the covariance matrix. If rank is equal to
+        the number of datapoints, the covariance matrix is exact and full rank. If rank
+        is equal to the number of landmark points, the standard Nystrom approximation is
+        used. If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank is reduced
+        further using the QR decomposition such that the eigenvalues of the included
+        eigenvectors account for the specified percentage of the total eigenvalues.
+        Defaults to 0.999.
+    :type rank: int or float
+    :param method: Explicitly specifies whether rank is to be interpreted as a
+        fixed number of eigenvectors or a percent of eigenvalues to include
+        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
+        If 'auto', interprets rank as a fixed number of eigenvectors if it is
+        an int and interprets rank as a percent of eigenvalues if it is a float.
+        Defaults to 'auto'.
+    :type method: str
+    :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
+    :type jitter: float
+    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
+    :rtype: array-like
+    """
+    if landmarks is None:
+        n = x.shape[0]
+        method = _check_method(rank, n, method)
+
+        if type(rank) is int and rank == n or type(rank) is float and rank == 1.0:
+            return _full_rank(x, cov_func, jitter=jitter)
+        else:
+            return _full_decomposition_low_rank(x, cov_func, rank=rank, method=method, jitter=jitter)
+    else:
+        n_landmarks = landmarks.shape[0]
+        method = _check_method(rank, n_landmarks, method)
+
+        if type(rank) is int and rank == n_landmarks or type(rank) is float and rank == 1.0:
+            return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
+        else:
+            return _modified_low_rank(x, cov_func, landmarks, rank=rank, method=method, jitter=jitter)
 
 
 def compute_initial_value(nn_distances, d, mu, L):

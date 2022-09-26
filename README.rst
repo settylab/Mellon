@@ -94,7 +94,7 @@ three stages: prepare_inference, run_inference, and process_inference.
 .. code-block::
 
    model = CrowdingEstimator()
-   model.prepare_inference()
+   model.prepare_inference(x)
    model.run_inference()
    log_density_x = model.process_inference()
 
@@ -109,7 +109,7 @@ replace run_inference with your own optimizer:
        return optimal_parameters
 
    model = CrowdingEstimator()
-   loss_func, initial_value = model.prepare_inference()
+   loss_func, initial_value = model.prepare_inference(x)
    pre_transformation = optimize(loss_func, initial_value)
    log_density_x = model.process_inference(pre_transformation=pre_transformation)
 

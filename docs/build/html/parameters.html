@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="decomposition" href="decomposition.html" /><link rel="prev" title="cov" href="cov.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="inference" href="inference.html" /><link rel="prev" title="cov" href="cov.html" />
 
     <meta name="generator" content="sphinx-5.1.1, furo 2022.09.15"/>
         <title>parameters - Crowding 1.0.0 documentation</title>
@@ -161,9 +161,7 @@
 <li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decomposition.html">decomposition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -204,6 +202,43 @@
         <article role="main">
           <section id="module-Crowding.parameters">
 <span id="parameters"></span><h1>parameters<a class="headerlink" href="#module-Crowding.parameters" title="Permalink to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="Crowding.parameters.compute_L">
+<span class="sig-prename descclassname"><span class="pre">Crowding.parameters.</span></span><span class="sig-name descname"><span class="pre">compute_L</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.parameters.compute_L" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute an <span class="math notranslate nohighlight">\(L\)</span> such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where
+<span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p></li>
+<li><p><strong>cov_func</strong> (<em>function</em>) – The Gaussian process covariance function.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points. If None, computes a full rank decompostion.
+Defaults to None.</p></li>
+<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the covariance matrix. If rank is equal to
+the number of datapoints, the covariance matrix is exact and full rank. If rank
+is equal to the number of landmark points, the standard Nystrom approximation is
+used. If rank is a float 0.0 <span class="math notranslate nohighlight">\(\le\)</span> rank <span class="math notranslate nohighlight">\(\le\)</span> 1.0, the rank is reduced
+further using the QR decomposition such that the eigenvalues of the included
+eigenvectors account for the specified percentage of the total eigenvalues.
+Defaults to 0.999.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Explicitly specifies whether rank is to be interpreted as a
+fixed number of eigenvectors or a percent of eigenvalues to include
+in the low rank approximation. Supports ‘fixed’, ‘percent’, or ‘auto’.
+If ‘auto’, interprets rank as a fixed number of eigenvectors if it is
+an int and interprets rank as a percent of eigenvalues if it is a float.
+Defaults to ‘auto’.</p></li>
+<li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal. Defaults to 1e-6.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="math notranslate nohighlight">\(L\)</span> - A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="Crowding.parameters.compute_cov_func">
 <span class="sig-prename descclassname"><span class="pre">Crowding.parameters.</span></span><span class="sig-name descname"><span class="pre">compute_cov_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.parameters.compute_cov_func" title="Permalink to this definition">#</a></dt>
@@ -340,12 +375,12 @@ where <span class="math notranslate nohighlight">\(mle =
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="decomposition.html">
+          <a class="next-page" href="inference.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">decomposition</div>
+                <div class="title">inference</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

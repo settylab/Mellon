@@ -38,11 +38,11 @@ def _check_method(rank, full, method):
         raise ValueError(message)
     elif percent and not (method == 'percent' or method == 'auto'):
         message = f"""The argument method={method} does not match the rank={rank}.
-                      The detected method from the rank is 'percent'."""
+            The detected method from the rank is 'percent'."""
         raise ValueError(message)
     elif fixed and not (method == 'fixed' or method == 'auto'):
         message = f"""The argument method={method} does not match the rank={rank}.
-                      The detected method from the rank is 'fixed'."""
+            The detected method from the rank is 'fixed'."""
         raise ValueError(message)
     elif rank == 1:  # true if rank is 1.0 or 1
         if percent:
@@ -59,7 +59,7 @@ def _check_method(rank, full, method):
                 To bypass this warning, explictly set method='fixed'.
                 If this is not the intended behavior, explicitly set
                 method='percent'."""
-        raise warnings.warn(message, UserWarning)
+        warnings.warn(message, UserWarning)
     if percent:
         return 'percent'
     else:
@@ -79,17 +79,12 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     :type rank: int or float
     :param method: Explicitly specifies whether rank is to be interpreted as a
         fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Defaults to 'auto'.
+        in the low rank approximation.
     :type method: str
     :return: :math:`s, v` - The top eigenvalues and eigenvectors.
     :rtype: array-like, array-like
     """
 
-    full = A.shape[0]
-    method = _select_method(rank, full, method)
     s, v = eigh(A)
     if method == 'percent':
         # automatically choose rank to capture some percent of the eigenvalues
@@ -149,7 +144,7 @@ def _full_decomposition_low_rank(x, cov_func, rank=DEFAULT_RANK,
     :rtype: array-like
     """
     W = cov_func(x, x)
-    s, v = _eigendecomposition(W, rank=DEFAULT_RANK, method=method)
+    s, v = _eigendecomposition(W, rank=rank, method=method)
     L = v * sqrt(s)
     return L
 
@@ -216,50 +211,3 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK,
     S, V = _eigendecomposition(T / s @ T.T, rank=rank, method=method)
     L = Q @ V * sqrt(S)
     return L
-
-
-def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK,
-              method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
-    R"""
-    Compute an :math:`L` such that :math:`L L^\top \approx K`, where
-    :math:`K` is the covariance matrix.
-
-    :param x: The training instances.
-    :type x: array-like
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param landmarks: The landmark points. If None, computes a full rank decompostion.
-        Defaults to None.
-    :type landmarks: array-like
-    :param rank: The rank of the covariance matrix. If rank is equal to
-        the number of datapoints, the covariance matrix is exact and full rank. If rank
-        is equal to the number of landmark points, the standard Nystrom approximation is
-        used. If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank is reduced
-        further using the QR decomposition such that the eigenvalues of the included
-        eigenvectors account for the specified percentage of the total eigenvalues.
-        Defaults to 0.999.
-    :type rank: int or float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Defaults to 'auto'.
-    :type method: str
-    :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
-    :type jitter: float
-    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
-    :rtype: array-like
-    """
-    if landmarks is None:
-        n = x.shape[0]
-        if type(rank) is int and rank == n:
-            return _full_rank(x, cov_func, jitter=jitter)
-        else:
-            return _full_decomposition_low_rank(x, cov_func, rank=rank, method=method, jitter=jitter)
-    else:
-        n_landmarks = landmarks.shape[0]
-        if type(rank) is int and rank == n_landmarks:
-            return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
-        else:
-            return _modified_low_rank(x, cov_func, landmarks, rank=rank, method=method, jitter=jitter)

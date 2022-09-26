@@ -161,9 +161,7 @@
 <li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decomposition.html">decomposition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -290,7 +288,7 @@ log_density_y = model.predict(y)
 <p>Instead of fitting the model with the fit function, you may split training into
 three stages: prepare_inference, run_inference, and process_inference.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>model = CrowdingEstimator()
-model.prepare_inference()
+model.prepare_inference(x)
 model.run_inference()
 log_density_x = model.process_inference()
 </pre></div>
@@ -303,7 +301,7 @@ replace run_inference with your own optimizer:</p>
     return optimal_parameters
 
 model = CrowdingEstimator()
-loss_func, initial_value = model.prepare_inference()
+loss_func, initial_value = model.prepare_inference(x)
 pre_transformation = optimize(loss_func, initial_value)
 log_density_x = model.process_inference(pre_transformation=pre_transformation)
 </pre></div>

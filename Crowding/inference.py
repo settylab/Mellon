@@ -1,7 +1,10 @@
-from jax.numpy import log, pi, exp, quantile
+from jax.numpy import log, pi, exp, quantile, stack
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
-from jaxopt import ScipyMinimize
+from jax import value_and_grad
+from jax.example_libraries.optimizers import adam
+from .conditional import _full_conditional_mean, _landmarks_conditional_mean, DEFAULT_SIGMA2
+from .util import DEFAULT_JITTER
 
 
 DEFAULT_N_ITER = 100
@@ -105,7 +108,7 @@ def compute_loss_func(nn_distances, d, transform, k):
     likelihood = _nearest_neighbors(nn_distances, d)
     def loss_func(z):
         return -(prior(z) + likelihood(transform(z)))
-    return loss_func, transform
+    return loss_func
 
 
 def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
@@ -127,11 +130,11 @@ def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
     :rtype: array-like, array-like, Object
     """
     def learn_schedule(i):
-        return jnp.exp(-1e-2 * i) * init_learn_rate
+        return exp(-1e-2 * i) * init_learn_rate
 
     opt_init, opt_update, get_params = adam(learn_schedule)
     opt_state = opt_init(initial_value)
-    val_grad = jax.value_and_grad(loss_func)
+    val_grad = value_and_grad(loss_func)
 
     def step(step, opt_state):
         value, grads = val_grad(get_params(opt_state))
@@ -143,9 +146,9 @@ def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
         value, opt_state = step(i, opt_state)
         losses.append(value)
     pre_transformation = get_params(opt_state)
-    losses = jnp.stack(losses)
+    losses = stack(losses)
 
-    return pre_transformation, (opt_state, losses)
+    return pre_transformation, opt_state, losses
 
 
 def compute_log_density_x(pre_transformation, transform):
@@ -162,3 +165,34 @@ def compute_log_density_x(pre_transformation, transform):
     :return: log_density_x - The log density at the training points.
     """
     return transform(pre_transformation)
+
+
+def compute_conditional_mean(x, landmarks, log_density_x, mu, cov_func,
+                             jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2):
+    R"""
+    Builds the mean function of the Gaussian process, conditioned on the log_density values.
+    Returns a function equivalent to the predict function of the model. 
+
+    :param x: The training instances.
+    :type x: array-like
+    :param landmarks: The landmark points.
+    :type landmarks: array-like
+    :param log_densities_x: The log density at each point in x.
+    :type log_densities_x: array-like
+    :param mu: The original Gaussian process mean.
+    :type mu: float
+    :param cov_func: The Gaussian process covariance function.
+    :type cov_func: function
+    :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
+    :type jitter: float
+    :param sigma2: The white noise variance. Defaults to 1e-6.
+    :type sigma2: float
+    :return: conditional_mean - The conditioned Gaussian process mean function.
+    :rtype: function
+    """
+    if landmarks is None:
+        return _full_conditional_mean(x, log_density_x, mu, cov_func, \
+                                                        jitter=jitter, sigma2=sigma2)
+    else:
+        return _landmarks_conditional_mean(x, landmarks, log_density_x, mu, cov_func, \
+                                                        jitter=jitter, sigma2=sigma2)

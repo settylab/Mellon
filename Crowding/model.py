@@ -1,11 +1,12 @@
 from inspect import signature
-from .conditional import compute_conditional_mean, DEFAULT_SIGMA2
+from .conditional import DEFAULT_SIGMA2
 from .cov import Matern52
-from .decomposition import compute_L, DEFAULT_RANK, DEFAULT_METHOD
+from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
 from .inference import compute_transform, compute_loss_func, run_inference, \
-                       compute_log_density_x, DEFAULT_N_ITER, DEFAULT_INIT_LEARN_RATE
+                       compute_log_density_x, compute_conditional_mean, \
+                       DEFAULT_N_ITER, DEFAULT_INIT_LEARN_RATE
 from .parameters import compute_landmarks, compute_nn_distances, compute_d, compute_mu, \
-                        compute_ls, compute_cov_func, compute_initial_value, \
+                        compute_ls, compute_cov_func, compute_L, compute_initial_value, \
                         DEFAULT_N_LANDMARKS
 from .util import DEFAULT_JITTER
 
@@ -109,15 +110,15 @@ class CrowdingEstimator:
     :ivar ls: The Gaussian process covariance function length scale.
     :ivar cov_func: The Gaussian process covariance function.
     :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-    :ivar initial_value: Initial guess for Maximum A Posteriori optimization.
+    :ivar initial_value: The initial guess for Maximum A Posteriori optimization.
     :ivar x: The training data.
     :ivar transform: A function :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')`.
     :ivar loss_func: The Bayesian loss function.
     :ivar pre_transformation: The optimized parameters :math:`z \sim \text{Normal}(0, I)` before
         transformation to :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
-    :ivar optimize_result: All results from the optimization. By default is a tuple containing
-        the last step of the optimization and the Bayesian losses at each step.
+    :ivar optimize_results: The last step of the optimization.
+    :ivar losses: The history of losses throughout training.
     :ivar log_density_x: The log density at the training points.
     :ivar log_density_func: A function that computes the log density at arbitrary prediction points.
     """
@@ -147,7 +148,8 @@ class CrowdingEstimator:
         self.x = None
         self.transform = None
         self.loss_func = None
-        self.optimize_result = None
+        self.optimize_results = None
+        self.losses = None
         self.pre_transformation = None
         self.losses = None
         self.log_density_x = None
@@ -233,11 +235,11 @@ class CrowdingEstimator:
         initial_value = self.initial_value
         n_iter = self.n_iter
         init_learn_rate = self.init_learn_rate
-        optimize_results, pre_transformation, losses = run_inference(function, initial_value, \
+        pre_transformation, optimize_results, losses = run_inference(function, initial_value, \
                                                               n_iter=n_iter, \
                                                               init_learn_rate=init_learn_rate)
-        self.optimize_results = optimize_results
         self.pre_transformation = pre_transformation
+        self.optimize_results = optimize_results
         self.losses = losses
 
     def _set_log_density_x(self):
@@ -247,19 +249,15 @@ class CrowdingEstimator:
         self.log_density_x = log_density_x
 
     def _set_log_density_func(self):
-        rank = self.rank
         x = self.x
         landmarks = self.landmarks
-        pre_transformation = self.pre_transformation
-        mu = self.mu
-        L = self.L
         log_density_x = self.log_density_x
+        mu = self.mu
         cov_func = self.cov_func
+        jitter = self.jitter
         sigma2 = self.sigma2
-        log_density_func = compute_conditional_mean(rank, mu, cov_func, x=x, landmarks=landmarks, \
-                                                    pre_transformation=pre_transformation, \
-                                                    log_density_x=log_density_x, \
-                                                    L=L, sigma2=sigma2)
+        log_density_func = compute_conditional_mean(x, landmarks, log_density_x, mu, cov_func, \
+                                                    jitter=jitter, sigma2=sigma2)
         self.log_density_func = log_density_func
 
     def _prepare_attribute(self, attribute):
@@ -270,11 +268,11 @@ class CrowdingEstimator:
         :param attribute: The name of the attribute.
         :type attribute: str
         """
-        if self.__dict__[attribute] is not None:
+        if getattr(self, attribute) is not None:
             return
         function_name = '_compute_' + attribute
-        function = CrowdingEstimator.__dict__[function_name]
-        value = function(self)
+        function = getattr(self, function_name)
+        value = function()
         setattr(self, attribute, value)
 
     def prepare_inference(self, x):

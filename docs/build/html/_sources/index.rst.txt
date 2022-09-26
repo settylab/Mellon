@@ -11,9 +11,7 @@
    base_cov
    cov
    parameters
-   decomposition
    inference
-   conditional
 
 .. include:: ../../README.rst
 

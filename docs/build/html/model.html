@@ -161,9 +161,7 @@
 <li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decomposition.html">decomposition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -292,15 +290,15 @@ than the number of landmark points.</p></li>
 <li><p><strong>ls</strong> – The Gaussian process covariance function length scale.</p></li>
 <li><p><strong>cov_func</strong> – The Gaussian process covariance function.</p></li>
 <li><p><strong>L</strong> – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
-<li><p><strong>initial_value</strong> – Initial guess for Maximum A Posteriori optimization.</p></li>
+<li><p><strong>initial_value</strong> – The initial guess for Maximum A Posteriori optimization.</p></li>
 <li><p><strong>x</strong> – The training data.</p></li>
 <li><p><strong>transform</strong> – A function <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')\)</span>.</p></li>
 <li><p><strong>loss_func</strong> – The Bayesian loss function.</p></li>
 <li><p><strong>pre_transformation</strong> – The optimized parameters <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I)\)</span> before
 transformation to <span class="math notranslate nohighlight">\(\text{Normal}(mu, K')\)</span>, where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix
 and <span class="math notranslate nohighlight">\(K'\)</span> is the approximate covariance matrix.</p></li>
-<li><p><strong>optimize_result</strong> – All results from the optimization. By default is a tuple containing
-the last step of the optimization and the Bayesian losses at each step.</p></li>
+<li><p><strong>optimize_results</strong> – The last step of the optimization.</p></li>
+<li><p><strong>losses</strong> – The history of losses throughout training.</p></li>
 <li><p><strong>log_density_x</strong> – The log density at the training points.</p></li>
 <li><p><strong>log_density_func</strong> – A function that computes the log density at arbitrary prediction points.</p></li>
 </ul>

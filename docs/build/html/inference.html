@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="conditional" href="conditional.html" /><link rel="prev" title="decomposition" href="decomposition.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="parameters" href="parameters.html" />
 
     <meta name="generator" content="sphinx-5.1.1, furo 2022.09.15"/>
         <title>inference - Crowding 1.0.0 documentation</title>
@@ -161,9 +161,7 @@
 <li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decomposition.html">decomposition</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">inference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="conditional.html">conditional</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -204,6 +202,32 @@
         <article role="main">
           <section id="module-Crowding.inference">
 <span id="inference"></span><h1>inference<a class="headerlink" href="#module-Crowding.inference" title="Permalink to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="Crowding.inference.compute_conditional_mean">
+<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_conditional_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_density_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_conditional_mean" title="Permalink to this definition">#</a></dt>
+<dd><p>Builds the mean function of the Gaussian process, conditioned on the log_density values.
+Returns a function equivalent to the predict function of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points.</p></li>
+<li><p><strong>log_densities_x</strong> (<em>array-like</em>) – The log density at each point in x.</p></li>
+<li><p><strong>mu</strong> (<em>float</em>) – The original Gaussian process mean.</p></li>
+<li><p><strong>cov_func</strong> (<em>function</em>) – The Gaussian process covariance function.</p></li>
+<li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal for stability. Defaults to 1e-6.</p></li>
+<li><p><strong>sigma2</strong> (<em>float</em>) – The white noise variance. Defaults to 1e-6.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>conditional_mean - The conditioned Gaussian process mean function.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="Crowding.inference.compute_log_density_x">
 <span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_log_density_x</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_log_density_x" title="Permalink to this definition">#</a></dt>
@@ -301,23 +325,15 @@ loss values, and final state of the optimizer.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="conditional.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">conditional</div>
-              </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-            </a>
-          <a class="prev-page" href="decomposition.html">
+          
+          <a class="prev-page" href="parameters.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">decomposition</div>
+                <div class="title">parameters</div>
                 
               </div>
             </a>
