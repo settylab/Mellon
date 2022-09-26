@@ -33,32 +33,32 @@ def _check_method(rank, full, method):
     fixed = (type(rank) is int) and (1 <= rank) and (rank <= full)
     if not (percent or fixed):
         message = """rank must be a float 0.0 <=rank <= 1.0 or
-            an int 1 <= rank <= q. q equals the number of landmarks
-            or the number of data points if there are no landmarks."""
+    an int 1 <= rank <= q. q equals the number of landmarks
+    or the number of data points if there are no landmarks."""
         raise ValueError(message)
     elif percent and not (method == 'percent' or method == 'auto'):
         message = f"""The argument method={method} does not match the rank={rank}.
-            The detected method from the rank is 'percent'."""
+    The detected method from the rank is 'percent'."""
         raise ValueError(message)
     elif fixed and not (method == 'fixed' or method == 'auto'):
         message = f"""The argument method={method} does not match the rank={rank}.
-            The detected method from the rank is 'fixed'."""
+    The detected method from the rank is 'fixed'."""
         raise ValueError(message)
-    elif rank == 1:  # true if rank is 1.0 or 1
+    elif rank == 1 and method == 'auto':
         if percent:
             message = """rank is 1.0, which is ambiguous. Because
-                rank is a float, it is interpreted as the percentage of
-                eigenvalues to include in the low rank approximation.
-                To bypass this warning, explictly set method='percent'.
-                If this is not the intended behavior, explicitly set
-                method='fixed'."""
+    rank is a float, it is interpreted as the percentage of
+    eigenvalues to include in the low rank approximation.
+    To bypass this warning, explictly set method='percent'.
+    If this is not the intended behavior, explicitly set
+    method='percent'."""
         else:
             message = """rank is 1, which is ambiguous. Because
-                rank is an int, it is interpreted as the number of
-                eigenvectors to include in the low rank approximation.
-                To bypass this warning, explictly set method='fixed'.
-                If this is not the intended behavior, explicitly set
-                method='percent'."""
+    rank is an int, it is interpreted as the number of
+    eigenvectors to include in the low rank approximation.
+    To bypass this warning, explictly set method='fixed'.
+    If this is not the intended behavior, explicitly set
+    method='fixed'."""
         warnings.warn(message, UserWarning)
     if percent:
         return 'percent'

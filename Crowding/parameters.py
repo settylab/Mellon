@@ -5,8 +5,8 @@ from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
 from .util import mle, DEFAULT_JITTER
 from .decomposition import _check_method, _eigendecomposition, _full_rank, \
-                            _full_decomposition_low_rank, _standard_low_rank, \
-                            _modified_low_rank, DEFAULT_RANK, DEFAULT_METHOD
+                           _full_decomposition_low_rank, _standard_low_rank, \
+                           _modified_low_rank, DEFAULT_RANK, DEFAULT_METHOD
 
 
 DEFAULT_N_LANDMARKS = 5000

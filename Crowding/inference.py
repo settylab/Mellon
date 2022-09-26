@@ -1,3 +1,4 @@
+from collections import namedtuple
 from jax.numpy import log, pi, exp, quantile, stack
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
@@ -125,8 +126,8 @@ def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
     :type n_iter: integer
     :param init_learn_rate: The initial learn rate. Defaults to 1.
     :type init_learn_rate: float
-    :return: pre_transformation, loss, opt_state - The optimized parameters, history of
-        loss values, and final state of the optimizer.
+    :return: Results - A named tuple containing pre_transformation, opt_state, losses: The optimized
+        parameters, final state of the optimizer, and history of loss values,
     :rtype: array-like, array-like, Object
     """
     def learn_schedule(i):
@@ -148,7 +149,9 @@ def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
     pre_transformation = get_params(opt_state)
     losses = stack(losses)
 
-    return pre_transformation, opt_state, losses
+    Results = namedtuple("Results", "pre_transformation opt_state losses")
+    results = Results(pre_transformation, opt_state, losses)
+    return results
 
 
 def compute_log_density_x(pre_transformation, transform):
@@ -175,7 +178,7 @@ def compute_conditional_mean(x, landmarks, log_density_x, mu, cov_func,
 
     :param x: The training instances.
     :type x: array-like
-    :param landmarks: The landmark points.
+    :param landmarks: The landmark points. Landmarks can be None if not using landmark points.
     :type landmarks: array-like
     :param log_densities_x: The log density at each point in x.
     :type log_densities_x: array-like

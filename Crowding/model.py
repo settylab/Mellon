@@ -51,9 +51,8 @@ class CrowdingEstimator:
     :param jitter: A small amount to add to the diagonal of the covariance
         matrix for numerical stabilitity. Defaults to 1e-6.
     :type jitter: float
-    :param sigma2: The white noise variance for the case the rank is reduced further
-        than the number of landmark points. Ignored in other cases. Must be greater
-        than 0. Defaults to 1e-6.
+    :param sigma2: White noise variance for conditioning the Gaussian process for
+        the predict function. Must be greater than 0 if using landmarks. Defaults to 1e-6.
     :type sigma2: float
     :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: int
@@ -99,8 +98,8 @@ class CrowdingEstimator:
         or a percentage of eigenvalues.
     :ivar jitter: A small amount added to the diagonal of the covariance matrix
         for numerical stability.
-    :ivar sigma2: White noise variance for the case the rank is reduced further
-        than the number of landmark points.
+    :ivar sigma2: White noise variance for conditioning the Gaussian process for
+        the predict function.
     :ivar n_iter: The number of optimization iterations.
     :ivar init_learn_rate: The initial learn rate.
     :ivar landmarks: The points to quantize the data.
@@ -117,7 +116,7 @@ class CrowdingEstimator:
     :ivar pre_transformation: The optimized parameters :math:`z \sim \text{Normal}(0, I)` before
         transformation to :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
-    :ivar optimize_results: The last step of the optimization.
+    :ivar opt_state: The last step of the optimization.
     :ivar losses: The history of losses throughout training.
     :ivar log_density_x: The log density at the training points.
     :ivar log_density_func: A function that computes the log density at arbitrary prediction points.
@@ -148,7 +147,7 @@ class CrowdingEstimator:
         self.x = None
         self.transform = None
         self.loss_func = None
-        self.optimize_results = None
+        self.opt_state = None
         self.losses = None
         self.pre_transformation = None
         self.losses = None
@@ -235,12 +234,11 @@ class CrowdingEstimator:
         initial_value = self.initial_value
         n_iter = self.n_iter
         init_learn_rate = self.init_learn_rate
-        pre_transformation, optimize_results, losses = run_inference(function, initial_value, \
-                                                              n_iter=n_iter, \
-                                                              init_learn_rate=init_learn_rate)
-        self.pre_transformation = pre_transformation
-        self.optimize_results = optimize_results
-        self.losses = losses
+        results = run_inference(function, initial_value, n_iter=n_iter, \
+                                init_learn_rate=init_learn_rate)
+        self.pre_transformation = results.pre_transformation
+        self.opt_state = results.opt_state
+        self.losses = results.losses
 
     def _set_log_density_x(self):
         pre_transformation = self.pre_transformation
