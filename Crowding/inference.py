@@ -48,8 +48,7 @@ def _multivariate(mu, L):
 def _nearest_neighbors(r, d):
     """
     Returns the likelihood function of log densities :math:`p` given the observed
-    distances :math:`L(p | r) = P(p | r)`, for number of dimensions :math:`d`.
-
+    distances :math:`L(p | r) = P(r | p)`, for number of dimensions :math:`d`.
     :param r: The observed nearest neighbor distances.
     :type r: array-like
     :param d: The local dimensionality.
@@ -58,15 +57,12 @@ def _nearest_neighbors(r, d):
     :rtype: function
     """
     constant1 = pi**(d/2) / exp(gammaln(d/2 + 1))
+    V = constant1 * (r**d)
     constant2 = log(d) + (d * log(pi) / 2) - gammaln(d/2 + 1)
-    def volume(r):
-        return constant1 * (r**d)
-    def log_dvolume_dr(r):
-        return constant2 + ((d-1) * log(r))
+    Vdr = constant2 + ((d-1) * log(r))
     def logpdf(log_density):
-        # log-probability-density function for distance r
-        A = exp(log_density) * volume(r)
-        B = log_density + log_dvolume_dr(r)
+        A = exp(log_density) * V
+        B = log_density + Vdr
         return arraysum(B - A)
     return logpdf
 
