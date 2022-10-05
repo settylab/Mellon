@@ -1,4 +1,4 @@
-from jax.numpy import dot, sqrt, ones_like, eye
+from jax.numpy import dot, ones_like, eye
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
@@ -8,8 +8,9 @@ from .util import stabilize, DEFAULT_JITTER
 DEFAULT_SIGMA2 = 1e-6
 
 
-def _full_conditional_mean(x, log_density_x, mu, cov_func,
-                           jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2):
+def _full_conditional_mean(
+    x, log_density_x, mu, cov_func, jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2
+):
     """
     Builds the mean function of the conditioned Gaussian process.
 
@@ -29,16 +30,19 @@ def _full_conditional_mean(x, log_density_x, mu, cov_func,
     :rtype: function
     """
     K = cov_func(x, x)
-    L = cholesky(stabilize(K, jitter=jitter+sigma2))
+    L = cholesky(stabilize(K, jitter=jitter + sigma2))
     weights = solve_triangular(L.T, solve_triangular(L, log_density_x, lower=True))
+
     def mean(Xnew):
         Kus = cov_func(Xnew, x)
         return mu + dot(Kus, weights)
+
     return mean
 
 
-def _landmarks_conditional_mean(x, xu, log_density_x, mu, cov_func,
-                                jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2):
+def _landmarks_conditional_mean(
+    x, xu, log_density_x, mu, cov_func, jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2
+):
     """
     Builds the mean function of the conditioned low rank gp, where rank
     is less than the number of landmark points.
@@ -73,7 +77,9 @@ def _landmarks_conditional_mean(x, xu, log_density_x, mu, cov_func,
     c = solve_triangular(L_B, dot(A, r_l), lower=True)
     z = solve_triangular(L_B.T, c)
     weights = solve_triangular(Luu.T, z)
+
     def mean(Xnew):
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
+
     return mean

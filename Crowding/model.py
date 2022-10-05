@@ -1,14 +1,29 @@
 from .conditional import DEFAULT_SIGMA2
 from .cov import Matern52
 from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
-from .inference import compute_transform, compute_loss_func, run_inference_adam, \
-                       run_inference_lbfgsb , \
-                       compute_log_density_x, compute_conditional_mean, \
-                       DEFAULT_N_ITER, DEFAULT_INIT_LEARN_RATE, DEFAULT_JIT, \
-                       DEFAULT_OPTIMIZER
-from .parameters import compute_landmarks, compute_nn_distances, compute_d, compute_mu, \
-                        compute_ls, compute_cov_func, compute_L, compute_initial_value, \
-                        DEFAULT_N_LANDMARKS
+from .inference import (
+    compute_transform,
+    compute_loss_func,
+    run_inference_adam,
+    run_inference_lbfgsb,
+    compute_log_density_x,
+    compute_conditional_mean,
+    DEFAULT_N_ITER,
+    DEFAULT_INIT_LEARN_RATE,
+    DEFAULT_JIT,
+    DEFAULT_OPTIMIZER,
+)
+from .parameters import (
+    compute_landmarks,
+    compute_nn_distances,
+    compute_d,
+    compute_mu,
+    compute_ls,
+    compute_cov_func,
+    compute_L,
+    compute_initial_value,
+    DEFAULT_N_LANDMARKS,
+)
 from .util import DEFAULT_JITTER
 
 
@@ -127,14 +142,26 @@ class CrowdingEstimator:
     :ivar log_density_x: The log density at the training points.
     :ivar log_density_func: A function that computes the log density at arbitrary prediction points.
     """
-    def __init__(self, cov_func_curry=DEFAULT_COV_FUNC, \
-                 n_landmarks=DEFAULT_N_LANDMARKS, \
-                 rank=DEFAULT_RANK, method=DEFAULT_METHOD, \
-                 jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2, \
-                 n_iter=DEFAULT_N_ITER, init_learn_rate=DEFAULT_INIT_LEARN_RATE, \
-                 landmarks=None, nn_distances=None, d=None, mu=None, \
-                 ls=None, cov_func=None, L=None, initial_value=None,
-                 optimizer=DEFAULT_OPTIMIZER):
+
+    def __init__(
+        self,
+        cov_func_curry=DEFAULT_COV_FUNC,
+        n_landmarks=DEFAULT_N_LANDMARKS,
+        rank=DEFAULT_RANK,
+        method=DEFAULT_METHOD,
+        sigma2=DEFAULT_SIGMA2,
+        n_iter=DEFAULT_N_ITER,
+        init_learn_rate=DEFAULT_INIT_LEARN_RATE,
+        landmarks=None,
+        nn_distances=None,
+        d=None,
+        mu=None,
+        ls=None,
+        cov_func=None,
+        L=None,
+        initial_value=None,
+        optimizer=DEFAULT_OPTIMIZER,
+    ):
         self.cov_func_curry = cov_func_curry
         self.n_landmarks = n_landmarks
         self.rank = rank
@@ -211,7 +238,9 @@ class CrowdingEstimator:
         rank = self.rank
         method = self.method
         jitter = self.jitter
-        L = compute_L(x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter)
+        L = compute_L(
+            x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
+        )
         return L
 
     def _compute_initial_value(self):
@@ -242,7 +271,7 @@ class CrowdingEstimator:
         n_iter = self.n_iter
         init_learn_rate = self.init_learn_rate
         optimizer = self.optimizer
-        if optimizer == 'adam':
+        if optimizer == "adam":
             results = run_inference_adam(
                 function,
                 initial_value,
@@ -252,22 +281,23 @@ class CrowdingEstimator:
             self.pre_transformation = results.pre_transformation
             self.opt_state = results.opt_state
             self.losses = results.losses
-        elif optimizer == 'L-BFGS-B':
+        elif optimizer == "L-BFGS-B":
             results = run_inference_lbfgsb(
                 function,
                 initial_value,
             )
             self.pre_transformation = results.pre_transformation
             self.opt_state = results.opt_state
-            self.losses = [results.loss, ]
+            self.losses = [
+                results.loss,
+            ]
         else:
             raise ValueError(
-                f'Unknown optimizer {optimizer}. You can use .loss_func and '
-                '.initial_value as loss function and initial state for an '
-                'external optimization. Write optimal state to '
-                '.pre_transformation to enable prediction with .predict().'
+                f"Unknown optimizer {optimizer}. You can use .loss_func and "
+                ".initial_value as loss function and initial state for an "
+                "external optimization. Write optimal state to "
+                ".pre_transformation to enable prediction with .predict()."
             )
-
 
     def _set_log_density_x(self):
         pre_transformation = self.pre_transformation
@@ -283,8 +313,9 @@ class CrowdingEstimator:
         cov_func = self.cov_func
         jitter = self.jitter
         sigma2 = self.sigma2
-        log_density_func = compute_conditional_mean(x, landmarks, log_density_x, mu, cov_func, \
-                                                    jitter=jitter, sigma2=sigma2)
+        log_density_func = compute_conditional_mean(
+            x, landmarks, log_density_x, mu, cov_func, jitter=jitter, sigma2=sigma2
+        )
         self.log_density_func = log_density_func
 
     def _prepare_attribute(self, attribute):
@@ -297,7 +328,7 @@ class CrowdingEstimator:
         """
         if getattr(self, attribute) is not None:
             return
-        function_name = '_compute_' + attribute
+        function_name = "_compute_" + attribute
         function = getattr(self, function_name)
         value = function()
         setattr(self, attribute, value)
@@ -305,7 +336,7 @@ class CrowdingEstimator:
     def prepare_inference(self, x):
         R"""
         Set all attributes in preparation for optimization, but do not
-        perform Bayesian inference. It is not necessary to call this 
+        perform Bayesian inference. It is not necessary to call this
         function before calling fit.
 
         :param x: The training instances to estimate density function.
@@ -315,15 +346,15 @@ class CrowdingEstimator:
         :rtype: function, array-like
         """
         self._set_x(x)
-        self._prepare_attribute('nn_distances')
-        self._prepare_attribute('d')
-        self._prepare_attribute('mu')
-        self._prepare_attribute('ls')
-        self._prepare_attribute('cov_func')
-        self._prepare_attribute('L')
-        self._prepare_attribute('initial_value')
-        self._prepare_attribute('transform')
-        self._prepare_attribute('loss_func')
+        self._prepare_attribute("nn_distances")
+        self._prepare_attribute("d")
+        self._prepare_attribute("mu")
+        self._prepare_attribute("ls")
+        self._prepare_attribute("cov_func")
+        self._prepare_attribute("L")
+        self._prepare_attribute("initial_value")
+        self._prepare_attribute("transform")
+        self._prepare_attribute("loss_func")
         return self.loss_func, self.initial_value
 
     def run_inference(self, loss_func=None, initial_value=None):

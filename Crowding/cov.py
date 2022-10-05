@@ -29,7 +29,7 @@ class Matern52(Covariance):
         \cdot e^{-\frac{\sqrt{5}||x-y||}{l}}`
         """
         r = sqrt(5.0) * distance(x, y) / self.ls
-        similarity = (r + square(r)/3 + 1) * exp(-r)
+        similarity = (r + square(r) / 3 + 1) * exp(-r)
         return similarity
 
 

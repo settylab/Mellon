@@ -8,7 +8,7 @@ from .util import stabilize, DEFAULT_JITTER
 
 
 DEFAULT_RANK = 0.999
-DEFAULT_METHOD = 'auto'
+DEFAULT_METHOD = "auto"
 
 
 def _check_method(rank, full, method):
@@ -36,15 +36,15 @@ def _check_method(rank, full, method):
     an int 1 <= rank <= q. q equals the number of landmarks
     or the number of data points if there are no landmarks."""
         raise ValueError(message)
-    elif percent and not (method == 'percent' or method == 'auto'):
+    elif percent and not (method == "percent" or method == "auto"):
         message = f"""The argument method={method} does not match the rank={rank}.
     The detected method from the rank is 'percent'."""
         raise ValueError(message)
-    elif fixed and not (method == 'fixed' or method == 'auto'):
+    elif fixed and not (method == "fixed" or method == "auto"):
         message = f"""The argument method={method} does not match the rank={rank}.
     The detected method from the rank is 'fixed'."""
         raise ValueError(message)
-    elif rank == 1 and method == 'auto':
+    elif rank == 1 and method == "auto":
         if percent:
             message = """rank is 1.0, which is ambiguous. Because
     rank is a float, it is interpreted as the percentage of
@@ -61,9 +61,9 @@ def _check_method(rank, full, method):
     method='fixed'."""
         warnings.warn(message, UserWarning)
     if percent:
-        return 'percent'
+        return "percent"
     else:
-        return 'fixed'
+        return "fixed"
 
 
 def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
@@ -86,7 +86,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     """
 
     s, v = eigh(A)
-    if method == 'percent':
+    if method == "percent":
         # automatically choose rank to capture some percent of the eigenvalues
         target = arraysum(s) * rank
         rank = searchsorted(cumsum(s[::-1]), target)
@@ -115,8 +115,9 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
     return L
 
 
-def _full_decomposition_low_rank(x, cov_func, rank=DEFAULT_RANK,
-                                 method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
+def _full_decomposition_low_rank(
+    x, cov_func, rank=DEFAULT_RANK, method=DEFAULT_METHOD, jitter=DEFAULT_JITTER
+):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^\top ~= K`, where :math:`K` is the
     full rank covariance matrix. The rank is less than or equal to the number of
@@ -173,8 +174,9 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     return L
 
 
-def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK,
-                       method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
+def _modified_low_rank(
+    x, cov_func, xu, rank=DEFAULT_RANK, method=DEFAULT_METHOD, jitter=DEFAULT_JITTER
+):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^\top ~= K`, where :math:`K` is the
     full rank covariance matrix. The rank is less than or equal to the number of
@@ -205,8 +207,8 @@ def _modified_low_rank(x, cov_func, xu, rank=DEFAULT_RANK,
     """
     W = stabilize(cov_func(xu, xu), jitter)
     C = cov_func(x, xu)
-    Q, R = qr(C, mode='reduced')
-    s, v = _eigendecomposition(W, rank=xu.shape[0], method='fixed')
+    Q, R = qr(C, mode="reduced")
+    s, v = _eigendecomposition(W, rank=xu.shape[0], method="fixed")
     T = R @ v
     S, V = _eigendecomposition(T / s @ T.T, rank=rank, method=method)
     L = Q @ V * sqrt(S)

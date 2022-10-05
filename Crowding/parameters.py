@@ -4,9 +4,16 @@ from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
 from .util import mle, DEFAULT_JITTER
-from .decomposition import _check_method, _eigendecomposition, _full_rank, \
-                           _full_decomposition_low_rank, _standard_low_rank, \
-                           _modified_low_rank, DEFAULT_RANK, DEFAULT_METHOD
+from .decomposition import (
+    _check_method,
+    _eigendecomposition,
+    _full_rank,
+    _full_decomposition_low_rank,
+    _standard_low_rank,
+    _modified_low_rank,
+    DEFAULT_RANK,
+    DEFAULT_METHOD,
+)
 
 
 DEFAULT_N_LANDMARKS = 5000
@@ -40,9 +47,9 @@ def compute_nn_distances(x):
     :rtype: array-like
     """
     if x.shape[1] >= 20:
-        tree = BallTree(x, metric='euclidean')
+        tree = BallTree(x, metric="euclidean")
     else:
-        tree = KDTree(x, metric='euclidean')
+        tree = KDTree(x, metric="euclidean")
     nn = tree.query(x, k=2)[0][:, 1]
     return nn
 
@@ -99,8 +106,14 @@ def compute_cov_func(cov_func_curry, ls):
     return cov_func_curry(ls)
 
 
-def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK,
-              method=DEFAULT_METHOD, jitter=DEFAULT_JITTER):
+def compute_L(
+    x,
+    cov_func,
+    landmarks=None,
+    rank=DEFAULT_RANK,
+    method=DEFAULT_METHOD,
+    jitter=DEFAULT_JITTER,
+):
     R"""
     Compute an :math:`L` such that :math:`L L^\top \approx K`, where
     :math:`K` is the covariance matrix.
@@ -139,15 +152,24 @@ def compute_L(x, cov_func, landmarks=None, rank=DEFAULT_RANK,
         if type(rank) is int and rank == n or type(rank) is float and rank == 1.0:
             return _full_rank(x, cov_func, jitter=jitter)
         else:
-            return _full_decomposition_low_rank(x, cov_func, rank=rank, method=method, jitter=jitter)
+            return _full_decomposition_low_rank(
+                x, cov_func, rank=rank, method=method, jitter=jitter
+            )
     else:
         n_landmarks = landmarks.shape[0]
         method = _check_method(rank, n_landmarks, method)
 
-        if type(rank) is int and rank == n_landmarks or type(rank) is float and rank == 1.0:
+        if (
+            type(rank) is int
+            and rank == n_landmarks
+            or type(rank) is float
+            and rank == 1.0
+        ):
             return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
         else:
-            return _modified_low_rank(x, cov_func, landmarks, rank=rank, method=method, jitter=jitter)
+            return _modified_low_rank(
+                x, cov_func, landmarks, rank=rank, method=method, jitter=jitter
+            )
 
 
 def compute_initial_value(nn_distances, d, mu, L):

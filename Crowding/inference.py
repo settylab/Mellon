@@ -5,13 +5,17 @@ from jax.scipy.special import gammaln
 import jax
 from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
-from .conditional import _full_conditional_mean, _landmarks_conditional_mean, DEFAULT_SIGMA2
+from .conditional import (
+    _full_conditional_mean,
+    _landmarks_conditional_mean,
+    DEFAULT_SIGMA2,
+)
 from .util import DEFAULT_JITTER
 
 
 DEFAULT_N_ITER = 100
 DEFAULT_INIT_LEARN_RATE = 1
-DEFAULT_OPTIMIZER = 'L-BFGS-B'
+DEFAULT_OPTIMIZER = "L-BFGS-B"
 DEFAULT_JIT = False
 
 
@@ -24,8 +28,10 @@ def _normal(k):
     :return: The log pdf of :math:`z`.
     :rtype: function
     """
+
     def logpdf(z):
-        return -(1/2)*arraysum(z**2) - (k/2)*log(2*pi)
+        return -(1 / 2) * arraysum(z**2) - (k / 2) * log(2 * pi)
+
     return logpdf
 
 
@@ -43,8 +49,10 @@ def _multivariate(mu, L):
     :return: A function :math:`z \rightarrow f`.
     :rtype: function
     """
+
     def transform(z):
         return L.dot(z) + mu
+
     return transform
 
 
@@ -59,15 +67,18 @@ def _nearest_neighbors(r, d):
     :return: The likelihood function.
     :rtype: function
     """
-    constant1 = pi**(d/2) / exp(gammaln(d/2 + 1))
+    constant1 = pi ** (d / 2) / exp(gammaln(d / 2 + 1))
     V = constant1 * (r**d)
-    constant2 = log(d) + (d * log(pi) / 2) - gammaln(d/2 + 1)
-    Vdr = constant2 + ((d-1) * log(r))
+    constant2 = log(d) + (d * log(pi) / 2) - gammaln(d / 2 + 1)
+    Vdr = constant2 + ((d - 1) * log(r))
+
     def logpdf(log_density):
         A = exp(log_density) * V
         B = log_density + Vdr
         return arraysum(B - A)
+
     return logpdf
+
 
 def compute_transform(mu, L):
     R"""
@@ -89,7 +100,7 @@ def compute_transform(mu, L):
 def compute_loss_func(nn_distances, d, transform, k):
     R"""
     Computes the Bayesian loss function -(prior(:math:`z`) +
-    likelihood(transform(:math:`z`))). 
+    likelihood(transform(:math:`z`))).
 
     :param nn_distances: The observed nearest neighbor distances.
     :type nn_distances: array-like
@@ -106,13 +117,20 @@ def compute_loss_func(nn_distances, d, transform, k):
     """
     prior = _normal(k)
     likelihood = _nearest_neighbors(nn_distances, d)
+
     def loss_func(z):
         return -(prior(z) + likelihood(transform(z)))
+
     return loss_func
 
 
-def run_inference_adam(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
-                  init_learn_rate=DEFAULT_INIT_LEARN_RATE, jit=DEFAULT_JIT):
+def run_inference_adam(
+    loss_func,
+    initial_value,
+    n_iter=DEFAULT_N_ITER,
+    init_learn_rate=DEFAULT_INIT_LEARN_RATE,
+    jit=DEFAULT_JIT,
+):
     R"""
     Minimizes function with a starting guess of initial_value using
     adam and exponentially decaying learning rate.
@@ -129,6 +147,7 @@ def run_inference_adam(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
         parameters, final state of the optimizer, and history of loss values,
     :rtype: array-like, array-like, Object
     """
+
     def learn_schedule(i):
         return exp(-1e-2 * i) * init_learn_rate
 
@@ -153,6 +172,7 @@ def run_inference_adam(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
     Results = namedtuple("Results", "pre_transformation opt_state losses")
     results = Results(pre_transformation, opt_state, losses)
     return results
+
 
 def run_inference_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
     R"""
@@ -187,11 +207,18 @@ def compute_log_density_x(pre_transformation, transform):
     return transform(pre_transformation)
 
 
-def compute_conditional_mean(x, landmarks, log_density_x, mu, cov_func,
-                             jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2):
+def compute_conditional_mean(
+    x,
+    landmarks,
+    log_density_x,
+    mu,
+    cov_func,
+    jitter=DEFAULT_JITTER,
+    sigma2=DEFAULT_SIGMA2,
+):
     R"""
     Builds the mean function of the Gaussian process, conditioned on the log_density values.
-    Returns a function equivalent to the predict function of the model. 
+    Returns a function equivalent to the predict function of the model.
 
     :param x: The training instances.
     :type x: array-like
@@ -211,8 +238,10 @@ def compute_conditional_mean(x, landmarks, log_density_x, mu, cov_func,
     :rtype: function
     """
     if landmarks is None:
-        return _full_conditional_mean(x, log_density_x, mu, cov_func, \
-                                                        jitter=jitter, sigma2=sigma2)
+        return _full_conditional_mean(
+            x, log_density_x, mu, cov_func, jitter=jitter, sigma2=sigma2
+        )
     else:
-        return _landmarks_conditional_mean(x, landmarks, log_density_x, mu, cov_func, \
-                                                        jitter=jitter, sigma2=sigma2)
+        return _landmarks_conditional_mean(
+            x, landmarks, log_density_x, mu, cov_func, jitter=jitter, sigma2=sigma2
+        )

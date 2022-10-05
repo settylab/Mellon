@@ -34,13 +34,13 @@ def mle(nn_distances, d):
     :return: :math:`mle` - The maximum likelihood estimate at each point.
     :rtype: array-like
     """
-    return gammaln(d/2 + 1) - (d/2)*log(pi) - d*log(nn_distances)
+    return gammaln(d / 2 + 1) - (d / 2) * log(pi) - d * log(nn_distances)
 
 
 def distance(x, y):
     """
     Computes the distances between each point in x and y.
-    
+
     :param x: A set of points.
     :type x: array-like
     :param y: A set of points.
