@@ -1,13 +1,14 @@
-from jax.config import config
-config.update("jax_enable_x64", True)
-config.update('jax_platform_name', 'cpu')
+from jax.config import config as jaxconfig
+jaxconfig.update("jax_enable_x64", True)
+jaxconfig.update('jax_platform_name', 'cpu')
 
 from .base_cov import Covariance, Add, Mul, Pow
 from .util import stabilize, mle, distance, DEFAULT_JITTER
 from .conditional import DEFAULT_SIGMA2
 from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
 from .cov import Matern32, Matern52, ExpQuad, Exponential, RatQuad
-from .inference import compute_transform, compute_loss_func, run_inference, \
+from .inference import compute_transform, compute_loss_func, run_inference_adam, \
+                       run_inference_lbfgsb, \
                        compute_log_density_x, compute_conditional_mean, \
                        DEFAULT_N_ITER, DEFAULT_INIT_LEARN_RATE
 from .parameters import compute_landmarks, compute_nn_distances, compute_d, compute_mu, \

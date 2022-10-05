@@ -1,10 +1,11 @@
-from inspect import signature
 from .conditional import DEFAULT_SIGMA2
 from .cov import Matern52
 from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
-from .inference import compute_transform, compute_loss_func, run_inference, \
+from .inference import compute_transform, compute_loss_func, run_inference_adam, \
+                       run_inference_lbfgsb , \
                        compute_log_density_x, compute_conditional_mean, \
-                       DEFAULT_N_ITER, DEFAULT_INIT_LEARN_RATE
+                       DEFAULT_N_ITER, DEFAULT_INIT_LEARN_RATE, DEFAULT_JIT, \
+                       DEFAULT_OPTIMIZER
 from .parameters import compute_landmarks, compute_nn_distances, compute_d, compute_mu, \
                         compute_ls, compute_cov_func, compute_L, compute_initial_value, \
                         DEFAULT_N_LANDMARKS
@@ -90,6 +91,9 @@ class CrowdingEstimator:
         \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`,
         where :math:`d` is the dimensionality of the data. Defaults to None.
     :type initial_value: array-like or None
+    :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
+        for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
+    :type optimizer: str
     :ivar cov_func_curry: The generator of the Gaussian process covariance function.
     :ivar n_landmarks: The number of landmark points.
     :ivar rank: The rank of approximate covariance matrix or percentage of
@@ -110,6 +114,7 @@ class CrowdingEstimator:
     :ivar cov_func: The Gaussian process covariance function.
     :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
     :ivar initial_value: The initial guess for Maximum A Posteriori optimization.
+    :ivar optimizer: OPtimizer for the maximum a posteriori density estimation.
     :ivar x: The training data.
     :ivar transform: A function :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')`.
     :ivar loss_func: The Bayesian loss function.
@@ -117,7 +122,8 @@ class CrowdingEstimator:
         transformation to :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
     :ivar opt_state: The last step of the optimization.
-    :ivar losses: The history of losses throughout training.
+    :ivar losses: The history of losses throughout training of adam or final
+        loss of L-BFGS-B.
     :ivar log_density_x: The log density at the training points.
     :ivar log_density_func: A function that computes the log density at arbitrary prediction points.
     """
@@ -127,7 +133,8 @@ class CrowdingEstimator:
                  jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2, \
                  n_iter=DEFAULT_N_ITER, init_learn_rate=DEFAULT_INIT_LEARN_RATE, \
                  landmarks=None, nn_distances=None, d=None, mu=None, \
-                 ls=None, cov_func=None, L=None, initial_value=None):
+                 ls=None, cov_func=None, L=None, initial_value=None,
+                 optimizer=DEFAULT_OPTIMIZER):
         self.cov_func_curry = cov_func_curry
         self.n_landmarks = n_landmarks
         self.rank = rank
@@ -144,13 +151,13 @@ class CrowdingEstimator:
         self.cov_func = cov_func
         self.L = L
         self.initial_value = initial_value
+        self.optimizer = optimizer
         self.x = None
         self.transform = None
         self.loss_func = None
         self.opt_state = None
         self.losses = None
         self.pre_transformation = None
-        self.losses = None
         self.log_density_x = None
         self.log_density_func = None
 
@@ -234,11 +241,33 @@ class CrowdingEstimator:
         initial_value = self.initial_value
         n_iter = self.n_iter
         init_learn_rate = self.init_learn_rate
-        results = run_inference(function, initial_value, n_iter=n_iter, \
-                                init_learn_rate=init_learn_rate)
-        self.pre_transformation = results.pre_transformation
-        self.opt_state = results.opt_state
-        self.losses = results.losses
+        optimizer = self.optimizer
+        if optimizer == 'adam':
+            results = run_inference_adam(
+                function,
+                initial_value,
+                n_iter=n_iter,
+                init_learn_rate=init_learn_rate,
+            )
+            self.pre_transformation = results.pre_transformation
+            self.opt_state = results.opt_state
+            self.losses = results.losses
+        elif optimizer == 'L-BFGS-B':
+            results = run_inference_lbfgsb(
+                function,
+                initial_value,
+            )
+            self.pre_transformation = results.pre_transformation
+            self.opt_state = results.opt_state
+            self.losses = [results.loss, ]
+        else:
+            raise ValueError(
+                f'Unknown optimizer {optimizer}. You can use .loss_func and '
+                '.initial_value as loss function and initial state for an '
+                'external optimization. Write optimal state to '
+                '.pre_transformation to enable prediction with .predict().'
+            )
+
 
     def _set_log_density_x(self):
         pre_transformation = self.pre_transformation

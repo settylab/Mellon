@@ -2,14 +2,17 @@ from collections import namedtuple
 from jax.numpy import log, pi, exp, quantile, stack
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
-from jax import value_and_grad
+import jax
 from jax.example_libraries.optimizers import adam
+from jaxopt import ScipyMinimize
 from .conditional import _full_conditional_mean, _landmarks_conditional_mean, DEFAULT_SIGMA2
 from .util import DEFAULT_JITTER
 
 
 DEFAULT_N_ITER = 100
 DEFAULT_INIT_LEARN_RATE = 1
+DEFAULT_OPTIMIZER = 'L-BFGS-B'
+DEFAULT_JIT = False
 
 
 def _normal(k):
@@ -108,8 +111,8 @@ def compute_loss_func(nn_distances, d, transform, k):
     return loss_func
 
 
-def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
-                  init_learn_rate=DEFAULT_INIT_LEARN_RATE):
+def run_inference_adam(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
+                  init_learn_rate=DEFAULT_INIT_LEARN_RATE, jit=DEFAULT_JIT):
     R"""
     Minimizes function with a starting guess of initial_value using
     adam and exponentially decaying learning rate.
@@ -131,7 +134,9 @@ def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
 
     opt_init, opt_update, get_params = adam(learn_schedule)
     opt_state = opt_init(initial_value)
-    val_grad = value_and_grad(loss_func)
+    val_grad = jax.value_and_grad(loss_func)
+    if jit:
+        val_grad = jax.jit(val_grad)
 
     def step(step, opt_state):
         value, grads = val_grad(get_params(opt_state))
@@ -147,6 +152,22 @@ def run_inference(loss_func, initial_value, n_iter=DEFAULT_N_ITER, \
 
     Results = namedtuple("Results", "pre_transformation opt_state losses")
     results = Results(pre_transformation, opt_state, losses)
+    return results
+
+def run_inference_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
+    R"""
+    Minimizes function with a starting guess of initial_value.
+    :param loss_func: Loss function to minimize.
+    :type loss_func: function
+    :param initial_value: Initial guess.
+    :type initial_value: array-like
+    :return: Results - A named tuple containing pre_transformation, opt_state, loss: The optimized
+        parameters, final state of the optimizer, and the final loss value,
+    :rtype: array-like, array-like, Object
+    """
+    opt = ScipyMinimize(fun=loss_func, method="L-BFGS-B", jit=jit).run(initial_value)
+    Results = namedtuple("Results", "pre_transformation opt_state loss")
+    results = Results(opt.params, opt.state, opt.state.fun_val)
     return results
 
 
