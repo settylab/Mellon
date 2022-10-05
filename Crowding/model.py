@@ -109,6 +109,9 @@ class CrowdingEstimator:
     :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
         for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
     :type optimizer: str
+    :param jit: Use jax just in time compilation for loss and its gradient
+        during optimization. Defaults to False.
+    :type jit: bool
     :ivar cov_func_curry: The generator of the Gaussian process covariance function.
     :ivar n_landmarks: The number of landmark points.
     :ivar rank: The rank of approximate covariance matrix or percentage of
@@ -149,6 +152,7 @@ class CrowdingEstimator:
         n_landmarks=DEFAULT_N_LANDMARKS,
         rank=DEFAULT_RANK,
         method=DEFAULT_METHOD,
+        jitter=DEFAULT_JITTER,
         sigma2=DEFAULT_SIGMA2,
         n_iter=DEFAULT_N_ITER,
         init_learn_rate=DEFAULT_INIT_LEARN_RATE,
@@ -161,6 +165,7 @@ class CrowdingEstimator:
         L=None,
         initial_value=None,
         optimizer=DEFAULT_OPTIMIZER,
+        jit=DEFAULT_JIT,
     ):
         self.cov_func_curry = cov_func_curry
         self.n_landmarks = n_landmarks
@@ -179,6 +184,7 @@ class CrowdingEstimator:
         self.L = L
         self.initial_value = initial_value
         self.optimizer = optimizer
+        self.jit = jit
         self.x = None
         self.transform = None
         self.loss_func = None
@@ -277,6 +283,7 @@ class CrowdingEstimator:
                 initial_value,
                 n_iter=n_iter,
                 init_learn_rate=init_learn_rate,
+                jit=self.jit,
             )
             self.pre_transformation = results.pre_transformation
             self.opt_state = results.opt_state
@@ -285,6 +292,7 @@ class CrowdingEstimator:
             results = run_inference_lbfgsb(
                 function,
                 initial_value,
+                jit=self.jit,
             )
             self.pre_transformation = results.pre_transformation
             self.opt_state = results.opt_state
@@ -357,7 +365,7 @@ class CrowdingEstimator:
         self._prepare_attribute("loss_func")
         return self.loss_func, self.initial_value
 
-    def run_inference(self, loss_func=None, initial_value=None):
+    def run_inference(self, loss_func=None, initial_value=None, optimizer=None):
         R"""
         Perform Bayesian inference, optimizing the pre_transformation parameters.
         If you would like to run your own inference procedure, use the loss_function
@@ -377,6 +385,8 @@ class CrowdingEstimator:
             self.loss_func = loss_func
         if initial_value is not None:
             self.initial_value = initial_value
+        if optimizer is not None:
+            self.optimizer = optimizer
         self._run_inference()
         return self.pre_transformation
 

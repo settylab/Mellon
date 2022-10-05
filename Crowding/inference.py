@@ -1,5 +1,5 @@
 from collections import namedtuple
-from jax.numpy import log, pi, exp, quantile, stack
+from jax.numpy import log, pi, exp, stack
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
 import jax
@@ -106,7 +106,8 @@ def compute_loss_func(nn_distances, d, transform, k):
     :type nn_distances: array-like
     :param d: The dimensionality of the data.
     :type d: int
-    :param transform: Maps :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
+    :param transform:
+        Maps :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
         where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
         where :math:`K` is the covariance matrix.
     :type transform: function

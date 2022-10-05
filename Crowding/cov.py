@@ -1,5 +1,4 @@
-from jax.numpy import repeat, newaxis, tensordot, sqrt, exp, square, eye, float64
-from jax.numpy import sum as arraysum
+from jax.numpy import sqrt, exp, square
 from .base_cov import Covariance
 from .util import distance
 

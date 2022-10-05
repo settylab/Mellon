@@ -1,12 +1,10 @@
-from jax.numpy import sqrt, ceil, exp, log, geomspace, quantile
-from jax.numpy.linalg import norm
+from jax.numpy import exp, log, quantile
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
 from .util import mle, DEFAULT_JITTER
 from .decomposition import (
     _check_method,
-    _eigendecomposition,
     _full_rank,
     _full_decomposition_low_rank,
     _standard_low_rank,
@@ -184,7 +182,8 @@ def compute_initial_value(nn_distances, d, mu, L):
     :type d: int
     :param mu: The Gaussian Process mean.
     :type mu: int
-    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K`
+        is the covariance matrix.
     :type L: array-like
     :return: initial_value - The argmin :math:`z`.
     :rtype: array-like

@@ -1,6 +1,5 @@
 import warnings
-from jax.numpy import cumsum, searchsorted, count_nonzero, eye, ones_like
-from jax.numpy import dot, sqrt
+from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
