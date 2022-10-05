@@ -372,9 +372,11 @@ class CrowdingEstimator:
         :return: log_density - The log density at each test point in x.
         :rtype: array-like
         """
+        if self.log_density_func is None:
+            self._set_log_density_func()
         return self.log_density_func(x)
 
-    def fit_predict(self, x):
+    def fit_predict(self, x, build_predict=False):
         R"""
         Perform Bayesian inference and return the log density at training points.
 
@@ -382,5 +384,5 @@ class CrowdingEstimator:
         :type x: array-like
         :return: log_density_x - The log density at each training point in x.
         """
-        self.fit(x, build_predict=True)
+        self.fit(x, build_predict=build_predict)
         return self.log_density_x
