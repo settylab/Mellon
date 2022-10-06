@@ -34,6 +34,14 @@ class Add(Covariance):
         self.left = left
         self.right = right
 
+    def __str__(self):
+        return self.__repl__()
+
+    def __repl__(self):
+        return (
+            "(" + self.left.__repl__() + " + " + self.right.__repl__() + ")"
+        )
+
     def __call__(self, X):
         if isinstance(self.right, Covariance):
             return self.left(X) + self.right(X)
@@ -49,6 +57,14 @@ class Mul(Covariance):
         self.left = left
         self.right = right
 
+    def __str__(self):
+        return self.__repl__()
+
+    def __repl__(self):
+        return (
+            "(" + self.left.__repl__() + " * " + self.right.__repl__() + ")"
+        )
+
     def __call__(self, X):
         if isinstance(self.right, Covariance):
             return self.left(X) * self.right(X)
@@ -63,6 +79,14 @@ class Pow(Covariance):
     def __init__(self, left, right):
         self.left = left
         self.right = right
+
+    def __str__(self):
+        return self.__repl__()
+
+    def __repl__(self):
+        return (
+            "(" + self.left.__repl__() + " ** " + self.right.__repl__() + ")"
+        )
 
     def __call__(self, X):
         return self.left(X) ** self.right

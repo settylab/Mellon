@@ -83,7 +83,9 @@ class CrowdingEstimator:
         a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
         Defaults to None.
     :type nn_distances: array-like or None
-    :param d: The local dimensionality of the data. If None, sets d to the size of axis 1
+    :param d: The local dimensionality of the data, i.e., the dimansionality of
+        the embedded manifold.
+        If None, sets d to the size of axis 1
         of the training data points. Defaults to None.
     :type d: int or None
     :param mu: The mean of the Gaussian process. If None, sets mu to the 1th percentile
@@ -132,14 +134,17 @@ class CrowdingEstimator:
     :ivar cov_func: The Gaussian process covariance function.
     :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
     :ivar initial_value: The initial guess for Maximum A Posteriori optimization.
-    :ivar optimizer: OPtimizer for the maximum a posteriori density estimation.
+    :ivar optimizer: Optimizer for the maximum a posteriori density estimation.
     :ivar x: The training data.
-    :ivar transform: A function :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')`.
+    :ivar transform: A function
+        :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')`.
+        Used to map the latent representation to the log-density on the
+        training data.
     :ivar loss_func: The Bayesian loss function.
     :ivar pre_transformation: The optimized parameters :math:`z \sim \text{Normal}(0, I)` before
         transformation to :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
-    :ivar opt_state: The last step of the optimization.
+    :ivar opt_state: The final state the optimizer.
     :ivar losses: The history of losses throughout training of adam or final
         loss of L-BFGS-B.
     :ivar log_density_x: The log density at the training points.
@@ -193,6 +198,43 @@ class CrowdingEstimator:
         self.pre_transformation = None
         self.log_density_x = None
         self.log_density_func = None
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        string = (
+            f"{name}("
+            f"cov_func_curry={self.cov_func_curry}, "
+            f"n_landmarks={self.n_landmarks}, "
+            f"rank={self.rank}, "
+            f"method='{self.method}', "
+            f"jitter={self.jitter}, "
+            f"sigma2={self.sigma2}, "
+            f"n_iter={self.n_iter}, "
+            f"init_learn_rate={self.init_learn_rate}, "
+            f"landmarks={self.landmarks}, "
+            f"nn_distances={self.nn_distances}, "
+            f"d={self.d}, "
+            f"mu={self.mu}, "
+            f"ls={self.mu}, "
+            f"cov_func={self.cov_func}, "
+        )
+        if self.L is None:
+            string += "L=None, "
+        else:
+            string += "L=L, "
+        if self.initial_value is None:
+            string += "initial_value=None, "
+        else:
+            string += "initial_value=initial_value, "
+        string += (
+            f"optimizer='{self.optimizer}', "
+            f"jit={self.jit}"
+            ")"
+        )
+        return string
 
     def _set_x(self, x):
         self.x = x
@@ -423,7 +465,7 @@ class CrowdingEstimator:
         :return: self - A fitted instance of this estimator.
         :rtype: Object
         """
-        if self.x is not None and self.x != x:
+        if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             raise ValueError(message)
 

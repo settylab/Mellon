@@ -178,12 +178,14 @@ def run_inference_adam(
 def run_inference_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
     R"""
     Minimizes function with a starting guess of initial_value.
+
     :param loss_func: Loss function to minimize.
     :type loss_func: function
     :param initial_value: Initial guess.
     :type initial_value: array-like
-    :return: Results - A named tuple containing pre_transformation, opt_state, loss: The optimized
-        parameters, final state of the optimizer, and the final loss value,
+    :return: Results - A named tuple containing pre_transformation, opt_state,
+        loss: The optimized parameters, final state of the optimizer, and the
+        final loss value,
     :rtype: array-like, array-like, Object
     """
     opt = ScipyMinimize(fun=loss_func, method="L-BFGS-B", jit=jit).run(initial_value)
