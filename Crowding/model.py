@@ -215,7 +215,12 @@ class CrowdingEstimator:
             f"n_iter={self.n_iter}, "
             f"init_learn_rate={self.init_learn_rate}, "
             f"landmarks={self.landmarks}, "
-            f"nn_distances={self.nn_distances}, "
+        )
+        if self.nn_distances is None:
+            string += "nn_distances=None, "
+        else:
+            string += "nn_distances=nn_distances, "
+        string += (
             f"d={self.d}, "
             f"mu={self.mu}, "
             f"ls={self.mu}, "
