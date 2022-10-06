@@ -124,7 +124,7 @@ def compute_loss_func(nn_distances, d, transform, k):
     return loss_func
 
 
-def run_inference_adam(
+def minimize_adam(
     loss_func,
     initial_value,
     n_iter=DEFAULT_N_ITER,
@@ -174,7 +174,7 @@ def run_inference_adam(
     return results
 
 
-def run_inference_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
+def minimize_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
     R"""
     Minimizes function with a starting guess of initial_value.
 

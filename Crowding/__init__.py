@@ -10,8 +10,8 @@ from .cov import Matern32, Matern52, ExpQuad, Exponential, RatQuad
 from .inference import (
     compute_transform,
     compute_loss_func,
-    run_inference_adam,
-    run_inference_lbfgsb,
+    minimize_adam,
+    minimize_lbfgsb,
     compute_log_density_x,
     compute_conditional_mean,
     DEFAULT_N_ITER,
@@ -19,6 +19,7 @@ from .inference import (
 )
 from .parameters import (
     compute_landmarks,
+    k_means,
     compute_nn_distances,
     compute_d,
     compute_mu,
@@ -27,5 +28,10 @@ from .parameters import (
     compute_L,
     compute_initial_value,
     DEFAULT_N_LANDMARKS,
+)
+from .derivatives import (
+    gradient,
+    hessian,
+    hessian_log_determinant,
 )
 from .model import CrowdingEstimator, DEFAULT_COV_FUNC

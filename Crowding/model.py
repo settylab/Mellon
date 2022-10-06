@@ -3,8 +3,8 @@ from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
 from .inference import (
     compute_transform,
     compute_loss_func,
-    run_inference_adam,
-    run_inference_lbfgsb,
+    minimize_adam,
+    minimize_lbfgsb,
     compute_log_density_x,
     compute_conditional_mean,
     DEFAULT_N_ITER,
@@ -22,6 +22,11 @@ from .parameters import (
     compute_L,
     compute_initial_value,
     DEFAULT_N_LANDMARKS,
+)
+from .derivatives import (
+    gradient,
+    hessian,
+    hessian_log_determinant,
 )
 from .util import DEFAULT_JITTER
 
@@ -70,8 +75,6 @@ class CrowdingEstimator:
     :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
         for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
     :type optimizer: str
-    :param jit: Use jax just in time compilation for loss and its gradient
-        during optimization. Defaults to False.
     :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: int
     :param init_learn_rate: The initial learn rate. Defaults to 1.
@@ -110,6 +113,8 @@ class CrowdingEstimator:
         \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`,
         where :math:`d` is the dimensionality of the data. Defaults to None.
     :type initial_value: array-like or None
+    :param jit: Use jax just in time compilation for loss and its gradient
+        during optimization. Defaults to False.
     :type jit: bool
     :ivar cov_func_curry: The generator of the Gaussian process covariance function.
     :ivar n_landmarks: The number of landmark points.
@@ -317,7 +322,7 @@ class CrowdingEstimator:
         init_learn_rate = self.init_learn_rate
         optimizer = self.optimizer
         if optimizer == "adam":
-            results = run_inference_adam(
+            results = minimize_adam(
                 function,
                 initial_value,
                 n_iter=n_iter,
@@ -328,7 +333,7 @@ class CrowdingEstimator:
             self.opt_state = results.opt_state
             self.losses = results.losses
         elif optimizer == "L-BFGS-B":
-            results = run_inference_lbfgsb(
+            results = minimize_lbfgsb(
                 function,
                 initial_value,
                 jit=self.jit,
@@ -493,3 +498,48 @@ class CrowdingEstimator:
         """
         self.fit(x, build_predict=build_predict)
         return self.log_density_x
+
+    def gradient(self, x, jit=True):
+        R"""
+        Conputes the gradient of the predict function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: gradiants - The gradient of function at each point in x.
+            gradients.shape == x.shape
+        :rtype: array-like
+        """
+        return gradient(self.predict, x, jit=jit)
+
+    def hessian(self, x, jit=True):
+        R"""
+        Conputes the hessian of the predict function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: hessians - The hessian matrix of function at each point in x.
+            hessians.shape == X.shape + X.shape[1:]
+        :rtype: array-like
+        """
+        return hessian(self.predict, x, jit=jit)
+
+    def hessian_log_determinant(self, x, jit=True):
+        R"""
+        Conputes the logarirhm of the determinat of the predict function for
+        each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: signs, log_determinants - The sign of the determinant
+            at each point x and the logarithm of its absolute value.
+            signs.shape == log_determinants.shape == x.shape[0]
+        :rtype: array-like, array-like
+        """
+        return hessian_log_determinant(self.predict, x, jit=jit)
+
