@@ -124,8 +124,8 @@ class CrowdingEstimator:
         for numerical stability.
     :ivar sigma2: White noise variance for conditioning the Gaussian process for
         the predict function.
-    :ivar n_iter: The number of optimization iterations.
-    :ivar init_learn_rate: The initial learn rate.
+    :ivar n_iter: The number of optimization iterations if adam optimizer is used.
+    :ivar init_learn_rate: The initial learn rate when adam optimizer is used.
     :ivar landmarks: The points to quantize the data.
     :ivar nn_distances: The nearest neighbor distances for each data point.
     :ivar d: The local dimensionality of the data.
