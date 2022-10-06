@@ -1,4 +1,3 @@
-from .conditional import DEFAULT_SIGMA2
 from .cov import Matern52
 from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
 from .inference import (
@@ -67,9 +66,6 @@ class CrowdingEstimator:
     :param jitter: A small amount to add to the diagonal of the covariance
         matrix for numerical stabilitity. Defaults to 1e-6.
     :type jitter: float
-    :param sigma2: White noise variance for conditioning the Gaussian process for
-        the predict function. Must be greater than 0 if using landmarks. Defaults to 1e-6.
-    :type sigma2: float
     :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: int
     :param init_learn_rate: The initial learn rate. Defaults to 1.
@@ -122,8 +118,6 @@ class CrowdingEstimator:
         or a percentage of eigenvalues.
     :ivar jitter: A small amount added to the diagonal of the covariance matrix
         for numerical stability.
-    :ivar sigma2: White noise variance for conditioning the Gaussian process for
-        the predict function.
     :ivar n_iter: The number of optimization iterations if adam optimizer is used.
     :ivar init_learn_rate: The initial learn rate when adam optimizer is used.
     :ivar landmarks: The points to quantize the data.
@@ -158,7 +152,6 @@ class CrowdingEstimator:
         rank=DEFAULT_RANK,
         method=DEFAULT_METHOD,
         jitter=DEFAULT_JITTER,
-        sigma2=DEFAULT_SIGMA2,
         n_iter=DEFAULT_N_ITER,
         init_learn_rate=DEFAULT_INIT_LEARN_RATE,
         landmarks=None,
@@ -177,7 +170,6 @@ class CrowdingEstimator:
         self.rank = rank
         self.method = method
         self.jitter = jitter
-        self.sigma2 = sigma2
         self.n_iter = n_iter
         self.init_learn_rate = init_learn_rate
         self.landmarks = landmarks
@@ -211,7 +203,6 @@ class CrowdingEstimator:
             f"rank={self.rank}, "
             f"method='{self.method}', "
             f"jitter={self.jitter}, "
-            f"sigma2={self.sigma2}, "
             f"n_iter={self.n_iter}, "
             f"init_learn_rate={self.init_learn_rate}, "
             f"landmarks={self.landmarks}, "
@@ -367,9 +358,8 @@ class CrowdingEstimator:
         mu = self.mu
         cov_func = self.cov_func
         jitter = self.jitter
-        sigma2 = self.sigma2
         log_density_func = compute_conditional_mean(
-            x, landmarks, log_density_x, mu, cov_func, jitter=jitter, sigma2=sigma2
+            x, landmarks, log_density_x, mu, cov_func, jitter=jitter,
         )
         self.log_density_func = log_density_func
 
@@ -481,8 +471,7 @@ class CrowdingEstimator:
 
     def predict(self, x):
         R"""
-        Predict the log density at each point in x. Note that predictions at the original
-        training points may differ slightly from fit_predict due to the sigma2 noise.
+        Predict the log density at each point in x.
 
         :param x: The new data to predict.
         :type x: array-like

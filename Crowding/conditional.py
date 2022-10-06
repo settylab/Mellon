@@ -5,11 +5,8 @@ from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER
 
 
-DEFAULT_SIGMA2 = 1e-6
-
-
 def _full_conditional_mean(
-    x, log_density_x, mu, cov_func, jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2
+    x, log_density_x, mu, cov_func, jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned Gaussian process.
@@ -24,13 +21,11 @@ def _full_conditional_mean(
     :type cov_func: function
     :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
     :type jitter: float
-    :param sigma2: The white noise variance. Defaults to 1e-6.
-    :type sigma2: float
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
     K = cov_func(x, x)
-    L = cholesky(stabilize(K, jitter=jitter + sigma2))
+    L = cholesky(stabilize(K, jitter=jitter))
     weights = solve_triangular(L.T, solve_triangular(L, log_density_x, lower=True))
 
     def mean(Xnew):
@@ -41,7 +36,7 @@ def _full_conditional_mean(
 
 
 def _landmarks_conditional_mean(
-    x, xu, log_density_x, mu, cov_func, jitter=DEFAULT_JITTER, sigma2=DEFAULT_SIGMA2
+    x, xu, log_density_x, mu, cov_func, jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned low rank gp, where rank
@@ -59,22 +54,16 @@ def _landmarks_conditional_mean(
     :type cov_func: function
     :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
     :type jitter: float
-    :param sigma2: The white noise variance. Defaults to 1e-6.
-    :type sigma2: float
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
     Kuu = cov_func(xu, xu)
     Kuf = cov_func(xu, x)
-    Luu = cholesky(stabilize(Kuu))
+    Luu = cholesky(stabilize(Kuu, jitter))
     A = solve_triangular(Luu, Kuf, lower=True)
-    Qffd = arraysum(A * A, 0)
-    Lamd = ones_like(Qffd) * sigma2  # DTC
-    A_l = A / Lamd
-    L_B = cholesky(eye(xu.shape[0]) + dot(A_l, A.T))
+    L_B = cholesky(stabilize(dot(A, A.T), jitter))
     r = log_density_x - mu
-    r_l = r / Lamd
-    c = solve_triangular(L_B, dot(A, r_l), lower=True)
+    c = solve_triangular(L_B, dot(A, r), lower=True)
     z = solve_triangular(L_B.T, c)
     weights = solve_triangular(Luu.T, z)
 

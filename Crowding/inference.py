@@ -8,7 +8,6 @@ from jaxopt import ScipyMinimize
 from .conditional import (
     _full_conditional_mean,
     _landmarks_conditional_mean,
-    DEFAULT_SIGMA2,
 )
 from .util import DEFAULT_JITTER
 
@@ -217,7 +216,6 @@ def compute_conditional_mean(
     mu,
     cov_func,
     jitter=DEFAULT_JITTER,
-    sigma2=DEFAULT_SIGMA2,
 ):
     R"""
     Builds the mean function of the Gaussian process, conditioned on the log_density values.
@@ -235,16 +233,14 @@ def compute_conditional_mean(
     :type cov_func: function
     :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
     :type jitter: float
-    :param sigma2: The white noise variance. Defaults to 1e-6.
-    :type sigma2: float
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
     if landmarks is None:
         return _full_conditional_mean(
-            x, log_density_x, mu, cov_func, jitter=jitter, sigma2=sigma2
+            x, log_density_x, mu, cov_func, jitter=jitter,
         )
     else:
         return _landmarks_conditional_mean(
-            x, landmarks, log_density_x, mu, cov_func, jitter=jitter, sigma2=sigma2
+            x, landmarks, log_density_x, mu, cov_func, jitter=jitter,
         )

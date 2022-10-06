@@ -5,7 +5,6 @@ jaxconfig.update("jax_platform_name", "cpu")
 
 from .base_cov import Covariance, Add, Mul, Pow
 from .util import stabilize, mle, distance, DEFAULT_JITTER
-from .conditional import DEFAULT_SIGMA2
 from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
 from .cov import Matern32, Matern52, ExpQuad, Exponential, RatQuad
 from .inference import (
