@@ -64,8 +64,14 @@ class CrowdingEstimator:
         Defaults to 'auto'.
     :type method: str
     :param jitter: A small amount to add to the diagonal of the covariance
-        matrix for numerical stabilitity. Defaults to 1e-6.
+        matrix to bind eigenvalues numerically away from 0 ensuring numerical
+        stabilitity. Defaults to 1e-6.
     :type jitter: float
+    :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
+        for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
+    :type optimizer: str
+    :param jit: Use jax just in time compilation for loss and its gradient
+        during optimization. Defaults to False.
     :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: int
     :param init_learn_rate: The initial learn rate. Defaults to 1.
@@ -104,11 +110,6 @@ class CrowdingEstimator:
         \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`,
         where :math:`d` is the dimensionality of the data. Defaults to None.
     :type initial_value: array-like or None
-    :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
-        for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
-    :type optimizer: str
-    :param jit: Use jax just in time compilation for loss and its gradient
-        during optimization. Defaults to False.
     :type jit: bool
     :ivar cov_func_curry: The generator of the Gaussian process covariance function.
     :ivar n_landmarks: The number of landmark points.
@@ -152,6 +153,7 @@ class CrowdingEstimator:
         rank=DEFAULT_RANK,
         method=DEFAULT_METHOD,
         jitter=DEFAULT_JITTER,
+        optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
         init_learn_rate=DEFAULT_INIT_LEARN_RATE,
         landmarks=None,
@@ -162,7 +164,6 @@ class CrowdingEstimator:
         cov_func=None,
         L=None,
         initial_value=None,
-        optimizer=DEFAULT_OPTIMIZER,
         jit=DEFAULT_JIT,
     ):
         self.cov_func_curry = cov_func_curry
@@ -170,6 +171,7 @@ class CrowdingEstimator:
         self.rank = rank
         self.method = method
         self.jitter = jitter
+        self.optimizer = optimizer
         self.n_iter = n_iter
         self.init_learn_rate = init_learn_rate
         self.landmarks = landmarks
@@ -180,7 +182,6 @@ class CrowdingEstimator:
         self.cov_func = cov_func
         self.L = L
         self.initial_value = initial_value
-        self.optimizer = optimizer
         self.jit = jit
         self.x = None
         self.transform = None
@@ -203,6 +204,7 @@ class CrowdingEstimator:
             f"rank={self.rank}, "
             f"method='{self.method}', "
             f"jitter={self.jitter}, "
+            f"optimizer='{self.optimizer}', "
             f"n_iter={self.n_iter}, "
             f"init_learn_rate={self.init_learn_rate}, "
             f"landmarks={self.landmarks}, "
@@ -226,7 +228,6 @@ class CrowdingEstimator:
         else:
             string += "initial_value=initial_value, "
         string += (
-            f"optimizer='{self.optimizer}', "
             f"jit={self.jit}"
             ")"
         )

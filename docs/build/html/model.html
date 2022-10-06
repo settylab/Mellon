@@ -205,7 +205,7 @@
 <span id="model"></span><h1>model<a class="headerlink" href="#module-Crowding.model" title="Permalink to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.model.</span></span><span class="sig-name descname"><span class="pre">CrowdingEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'Crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.model.</span></span><span class="sig-name descname"><span class="pre">CrowdingEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'Crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A non-parametric density estimator.
 CrowdingEstimator performs Bayesian inference with a Gaussian process prior and Nearest
@@ -238,7 +238,12 @@ an int and interprets rank as a percent of eigenvalues if it is a float.
 Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
 Defaults to ‘auto’.</p></li>
 <li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal of the covariance
-matrix for numerical stabilitity. Defaults to 1e-6.</p></li>
+matrix to bind eigenvalues numerically away from 0 ensuring numerical
+stabilitity. Defaults to 1e-6.</p></li>
+<li><p><strong>optimizer</strong> (<em>str</em>) – Select optimizer ‘L-BFGS-B’ or stochastic optimizer ‘adam’
+for the maximum a posteriori density estimation. Defaults to ‘L-BFGS-B’.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation for loss and its gradient
+during optimization. Defaults to False.</p></li>
 <li><p><strong>n_iter</strong> (<em>int</em>) – The number of optimization iterations. Defaults to 100.</p></li>
 <li><p><strong>init_learn_rate</strong> (<em>float</em>) – The initial learn rate. Defaults to 1.</p></li>
 <li><p><strong>landmarks</strong> (<em>array-like</em><em> or </em><em>None</em>) – The points to quantize the data for the approximate covariance. If None,
@@ -267,10 +272,6 @@ If None, automatically computes L. Defaults to None.</p></li>
 <span class="math notranslate nohighlight">\(z\)</span> that minimizes <span class="math notranslate nohighlight">\(||Lz + mu - mle|| + ||z||\)</span>, where <span class="math notranslate nohighlight">\(mle =
 \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span>,
 where <span class="math notranslate nohighlight">\(d\)</span> is the dimensionality of the data. Defaults to None.</p></li>
-<li><p><strong>optimizer</strong> (<em>str</em>) – Select optimizer ‘L-BFGS-B’ or stochastic optimizer ‘adam’
-for the maximum a posteriori density estimation. Defaults to ‘L-BFGS-B’.</p></li>
-<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation for loss and its gradient
-during optimization. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Variables<span class="colon">:</span></dt>
