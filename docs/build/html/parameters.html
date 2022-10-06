@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="inference" href="inference.html" /><link rel="prev" title="cov" href="cov.html" />
 
-    <meta name="generator" content="sphinx-5.1.1, furo 2022.09.15"/>
+    <meta name="generator" content="sphinx-5.2.3, furo 2022.09.29"/>
         <title>parameters - Crowding 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=9ec31e2665bf879c1d47d93a8ec4893870ee1e45" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     
     
@@ -134,7 +134,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -186,7 +186,8 @@
           <span>Back to top</span>
         </a>
         <div class="content-icon-container">
-          <div class="theme-toggle-container theme-toggle-content">
+          
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -194,7 +195,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -282,7 +283,8 @@ such that the initial value <span class="math notranslate nohighlight">\(z\)</sp
 <li><p><strong>nn_distances</strong> (<em>array-like</em>) – The observed nearest neighbor distances.</p></li>
 <li><p><strong>d</strong> (<em>int</em>) – The local dimensionality of the data.</p></li>
 <li><p><strong>mu</strong> (<em>int</em>) – The Gaussian Process mean.</p></li>
-<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
+<li><p><strong>L</strong> (<em>array-like</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span>
+is the covariance matrix.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -420,8 +422,34 @@ where <span class="math notranslate nohighlight">\(mle =
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">parameters</a><ul>
+<li><a class="reference internal" href="#Crowding.parameters.compute_L"><code class="docutils literal notranslate"><span class="pre">compute_L()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.parameters.compute_cov_func"><code class="docutils literal notranslate"><span class="pre">compute_cov_func()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.parameters.compute_d"><code class="docutils literal notranslate"><span class="pre">compute_d()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.parameters.compute_initial_value"><code class="docutils literal notranslate"><span class="pre">compute_initial_value()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.parameters.compute_landmarks"><code class="docutils literal notranslate"><span class="pre">compute_landmarks()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.parameters.compute_ls"><code class="docutils literal notranslate"><span class="pre">compute_ls()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.parameters.compute_mu"><code class="docutils literal notranslate"><span class="pre">compute_mu()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.parameters.compute_nn_distances"><code class="docutils literal notranslate"><span class="pre">compute_nn_distances()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
@@ -431,6 +459,7 @@ where <span class="math notranslate nohighlight">\(mle =
     <script src="_static/underscore.js"></script>
     <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/furo.js"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>

@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="util" href="util.html" /><link rel="prev" title="Installation:" href="index.html" />
 
-    <meta name="generator" content="sphinx-5.1.1, furo 2022.09.15"/>
+    <meta name="generator" content="sphinx-5.2.3, furo 2022.09.29"/>
         <title>model - Crowding 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=9ec31e2665bf879c1d47d93a8ec4893870ee1e45" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     
     
@@ -134,7 +134,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -186,7 +186,8 @@
           <span>Back to top</span>
         </a>
         <div class="content-icon-container">
-          <div class="theme-toggle-container theme-toggle-content">
+          
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -194,7 +195,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -204,7 +205,7 @@
 <span id="model"></span><h1>model<a class="headerlink" href="#module-Crowding.model" title="Permalink to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.model.</span></span><span class="sig-name descname"><span class="pre">CrowdingEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'Crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.model.</span></span><span class="sig-name descname"><span class="pre">CrowdingEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'Crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma2=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A non-parametric density estimator.
 CrowdingEstimator performs Bayesian inference with a Gaussian process prior and Nearest
@@ -266,6 +267,10 @@ If None, automatically computes L. Defaults to None.</p></li>
 <span class="math notranslate nohighlight">\(z\)</span> that minimizes <span class="math notranslate nohighlight">\(||Lz + mu - mle|| + ||z||\)</span>, where <span class="math notranslate nohighlight">\(mle =
 \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span>,
 where <span class="math notranslate nohighlight">\(d\)</span> is the dimensionality of the data. Defaults to None.</p></li>
+<li><p><strong>optimizer</strong> (<em>str</em>) – Select optimizer ‘L-BFGS-B’ or stochastic optimizer ‘adam’
+for the maximum a posteriori density estimation. Defaults to ‘L-BFGS-B’.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation for loss and its gradient
+during optimization. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Variables<span class="colon">:</span></dt>
@@ -290,6 +295,7 @@ the predict function.</p></li>
 <li><p><strong>cov_func</strong> – The Gaussian process covariance function.</p></li>
 <li><p><strong>L</strong> – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
 <li><p><strong>initial_value</strong> – The initial guess for Maximum A Posteriori optimization.</p></li>
+<li><p><strong>optimizer</strong> – Optimizer for the maximum a posteriori density estimation.</p></li>
 <li><p><strong>x</strong> – The training data.</p></li>
 <li><p><strong>transform</strong> – A function <span class="math notranslate nohighlight">\(z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')\)</span>.</p></li>
 <li><p><strong>loss_func</strong> – The Bayesian loss function.</p></li>
@@ -297,7 +303,8 @@ the predict function.</p></li>
 transformation to <span class="math notranslate nohighlight">\(\text{Normal}(mu, K')\)</span>, where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix
 and <span class="math notranslate nohighlight">\(K'\)</span> is the approximate covariance matrix.</p></li>
 <li><p><strong>opt_state</strong> – The last step of the optimization.</p></li>
-<li><p><strong>losses</strong> – The history of losses throughout training.</p></li>
+<li><p><strong>losses</strong> – The history of losses throughout training of adam or final
+loss of L-BFGS-B.</p></li>
 <li><p><strong>log_density_x</strong> – The log density at the training points.</p></li>
 <li><p><strong>log_density_func</strong> – A function that computes the log density at arbitrary prediction points.</p></li>
 </ul>
@@ -326,7 +333,7 @@ Defaults to True.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.fit_predict">
-<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform Bayesian inference and return the log density at training points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -360,7 +367,7 @@ training points may differ slightly from fit_predict due to the sigma2 noise.</p
 <dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.prepare_inference">
 <span class="sig-name descname"><span class="pre">prepare_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.prepare_inference" title="Permalink to this definition">#</a></dt>
 <dd><p>Set all attributes in preparation for optimization, but do not
-perform Bayesian inference. It is not necessary to call this 
+perform Bayesian inference. It is not necessary to call this
 function before calling fit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -401,7 +408,7 @@ Defaults to True.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.run_inference">
-<span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.run_inference" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.run_inference" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform Bayesian inference, optimizing the pre_transformation parameters.
 If you would like to run your own inference procedure, use the loss_function
 and initial_value attributes and set pre_transformation to the optimized
@@ -478,8 +485,35 @@ the stored initial_value attribute.</p></li>
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">model</a><ul>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator</span></code></a><ul>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.fit"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.fit()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.fit_predict"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.fit_predict()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.predict"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.predict()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.prepare_inference"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.prepare_inference()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.process_inference"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.process_inference()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.run_inference"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.run_inference()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
@@ -489,6 +523,7 @@ the stored initial_value attribute.</p></li>
     <script src="_static/underscore.js"></script>
     <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/furo.js"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
