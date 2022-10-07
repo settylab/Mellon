@@ -30,8 +30,9 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     :rtype: array-like
     """
     n = x.shape[0]
-    if (n_landmarks < 1) or (n_landmarks >= n):
-        return
+    assert n_landmarks > 1, "n_landmarks musst be larger 1"
+    if n_landmarks >= n:
+        return x
     return k_means(x, n_landmarks, n_init=1)[0]
 
 

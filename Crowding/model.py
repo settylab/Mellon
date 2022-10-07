@@ -402,6 +402,7 @@ class CrowdingEstimator:
         self._prepare_attribute("mu")
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")
+        self._prepare_attribute("landmarks")
         self._prepare_attribute("L")
         self._prepare_attribute("initial_value")
         self._prepare_attribute("transform")
