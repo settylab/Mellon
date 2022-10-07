@@ -295,8 +295,8 @@ covariance matrix.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.run_inference_adam">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">run_inference_adam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.run_inference_adam" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="Crowding.inference.minimize_adam">
+<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">minimize_adam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.minimize_adam" title="Permalink to this definition">#</a></dt>
 <dd><p>Minimizes function with a starting guess of initial_value using
 adam and exponentially decaying learning rate.</p>
 <dl class="field-list simple">
@@ -319,8 +319,8 @@ parameters, final state of the optimizer, and history of loss values,</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.run_inference_lbfgsb">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">run_inference_lbfgsb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.run_inference_lbfgsb" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="Crowding.inference.minimize_lbfgsb">
+<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">minimize_lbfgsb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.minimize_lbfgsb" title="Permalink to this definition">#</a></dt>
 <dd><p>Minimizes function with a starting guess of initial_value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -401,8 +401,8 @@ final loss value,</p>
 <li><a class="reference internal" href="#Crowding.inference.compute_log_density_x"><code class="docutils literal notranslate"><span class="pre">compute_log_density_x()</span></code></a></li>
 <li><a class="reference internal" href="#Crowding.inference.compute_loss_func"><code class="docutils literal notranslate"><span class="pre">compute_loss_func()</span></code></a></li>
 <li><a class="reference internal" href="#Crowding.inference.compute_transform"><code class="docutils literal notranslate"><span class="pre">compute_transform()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.inference.run_inference_adam"><code class="docutils literal notranslate"><span class="pre">run_inference_adam()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.inference.run_inference_lbfgsb"><code class="docutils literal notranslate"><span class="pre">run_inference_lbfgsb()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.inference.minimize_adam"><code class="docutils literal notranslate"><span class="pre">minimize_adam()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.inference.minimize_lbfgsb"><code class="docutils literal notranslate"><span class="pre">minimize_lbfgsb()</span></code></a></li>
 </ul>
 </li>
 </ul>

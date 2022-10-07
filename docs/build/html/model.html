@@ -242,8 +242,6 @@ matrix to bind eigenvalues numerically away from 0 ensuring numerical
 stabilitity. Defaults to 1e-6.</p></li>
 <li><p><strong>optimizer</strong> (<em>str</em>) – Select optimizer ‘L-BFGS-B’ or stochastic optimizer ‘adam’
 for the maximum a posteriori density estimation. Defaults to ‘L-BFGS-B’.</p></li>
-<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation for loss and its gradient
-during optimization. Defaults to False.</p></li>
 <li><p><strong>n_iter</strong> (<em>int</em>) – The number of optimization iterations. Defaults to 100.</p></li>
 <li><p><strong>init_learn_rate</strong> (<em>float</em>) – The initial learn rate. Defaults to 1.</p></li>
 <li><p><strong>landmarks</strong> (<em>array-like</em><em> or </em><em>None</em>) – The points to quantize the data for the approximate covariance. If None,
@@ -272,6 +270,8 @@ If None, automatically computes L. Defaults to None.</p></li>
 <span class="math notranslate nohighlight">\(z\)</span> that minimizes <span class="math notranslate nohighlight">\(||Lz + mu - mle|| + ||z||\)</span>, where <span class="math notranslate nohighlight">\(mle =
 \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)\)</span>,
 where <span class="math notranslate nohighlight">\(d\)</span> is the dimensionality of the data. Defaults to None.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation for loss and its gradient
+during optimization. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Variables<span class="colon">:</span></dt>
@@ -343,6 +343,71 @@ Defaults to True.</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>log_density_x - The log density at each training point in x.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.gradient">
+<span class="sig-name descname"><span class="pre">gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.gradient" title="Permalink to this definition">#</a></dt>
+<dd><p>Conputes the gradient of the predict function for each line in x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>gradiants - The gradient of function at each point in x.
+gradients.shape == x.shape</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.hessian">
+<span class="sig-name descname"><span class="pre">hessian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.hessian" title="Permalink to this definition">#</a></dt>
+<dd><p>Conputes the hessian of the predict function for each line in x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>hessians - The hessian matrix of function at each point in x.
+hessians.shape == X.shape + X.shape[1:]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.hessian_log_determinant">
+<span class="sig-name descname"><span class="pre">hessian_log_determinant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.hessian_log_determinant" title="Permalink to this definition">#</a></dt>
+<dd><p>Conputes the logarirhm of the determinat of the predict function for
+each line in x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>signs, log_determinants - The sign of the determinant
+at each point x and the logarithm of its absolute value.
+signs.shape == log_determinants.shape == x.shape[0]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like, array-like</p>
 </dd>
 </dl>
 </dd></dl>
@@ -502,6 +567,9 @@ the stored initial_value attribute.</p></li>
 <li><a class="reference internal" href="#Crowding.model.CrowdingEstimator"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator</span></code></a><ul>
 <li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.fit"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.fit()</span></code></a></li>
 <li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.fit_predict"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.fit_predict()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.gradient"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.gradient()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.hessian"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.hessian()</span></code></a></li>
+<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.hessian_log_determinant"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.hessian_log_determinant()</span></code></a></li>
 <li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.predict"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.predict()</span></code></a></li>
 <li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.prepare_inference"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.prepare_inference()</span></code></a></li>
 <li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.process_inference"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.process_inference()</span></code></a></li>

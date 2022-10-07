@@ -205,111 +205,177 @@
 </div>
 <p>Crowding is a non-parametric density estimator based on the NearestNeighbors distribution.</p>
 <section id="installation">
-<h1>Installation:<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h1>
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h1>
 <p>To install with pip you can run:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install Crowding
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install Crowding
 </pre></div>
 </div>
 </section>
 <section id="basic-usage">
-<h1>Basic Usage:<a class="headerlink" href="#basic-usage" title="Permalink to this heading">#</a></h1>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>import numpy as np
-from Crowding import CrowdingEstimator
+<h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this heading">#</a></h1>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Crowding</span> <span class="k">as</span> <span class="nn">scd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-x = np.random.rand(100, 10)  # arbitrary training data
-y = np.random.rand(100, 10)  # arbitrary test data
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># 10-dimensional state representation for 100 cells</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># arbitrary test data</span>
 
-model = CrowdingEstimator()
-log_density_x = model.fit_predict(x)
-log_density_y = model.predict(y)
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">log_density_x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">log_density_y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="usage-with-scanpy">
+<h1>Usage with scanpy<a class="headerlink" href="#usage-with-scanpy" title="Permalink to this heading">#</a></h1>
+<p>We recomend using a diffusion map latent representation of cell states as
+input for the density computation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Crowding</span> <span class="k">as</span> <span class="nn">scd</span>
+<span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">h5ad_file_path</span><span class="p">)</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">external</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">palantir</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;log_density&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s1">&#39;DM_EigenVectors&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Alternatively, to compute the density for a subset of cells on the complete
+dataset, the density of the subset can be evaluated on all cells:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Crowding</span> <span class="k">as</span> <span class="nn">scd</span>
+<span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
+
+<span class="n">adata</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">h5ad_file_path</span><span class="p">)</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">external</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">palantir</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">mask</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;condition&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;subset_value&#39;</span> <span class="c1"># arbitrary mask</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">adata</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s1">&#39;DM_EigenVectors&#39;</span><span class="p">])</span>
+<span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;log_density_conditional&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s1">&#39;DM_EigenVectors&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>
 <section id="parameters">
-<h1>Parameters:<a class="headerlink" href="#parameters" title="Permalink to this heading">#</a></h1>
+<h1>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading">#</a></h1>
 <p>Above, all parameters are set automatically. The following code is equivalent.
 Any parameters can be changed as desired.</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import CrowdingEstimator, Matern52, \
-                     compute_landmarks, compute_nn_distances, compute_d, compute_mu, \
-                     compute_ls, compute_cov_func, compute_initial_value
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Crowding</span> <span class="k">as</span> <span class="nn">scd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># 10-dimensional state representation for 100 cells</span>
+</pre></div>
+</div>
+<p>The Crowding density estimation uses the distance to the nearest neighbor
+from each cell as the input data.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">nn_distances</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">compute_nn_distances</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>One aspect of the density inference through Crowding is controlling
+the rate of density change between similar cells. This is realized
+through a kernel function that computes the covariance of the log-density
+values for pairs of cells. By default, we use the Matern52 kernel
+with a heuristic for the length-scale parameter. This produces a twice
+differentiable density function with reasonable rate of change. Variance,
+bias, and differentiability can be controlled through the choice of kernel.
+E.g., increasing the length-scale reduces variance and using <cite>scd.ExpQuad</cite>
+increases differentiability.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">length_scale</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">compute_ls</span><span class="p">(</span><span class="n">nn_distances</span><span class="p">)</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">Matern52</span><span class="p">(</span><span class="n">length_scale</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Landmarks in the data are used to approximate the covariance structure
+and hence the similarity of density values between cells by using the similarity
+to the landmarks as proxy. While any set of landmarks can be used, k-means-cluster
+centroids preformed best in our tests. The number of landmarks limits the rank
+of the resulting covariance matrix.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_landmarks</span> <span class="o">=</span> <span class="mi">5000</span>
+<span class="n">landmarks</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">k_means</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n_landmarks</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>By default, we further reduce the rank of the covariance matrix with an
+improved Nyström approximation. The rank parameter can be used to either
+select the fraction of <em>total variance</em> (sum of eigenvalues) preserved or
+an integer number of ranks. The resulting <cite>L</cite> is a Cholesky factor of the
+approximated covariance matrix.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">rank</span> <span class="o">=</span> <span class="mf">0.999</span>
+<span class="n">L</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">compute_L</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">cov_func</span><span class="p">,</span> <span class="n">landmarks</span><span class="o">=</span><span class="n">landmarks</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By default, we assume that the data can vary along all its dimensions.
+However, if it is known that locally cells vary only along a
+subspace, e.g., tangential to the phenotypic manifold, then the
+dimensionality of this subspace should  be used.
+<cite>d</cite> is used to correctly related the nearest-neighbor-distance
+distribution to the cell-state density.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Crowding can automatically suggest a mean value <cite>mu</cite> for the Gaussian
+process of log-density to ensure scale invariance. A low value ensures
+that the density drops of quickly away from the data.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mu</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">compute_mu</span><span class="p">(</span><span class="n">nn_distances</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>An initial value, based on ridge regression, is used by default
+to speed up the optimization.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">initial_parameters</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">compute_initial_value</span><span class="p">(</span><span class="n">nn_distances</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">L</span><span class="p">)</span>
 
-cov_func_curry = Matern52
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">(</span>
+    <span class="n">n_landmarks</span><span class="o">=</span><span class="n">n_landmarks</span><span class="p">,</span>
+    <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+    <span class="n">jitter</span><span class="o">=</span><span class="n">jitter</span><span class="p">,</span>
+    <span class="n">landmarks</span><span class="o">=</span><span class="n">landmarks</span><span class="p">,</span>
+    <span class="n">nn_distances</span><span class="o">=</span><span class="n">nn_distances</span><span class="p">,</span>
+    <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+    <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+    <span class="n">ls</span><span class="o">=</span><span class="n">ls</span><span class="p">,</span>
+    <span class="n">cov_func</span><span class="o">=</span><span class="n">cov_func</span><span class="p">,</span>
+    <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span>
+    <span class="n">initial_parameters</span><span class="o">=</span><span class="n">initial_parameters</span><span class="p">,</span>
+<span class="p">)</span>
 
-# Higher n_landmarks is always better, but is more expensive.
-n_landmarks = 5000
-
-# Higher rank is always better, but is more expensive.
-rank = 0.999
-
-# Generally unnecessary, but it clarifies the ambiguous case where rank = 1 or 1.0.
-method = &#39;auto&#39;
-
-# Increase if the covariance matrix is not positive definite.
-jitter = 1e-6
-
-sigma2 = 1e-6
-
-# Landmark points should summarize the training data. The best way to choose
-# landmark points is an open problem.
-landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
-
-nn_distances = compute_nn_distances(x)
-
-# The data may vary in fewer dimensions at a local scale.
-d = compute_d(x)
-
-# mu should be smaller than the density at most datapoints so the
-# log density function decays to mu away from the data. You can use the mle
-# function from the util module as an initial noisy log density estimation.
-mu = compute_mu(nn_distances, d)
-
-# Higher length scale produces a smoother function.
-ls = compute_ls(nn_distances)
-
-cov_func = compute_cov_func(cov_func_curry, ls)
-
-L = compute_L(x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter)
-
-# The initial_value should be in the same basin as the global minimum.
-initial_value = compute_initial_value(nn_distances, d, mu, L)
-
-model = CrowdingEstimator(cov_func_curry=cov_func_curry, n_landmarks=n_landmarks, \
-                          rank=rank, method=method, jitter=jitter, sigma2=sigma2, \
-                          landmarks=landmarks, nn_distances=nn_distances, d=d, \
-                          mu=mu, ls=ls, cov_func=cov_func, L=L, \
-                          initial_value=initial_value)
-log_density_x = model.fit_predict(x)
-log_density_y = model.predict(y)
+<span class="n">log_density_x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="stages-api">
-<h1>Stages API:<a class="headerlink" href="#stages-api" title="Permalink to this heading">#</a></h1>
+<h1>Stages API<a class="headerlink" href="#stages-api" title="Permalink to this heading">#</a></h1>
 <p>Instead of fitting the model with the fit function, you may split training into
 three stages: prepare_inference, run_inference, and process_inference.</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>model = CrowdingEstimator()
-model.prepare_inference(x)
-model.run_inference()
-log_density_x = model.process_inference()
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">prepare_inference</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">run_inference</span><span class="p">()</span>
+<span class="n">log_density_x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">process_inference</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>This allows you to make intermediate changes. For example, if you would
 like to use your own optimizer, use the I/O of the three stages and
 replace run_inference with your own optimizer:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>def optimize(loss_func, initial_value):
-    ...
-    return optimal_parameters
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">loss_func</span><span class="p">,</span> <span class="n">initial_parameters</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">return</span> <span class="n">optimal_parameters</span>
 
-model = CrowdingEstimator()
-loss_func, initial_value = model.prepare_inference(x)
-pre_transformation = optimize(loss_func, initial_value)
-log_density_x = model.process_inference(pre_transformation=pre_transformation)
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">loss_func</span><span class="p">,</span> <span class="n">initial_parameters</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">prepare_inference</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">pre_transformation</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">loss_func</span><span class="p">,</span> <span class="n">initial_parameters</span><span class="p">)</span>
+<span class="n">log_density_x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">process_inference</span><span class="p">(</span><span class="n">pre_transformation</span><span class="o">=</span><span class="n">pre_transformation</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
+<section id="derivatives">
+<h1>Derivatives<a class="headerlink" href="#derivatives" title="Permalink to this heading">#</a></h1>
+<p>After inference the density and its derivatives can be computed for arbitrary
+cell-states.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># arbitrary cell states</span>
+
+<span class="n">log_density</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+<span class="n">gradients</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+<span class="n">hessians</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">hessian</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Of course this also works for <cite>Y=X</cite>.</p>
+</section>
 <section id="covariance-functions">
-<h1>Covariance Functions:<a class="headerlink" href="#covariance-functions" title="Permalink to this heading">#</a></h1>
+<h1>Covariance Functions<a class="headerlink" href="#covariance-functions" title="Permalink to this heading">#</a></h1>
 <p>See the cov module for a list of covariance functions already implemented.
 This section shows different ways to use a supplied covariance function
 or define your own.</p>
@@ -319,87 +385,87 @@ of the covariance function will be set to ls, which is computed automatically
 if not passed as an argument.</p>
 <div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text">Pass a predefined covariance function class (Default behavior)</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import Matern52
-cov_func = Matern52
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Matern52</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id2">
 <div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance    # distance computes the distance between each point in x
-                                 # and each point in y.
-def Matern52(ls=1.0):
-    def k(x, y):
-        r = distance(x, y) / ls
-        similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
-        return similarity
-    return cov_func
-cov_func = Matern52
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>    <span class="c1"># distance computes the distance between each point in x</span>
+                                 <span class="c1"># and each point in y.</span>
+<span class="k">def</span> <span class="nf">Matern52</span><span class="p">(</span><span class="n">ls</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">distance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">ls</span>
+        <span class="n">similarity</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">square</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">similarity</span>
+    <span class="k">return</span> <span class="n">cov_func</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id3">
 <div class="code-block-caption"><span class="caption-text">Inherit from the Covariance base class</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
-from Crowding import Covariance  # The Covariance base class __call__ method calls k.
-                                 # It also supports adding, multiplying, and taking the covariance
-                                 # to a power with the +, *, and ** operators.
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>
+<span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Covariance</span>  <span class="c1"># The Covariance base class __call__ method calls k.</span>
+                                 <span class="c1"># It also supports adding, multiplying, and taking the covariance</span>
+                                 <span class="c1"># to a power with the +, *, and ** operators.</span>
 
-class Matern52(Covariance):
-    def __init__(self, ls=1.0):
-        super().__init__()
-        self.ls = ls
+<span class="k">class</span> <span class="nc">Matern52</span><span class="p">(</span><span class="n">Covariance</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ls</span> <span class="o">=</span> <span class="n">ls</span>
 
-    def k(self, x, y):
-        r = distance(x, y) / self.ls
-        similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
-        return similarity
-cov_func = Matern52
+    <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">distance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls</span>
+        <span class="n">similarity</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">square</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">similarity</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span>
 </pre></div>
 </div>
 </div>
 <p>Alternatively, the cov_func argument supports a two argument function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float.</p>
 <div class="literal-block-wrapper docutils container" id="id4">
 <div class="code-block-caption"><span class="caption-text">Instantiate a predefined covariance function.</span><a class="headerlink" href="#id4" title="Permalink to this code">#</a></div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import Matern52
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Matern52</span>
 
-ls = 1.0  # Set ls as desired.
-cov_func = Matern52(ls)
+<span class="n">ls</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Set ls as desired.</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id5">
 <div class="code-block-caption"><span class="caption-text">Write a function of two variables.</span><a class="headerlink" href="#id5" title="Permalink to this code">#</a></div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>
 
-ls = 1.0  # Set ls as desired.
-def Matern52_k(x, y):
-    r = distance(x, y) / ls
-    similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
-    return similarity
-cov_func = Matern52_k
+<span class="n">ls</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Set ls as desired.</span>
+<span class="k">def</span> <span class="nf">Matern52_k</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">distance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">ls</span>
+    <span class="n">similarity</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">square</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">similarity</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52_k</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id6">
 <div class="code-block-caption"><span class="caption-text">Instatiate a type that inherits from the Covariance base class.</span><a class="headerlink" href="#id6" title="Permalink to this code">#</a></div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>from Crowding import distance
-from Crowding import Covariance  # The Covariance base class __call__ method calls k.
-                                 # It also supports adding, multiplying, and exponentiating
-                                 # with the +, *, and ** operators.
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>
+<span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Covariance</span>  <span class="c1"># The Covariance base class __call__ method calls k.</span>
+                                 <span class="c1"># It also supports adding, multiplying, and exponentiating</span>
+                                 <span class="c1"># with the +, *, and ** operators.</span>
 
-class Matern52(Covariance):
-    def __init__(self, ls=1.0):
-        super().__init__()
-        self.ls = ls
+<span class="k">class</span> <span class="nc">Matern52</span><span class="p">(</span><span class="n">Covariance</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ls</span> <span class="o">=</span> <span class="n">ls</span>
 
-    def k(self, x, y):
-        r = distance(x, y) / self.ls
-        similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
-        return similarity
+    <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">distance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls</span>
+        <span class="n">similarity</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">square</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">similarity</span>
 
-ls = 1.0  # Set ls as desired.
-cov_func = Matern52(ls)
+<span class="n">ls</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Set ls as desired.</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

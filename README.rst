@@ -1,100 +1,178 @@
 Crowding is a non-parametric density estimator based on the NearestNeighbors distribution.
 
-Installation:
-===============
+Installation
+============
 
 To install with pip you can run:
 
-.. code-block::
+.. code-block:: bash
 
    pip install Crowding
 
-Basic Usage:
-======================
+Basic Usage
+===========
 
-.. code-block::
+.. code-block:: python
 
-   import numpy as np
-   from Crowding import CrowdingEstimator
+    import Crowding as scd
+    import numpy as np
 
-   x = np.random.rand(100, 10)  # arbitrary training data
-   y = np.random.rand(100, 10)  # arbitrary test data
+    X = np.random.rand(100, 10)  # 10-dimensional state representation for 100 cells
+    Y = np.random.rand(100, 10)  # arbitrary test data
 
-   model = CrowdingEstimator()
-   log_density_x = model.fit_predict(x)
-   log_density_y = model.predict(y)
+    model = scd.CrowdingEstimator()
+    log_density_x = model.fit_predict(X)
+    log_density_y = model.predict(Y)
 
-Parameters:
-======================
+
+Usage with scanpy
+=================
+
+We recomend using a diffusion map latent representation of cell states as
+input for the density computation.
+
+.. code-block:: python
+
+    import Crowding as scd
+    import scanpy as sc
+
+    adata = sc.read(h5ad_file_path)
+    sc.external.tl.palantir(adata)
+    
+    model = scd.CrowdingEstimator()
+    adata.obs['log_density'] = model.fit_predict(adata.obsm['DM_EigenVectors'])
+
+Alternatively, to compute the density for a subset of cells on the complete
+dataset, the density of the subset can be evaluated on all cells:
+
+.. code-block:: python
+
+    import Crowding as scd
+    import scanpy as sc
+
+    adata = sc.read(h5ad_file_path)
+    sc.external.tl.palantir(adata)
+    
+    model = scd.CrowdingEstimator()
+    mask = adata.obs['condition'] == 'subset_value' # arbitrary mask
+    model.fit(adata[mask, :].obsm['DM_EigenVectors'])
+    adata.obs['log_density_conditional'] = model.predict(adata.obsm['DM_EigenVectors'])
+
+Parameters
+==========
 
 Above, all parameters are set automatically. The following code is equivalent.
 Any parameters can be changed as desired.
 
-.. code-block::
+.. code-block:: python
 
-   from Crowding import CrowdingEstimator, Matern52, \
-                        compute_landmarks, compute_nn_distances, compute_d, compute_mu, \
-                        compute_ls, compute_cov_func, compute_initial_value
+    import Crowding as scd
+    import numpy as np
+
+    X = np.random.rand(100, 10)  # 10-dimensional state representation for 100 cells
 
 
-   cov_func_curry = Matern52
+The Crowding density estimation uses the distance to the nearest neighbor
+from each cell as the input data.
 
-   # Higher n_landmarks is always better, but is more expensive.
-   n_landmarks = 5000
+.. code-block:: python
 
-   # Higher rank is always better, but is more expensive.
-   rank = 0.999
+    nn_distances = scd.compute_nn_distances(X)
 
-   # Generally unnecessary, but it clarifies the ambiguous case where rank = 1 or 1.0.
-   method = 'auto'
+One aspect of the density inference through Crowding is controlling 
+the rate of density change between similar cells. This is realized
+through a kernel function that computes the covariance of the log-density
+values for pairs of cells. By default, we use the Matern52 kernel
+with a heuristic for the length-scale parameter. This produces a twice
+differentiable density function with reasonable rate of change. Variance,
+bias, and differentiability can be controlled through the choice of kernel.
+E.g., increasing the length-scale reduces variance and using `scd.ExpQuad`
+increases differentiability.
 
-   # Increase if the covariance matrix is not positive definite.
-   jitter = 1e-6
+.. code-block:: python
 
-   sigma2 = 1e-6
+    length_scale = scd.compute_ls(nn_distances)
+    cov_func = scd.Matern52(length_scale)
 
-   # Landmark points should summarize the training data. The best way to choose
-   # landmark points is an open problem.
-   landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
 
-   nn_distances = compute_nn_distances(x)
+Landmarks in the data are used to approximate the covariance structure
+and hence the similarity of density values between cells by using the similarity
+to the landmarks as proxy. While any set of landmarks can be used, k-means-cluster
+centroids preformed best in our tests. The number of landmarks limits the rank
+of the resulting covariance matrix.
 
-   # The data may vary in fewer dimensions at a local scale.
-   d = compute_d(x)
+.. code-block:: python
 
-   # mu should be smaller than the density at most datapoints so the
-   # log density function decays to mu away from the data. You can use the mle
-   # function from the util module as an initial noisy log density estimation.
-   mu = compute_mu(nn_distances, d)
+    n_landmarks = 5000
+    landmarks = scd.k_means(X, n_landmarks, n_init=1)[0]
 
-   # Higher length scale produces a smoother function.
-   ls = compute_ls(nn_distances)
+By default, we further reduce the rank of the covariance matrix with an
+improved Nyström approximation. The rank parameter can be used to either
+select the fraction of *total variance* (sum of eigenvalues) preserved or
+an integer number of ranks. The resulting `L` is a Cholesky factor of the
+approximated covariance matrix.
 
-   cov_func = compute_cov_func(cov_func_curry, ls)
+.. code-block:: python
 
-   L = compute_L(x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter)
+    rank = 0.999
+    L = scd.compute_L(X, cov_func, landmarks=landmarks, rank=rank)
 
-   # The initial_value should be in the same basin as the global minimum.
-   initial_value = compute_initial_value(nn_distances, d, mu, L)
 
-   model = CrowdingEstimator(cov_func_curry=cov_func_curry, n_landmarks=n_landmarks, \
-                             rank=rank, method=method, jitter=jitter, sigma2=sigma2, \
-                             landmarks=landmarks, nn_distances=nn_distances, d=d, \
-                             mu=mu, ls=ls, cov_func=cov_func, L=L, \
-                             initial_value=initial_value)
-   log_density_x = model.fit_predict(x)
-   log_density_y = model.predict(y)
+By default, we assume that the data can vary along all its dimensions.
+However, if it is known that locally cells vary only along a
+subspace, e.g., tangential to the phenotypic manifold, then the
+dimensionality of this subspace should  be used.
+`d` is used to correctly related the nearest-neighbor-distance
+distribution to the cell-state density.
 
-Stages API:
-==================
+.. code-block:: python
+
+    d = X.shape[1]
+
+Crowding can automatically suggest a mean value `mu` for the Gaussian
+process of log-density to ensure scale invariance. A low value ensures
+that the density drops of quickly away from the data.
+
+.. code-block:: python
+
+    mu = scd.compute_mu(nn_distances, d)
+
+
+An initial value, based on ridge regression, is used by default
+to speed up the optimization.
+
+.. code-block:: python
+
+    initial_parameters = scd.compute_initial_value(nn_distances, d, mu, L)
+
+    model = scd.CrowdingEstimator(
+        n_landmarks=n_landmarks,
+        rank=rank, method=method,
+        jitter=jitter,
+        landmarks=landmarks,
+        nn_distances=nn_distances,
+        d=d,
+        mu=mu,
+        ls=ls,
+        cov_func=cov_func,
+        L=L,
+        initial_parameters=initial_parameters,
+    )
+
+    log_density_x = model.fit_predict(X)
+
+
+
+Stages API
+==========
 
 Instead of fitting the model with the fit function, you may split training into
 three stages: prepare_inference, run_inference, and process_inference.
 
-.. code-block::
+.. code-block:: python
 
-   model = CrowdingEstimator()
-   model.prepare_inference(x)
+   model = scd.CrowdingEstimator()
+   model.prepare_inference(X)
    model.run_inference()
    log_density_x = model.process_inference()
 
@@ -102,19 +180,35 @@ This allows you to make intermediate changes. For example, if you would
 like to use your own optimizer, use the I/O of the three stages and
 replace run_inference with your own optimizer:
 
-.. code-block::
+.. code-block:: python
 
-   def optimize(loss_func, initial_value):
+   def optimize(loss_func, initial_parameters):
        ...
        return optimal_parameters
 
-   model = CrowdingEstimator()
-   loss_func, initial_value = model.prepare_inference(x)
-   pre_transformation = optimize(loss_func, initial_value)
+   model = scd.CrowdingEstimator()
+   loss_func, initial_parameters = model.prepare_inference(X)
+   pre_transformation = optimize(loss_func, initial_parameters)
    log_density_x = model.process_inference(pre_transformation=pre_transformation)
 
-Covariance Functions:
-======================
+Derivatives
+===========
+
+After inference the density and its derivatives can be computed for arbitrary
+cell-states.
+
+.. code-block:: python
+
+    Y = np.random.rand(100, 10)  # arbitrary cell states
+
+    log_density = model.predict(Y)
+    gradients = model.gradient(Y)
+    hessians = model.hessian(Y)
+
+Of course this also works for `Y=X`.
+
+Covariance Functions
+====================
 
 See the cov module for a list of covariance functions already implemented.
 This section shows different ways to use a supplied covariance function
@@ -125,13 +219,13 @@ that returns a function k(x, y) :math:`\rightarrow` float. In this case, the len
 of the covariance function will be set to ls, which is computed automatically
 if not passed as an argument.
 
-.. code-block::
+.. code-block:: python
    :caption: Pass a predefined covariance function class (Default behavior)
 
    from Crowding import Matern52
    cov_func = Matern52
 
-.. code-block::
+.. code-block:: python
    :caption: Write a function of one variable that returns a function k(x, y) :math:`\rightarrow` float
 
    from Crowding import distance    # distance computes the distance between each point in x
@@ -144,7 +238,7 @@ if not passed as an argument.
        return cov_func
    cov_func = Matern52
 
-.. code-block::
+.. code-block:: python
    :caption: Inherit from the Covariance base class
 
    from Crowding import distance
@@ -165,7 +259,7 @@ if not passed as an argument.
 
 Alternatively, the cov_func argument supports a two argument function k(x, y) :math:`\rightarrow` float.
 
-.. code-block::
+.. code-block:: python
    :caption: Instantiate a predefined covariance function.
 
    from Crowding import Matern52
@@ -173,7 +267,7 @@ Alternatively, the cov_func argument supports a two argument function k(x, y) :m
    ls = 1.0  # Set ls as desired.
    cov_func = Matern52(ls)
 
-.. code-block::
+.. code-block:: python
    :caption: Write a function of two variables.
 
    from Crowding import distance
@@ -185,7 +279,7 @@ Alternatively, the cov_func argument supports a two argument function k(x, y) :m
        return similarity
    cov_func = Matern52_k
 
-.. code-block::
+.. code-block:: python
    :caption: Instatiate a type that inherits from the Covariance base class.
 
    from Crowding import distance
