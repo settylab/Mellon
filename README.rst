@@ -29,7 +29,10 @@ Usage with scanpy
 =================
 
 We recomend using a diffusion map latent representation of cell states as
-input for the density computation.
+input for the density computation. This latent represntation ensures that
+euclidian distance relates to cell-state disimilarity, some meaningless noise
+in cell-state is removed, and the dimensionality roghly represntes the
+dimensionality of the phenotypic manifold.
 
 .. code-block:: python
 
