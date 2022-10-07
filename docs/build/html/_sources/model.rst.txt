@@ -1,5 +1,5 @@
-model
----------------------
+Model
+=====
 
 .. automodule:: Crowding.model
    :members:

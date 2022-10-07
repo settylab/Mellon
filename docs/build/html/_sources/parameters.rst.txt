@@ -1,5 +1,5 @@
-parameters
---------------------------
+Parameter Selection
+===================
 
 .. automodule:: Crowding.parameters
    :members:

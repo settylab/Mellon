@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="inference" href="inference.html" /><link rel="prev" title="cov" href="cov.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Inference" href="inference.html" /><link rel="prev" title="Covariance Functions" href="cov.html" />
 
     <meta name="generator" content="sphinx-5.2.3, furo 2022.09.29"/>
-        <title>parameters - Crowding 1.0.0 documentation</title>
+        <title>Parameter Selection - Crowding 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -156,12 +156,11 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="model.html">model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
-<li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cov.html">cov</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cov.html">Covariance Functions</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Parameter Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inference.html">Inference</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -202,7 +201,7 @@
         </div>
         <article role="main">
           <section id="module-Crowding.parameters">
-<span id="parameters"></span><h1>parameters<a class="headerlink" href="#module-Crowding.parameters" title="Permalink to this heading">#</a></h1>
+<span id="parameter-selection"></span><h1>Parameter Selection<a class="headerlink" href="#module-Crowding.parameters" title="Permalink to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="Crowding.parameters.compute_L">
 <span class="sig-prename descclassname"><span class="pre">Crowding.parameters.</span></span><span class="sig-name descname"><span class="pre">compute_L</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.parameters.compute_L" title="Permalink to this definition">#</a></dt>
@@ -382,7 +381,7 @@ where <span class="math notranslate nohighlight">\(mle =
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">inference</div>
+                <div class="title">Inference</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -393,7 +392,7 @@ where <span class="math notranslate nohighlight">\(mle =
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">cov</div>
+                <div class="title">Covariance Functions</div>
                 
               </div>
             </a>
@@ -434,7 +433,7 @@ where <span class="math notranslate nohighlight">\(mle =
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">parameters</a><ul>
+<li><a class="reference internal" href="#">Parameter Selection</a><ul>
 <li><a class="reference internal" href="#Crowding.parameters.compute_L"><code class="docutils literal notranslate"><span class="pre">compute_L()</span></code></a></li>
 <li><a class="reference internal" href="#Crowding.parameters.compute_cov_func"><code class="docutils literal notranslate"><span class="pre">compute_cov_func()</span></code></a></li>
 <li><a class="reference internal" href="#Crowding.parameters.compute_d"><code class="docutils literal notranslate"><span class="pre">compute_d()</span></code></a></li>

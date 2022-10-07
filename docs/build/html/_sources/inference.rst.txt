@@ -1,5 +1,5 @@
-inference
--------------------------
+Inference
+=========
 
 .. automodule:: Crowding.inference
    :members:

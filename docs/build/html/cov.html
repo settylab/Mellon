@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="parameters" href="parameters.html" /><link rel="prev" title="base_cov" href="base_cov.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Parameter Selection" href="parameters.html" /><link rel="prev" title="Utilities" href="util.html" />
 
     <meta name="generator" content="sphinx-5.2.3, furo 2022.09.29"/>
-        <title>cov - Crowding 1.0.0 documentation</title>
+        <title>Covariance Functions - Crowding 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -156,12 +156,11 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Modules:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="model.html">model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
-<li class="toctree-l1"><a class="reference internal" href="base_cov.html">base_cov</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">cov</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="inference.html">inference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Covariance Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameter Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inference.html">Inference</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
@@ -201,12 +200,71 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-Crowding.cov">
-<span id="cov"></span><h1>cov<a class="headerlink" href="#module-Crowding.cov" title="Permalink to this heading">#</a></h1>
+          <section id="covariance-functions">
+<h1>Covariance Functions<a class="headerlink" href="#covariance-functions" title="Permalink to this heading">#</a></h1>
+<p>This section shows different ways to use a supplied covariance function
+or define your own.</p>
+<p>The <cite>cov_func_curry</cite> argument of the model class supports a one argument function
+or class type that returns a function k(x, y)
+<span class="math notranslate nohighlight">\(\rightarrow\)</span> float. In this case, the length scale of the covariance
+function will be computed automatically if not passed as an argument.
+Alternatively, one can set the <cite>cov_func</cite> argument with a function taking
+two arrays of cell states returning the similatity between each pair.</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">Pass a predefined covariance function class (Default behavior)</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Matern52</span>
+<span class="n">cov_func_cury</span> <span class="o">=</span> <span class="n">Matern52</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span><span class="p">(</span><span class="n">length_scale</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>    <span class="c1"># distance computes the distance between each point in x</span>
+                                 <span class="c1"># and each point in y.</span>
+<span class="k">def</span> <span class="nf">Matern52</span><span class="p">(</span><span class="n">ls</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">distance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">ls</span>
+        <span class="n">similarity</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">square</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">similarity</span>
+    <span class="k">return</span> <span class="n">k</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function
+<span class="math notranslate nohighlight">\(k(x, y) \rightarrow\)</span> float and inherit from the Covariance base class</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>
+<span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Covariance</span>  <span class="c1"># The Covariance base class __call__ method calls k.</span>
+                                 <span class="c1"># It also supports adding, multiplying, and taking the covariance</span>
+                                 <span class="c1"># to a power with the +, *, and ** operators.</span>
+
+<span class="k">class</span> <span class="nc">Matern52</span><span class="p">(</span><span class="n">Covariance</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ls</span> <span class="o">=</span> <span class="n">ls</span>
+
+    <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">distance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls</span>
+        <span class="n">similarity</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="n">square</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">simiAlarity</span>
+</pre></div>
+</div>
+</div>
+<p>Covariance functions can be algebraically combined:</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">Combining two covariance functions.</span><a class="headerlink" href="#id4" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Matern52</span><span class="p">,</span> <span class="n">ExpQuad</span>
+<span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span><span class="p">(</span><span class="n">length_scale</span><span class="p">)</span><span class="o">*</span><span class="mf">.7</span> <span class="o">+</span> <span class="n">ExpQuad</span><span class="p">(</span><span class="n">length_scale</span><span class="p">)</span><span class="o">*</span><span class="mf">.3</span>
+</pre></div>
+</div>
+</div>
+<section id="module-Crowding.cov">
+<span id="implemented-covariance-functions"></span><h2>Implemented Covariance Functions<a class="headerlink" href="#module-Crowding.cov" title="Permalink to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="Crowding.cov.ExpQuad">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">ExpQuad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.ExpQuad" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="base_cov.html#Crowding.base_cov.Covariance" title="Crowding.base_cov.Covariance"><code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="Crowding.cov.ExpQuad.k">
 <span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.ExpQuad.k" title="Permalink to this definition">#</a></dt>
@@ -218,7 +276,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="Crowding.cov.Exponential">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">Exponential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Exponential" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="base_cov.html#Crowding.base_cov.Covariance" title="Crowding.base_cov.Covariance"><code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="Crowding.cov.Exponential.k">
 <span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Exponential.k" title="Permalink to this definition">#</a></dt>
@@ -230,7 +288,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="Crowding.cov.Matern32">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">Matern32</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Matern32" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="base_cov.html#Crowding.base_cov.Covariance" title="Crowding.base_cov.Covariance"><code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="Crowding.cov.Matern32.k">
 <span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Matern32.k" title="Permalink to this definition">#</a></dt>
@@ -242,7 +300,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="Crowding.cov.Matern52">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">Matern52</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Matern52" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="base_cov.html#Crowding.base_cov.Covariance" title="Crowding.base_cov.Covariance"><code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="Crowding.cov.Matern52.k">
 <span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Matern52.k" title="Permalink to this definition">#</a></dt>
@@ -255,7 +313,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="Crowding.cov.RatQuad">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">RatQuad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.RatQuad" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="base_cov.html#Crowding.base_cov.Covariance" title="Crowding.base_cov.Covariance"><code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="Crowding.cov.RatQuad.k">
 <span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.RatQuad.k" title="Permalink to this definition">#</a></dt>
@@ -264,6 +322,7 @@
 
 </dd></dl>
 
+</section>
 </section>
 
         </article>
@@ -276,18 +335,18 @@
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">parameters</div>
+                <div class="title">Parameter Selection</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="base_cov.html">
+          <a class="prev-page" href="util.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">base_cov</div>
+                <div class="title">Utilities</div>
                 
               </div>
             </a>
@@ -328,7 +387,8 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">cov</a><ul>
+<li><a class="reference internal" href="#">Covariance Functions</a><ul>
+<li><a class="reference internal" href="#module-Crowding.cov">Implemented Covariance Functions</a><ul>
 <li><a class="reference internal" href="#Crowding.cov.ExpQuad"><code class="docutils literal notranslate"><span class="pre">ExpQuad</span></code></a><ul>
 <li><a class="reference internal" href="#Crowding.cov.ExpQuad.k"><code class="docutils literal notranslate"><span class="pre">ExpQuad.k()</span></code></a></li>
 </ul>
@@ -347,6 +407,8 @@
 </li>
 <li><a class="reference internal" href="#Crowding.cov.RatQuad"><code class="docutils literal notranslate"><span class="pre">RatQuad</span></code></a><ul>
 <li><a class="reference internal" href="#Crowding.cov.RatQuad.k"><code class="docutils literal notranslate"><span class="pre">RatQuad.k()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

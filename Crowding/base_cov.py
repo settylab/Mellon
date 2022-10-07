@@ -35,17 +35,18 @@ class Add(Covariance):
         self.right = right
 
     def __str__(self):
-        return self.__repl__()
+        return self.__repr__()
 
-    def __repl__(self):
+    def __repr__(self):
         return (
-            "(" + self.left.__repl__() + " + " + self.right.__repl__() + ")"
+            "(" + repr(self.left) + " + " + repr(self.right) + ")"
         )
 
-    def __call__(self, X):
-        if isinstance(self.right, Covariance):
-            return self.left(X) + self.right(X)
-        return self.left(X) + self.right
+    def __call__(self, x, y):
+        if callable(self.right):
+            return self.left(x, y) + self.right(x, y)
+        print(type(self.right))
+        return self.left(x, y) + self.right
 
 
 class Mul(Covariance):
@@ -58,17 +59,17 @@ class Mul(Covariance):
         self.right = right
 
     def __str__(self):
-        return self.__repl__()
+        return self.__repr__()
 
-    def __repl__(self):
+    def __repr__(self):
         return (
-            "(" + self.left.__repl__() + " * " + self.right.__repl__() + ")"
+            "(" + repr(self.left) + " * " + repr(self.right) + ")"
         )
 
-    def __call__(self, X):
-        if isinstance(self.right, Covariance):
-            return self.left(X) * self.right(X)
-        return self.left(X) * self.right
+    def __call__(self, x, y):
+        if callable(self.right):
+            return self.left(x, y) * self.right(x, y)
+        return self.left(x, y) * self.right
 
 
 class Pow(Covariance):
@@ -81,12 +82,12 @@ class Pow(Covariance):
         self.right = right
 
     def __str__(self):
-        return self.__repl__()
+        return self.__repr__()
 
-    def __repl__(self):
+    def __repr__(self):
         return (
-            "(" + self.left.__repl__() + " ** " + self.right.__repl__() + ")"
+            "(" + repr(self.left) + " ** " + repr(self.right) + ")"
         )
 
-    def __call__(self, X):
-        return self.left(X) ** self.right
+    def __call__(self, x, y):
+        return self.left(x, y) ** self.right

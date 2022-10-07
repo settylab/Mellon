@@ -6,12 +6,11 @@
    :maxdepth: 2
    :caption: Modules:
 
-   model
-   util
-   base_cov
-   cov
-   parameters
-   inference
+   Model <model>
+   Utilities <util>
+   Covariance Functions <cov>
+   Parameter Selection <parameters>
+   Inference <inference>
 
 .. include:: ../../README.rst
 
