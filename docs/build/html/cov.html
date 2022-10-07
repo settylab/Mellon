@@ -236,8 +236,6 @@ two arrays of cell states returning the similatity between each pair.</p>
 <span class="math notranslate nohighlight">\(k(x, y) \rightarrow\)</span> float and inherit from the Covariance base class</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>
 <span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Covariance</span>  <span class="c1"># The Covariance base class __call__ method calls k.</span>
-                                 <span class="c1"># It also supports adding, multiplying, and taking the covariance</span>
-                                 <span class="c1"># to a power with the +, *, and ** operators.</span>
 
 <span class="k">class</span> <span class="nc">Matern52</span><span class="p">(</span><span class="n">Covariance</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
@@ -251,7 +249,8 @@ two arrays of cell states returning the similatity between each pair.</p>
 </pre></div>
 </div>
 </div>
-<p>Covariance functions can be algebraically combined:</p>
+<p>The Covariance class upports adding, multiplying, and taking the covariance
+to a power with the +, *, and ** operators:</p>
 <div class="literal-block-wrapper docutils container" id="id4">
 <div class="code-block-caption"><span class="caption-text">Combining two covariance functions.</span><a class="headerlink" href="#id4" title="Permalink to this code">#</a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Matern52</span><span class="p">,</span> <span class="n">ExpQuad</span>

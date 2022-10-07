@@ -28,10 +28,12 @@ Basic Usage
 Usage with Scanpy
 =================
 
+`Scanpy <https://scanpy.readthedocs.io/>`_ is a popular single-cell analysis
+toolkit that can be used in conjunction with Crowding.
 We recomend using a diffusion map latent representation of cell states as
 input for the density computation. This latent represntation ensures that
-euclidian distance relates to cell-state disimilarity, some meaningless noise
-in cell-state is removed, and the dimensionality roghly represntes the
+euclidian distance relates to cell-state disimilarity, some confounding noise
+in cell state is removed, and the dimensionality approximates the
 dimensionality of the phenotypic manifold.
 
 .. code-block:: python
@@ -41,7 +43,7 @@ dimensionality of the phenotypic manifold.
 
     adata = sc.read(h5ad_file_path)
     sc.external.tl.palantir(adata)
-    
+
     model = scd.CrowdingEstimator()
     adata.obs['log_density'] = model.fit_predict(adata.obsm['DM_EigenVectors'])
 
@@ -55,7 +57,7 @@ dataset, the density of the subset can be evaluated on all cells:
 
     adata = sc.read(h5ad_file_path)
     sc.external.tl.palantir(adata)
-    
+
     model = scd.CrowdingEstimator()
     mask = adata.obs['condition'] == 'subset_value' # arbitrary mask
     model.fit(adata[mask, :].obsm['DM_EigenVectors'])
@@ -82,7 +84,7 @@ from each cell as the input data.
 
     nn_distances = scd.compute_nn_distances(X)
 
-One aspect of the density inference through Crowding is controlling 
+One aspect of the density inference through Crowding is controlling
 the rate of density change between similar cells. This is realized
 through a kernel function that computes the covariance of the log-density
 values for pairs of cells. By default, we use the Matern52 kernel

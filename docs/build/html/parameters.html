@@ -214,13 +214,14 @@
 <li><p><strong>cov_func</strong> (<em>function</em>) – The Gaussian process covariance function.</p></li>
 <li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points. If None, computes a full rank decompostion.
 Defaults to None.</p></li>
-<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the covariance matrix. If rank is equal to
-the number of datapoints, the covariance matrix is exact and full rank. If rank
-is equal to the number of landmark points, the standard Nystrom approximation is
-used. If rank is a float 0.0 <span class="math notranslate nohighlight">\(\le\)</span> rank <span class="math notranslate nohighlight">\(\le\)</span> 1.0, the rank is reduced
-further using the QR decomposition such that the eigenvalues of the included
-eigenvectors account for the specified percentage of the total eigenvalues.
-Defaults to 0.999.</p></li>
+<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the approximate covariance matrix.
+If rank is an int, an <span class="math notranslate nohighlight">\(n \times\)</span> rank matrix
+<span class="math notranslate nohighlight">\(L\)</span> is computed such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, the exact
+<span class="math notranslate nohighlight">\(n \times n\)</span> covariance matrix.
+If rank is a float 0.0 <span class="math notranslate nohighlight">\(\le\)</span> rank <span class="math notranslate nohighlight">\(\le\)</span> 1.0, the rank/size
+of <span class="math notranslate nohighlight">\(L\)</span> is selected such that the included eigenvalues of the covariance
+between landmark points account for the specified percentage of the
+sum of eigenvalues. Defaults to 0.999.</p></li>
 <li><p><strong>method</strong> (<em>str</em>) – Explicitly specifies whether rank is to be interpreted as a
 fixed number of eigenvectors or a percent of eigenvalues to include
 in the low rank approximation. Supports ‘fixed’, ‘percent’, or ‘auto’.

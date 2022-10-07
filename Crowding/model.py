@@ -57,8 +57,8 @@ class CrowdingEstimator:
         :math:`n \times n` covariance matrix.
         If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
         of :math:`L` is selected such that the included eigenvalues of the covariance
-        between landmark points, or data points if not using landmark points, account
-        for the specified percentage of the total eigenvalues. Defaults to 0.999.
+        between landmark points account for the specified percentage of the
+        sum of eigenvalues. Defaults to 0.999.
     :type rank: int or float
     :param method: Explicitly specifies whether rank is to be interpreted as a
         fixed number of eigenvectors or a percent of eigenvalues to include

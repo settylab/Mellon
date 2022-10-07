@@ -123,13 +123,14 @@ def compute_L(
     :param landmarks: The landmark points. If None, computes a full rank decompostion.
         Defaults to None.
     :type landmarks: array-like
-    :param rank: The rank of the covariance matrix. If rank is equal to
-        the number of datapoints, the covariance matrix is exact and full rank. If rank
-        is equal to the number of landmark points, the standard Nystrom approximation is
-        used. If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank is reduced
-        further using the QR decomposition such that the eigenvalues of the included
-        eigenvectors account for the specified percentage of the total eigenvalues.
-        Defaults to 0.999.
+    :param rank: The rank of the approximate covariance matrix.
+        If rank is an int, an :math:`n \times` rank matrix
+        :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
+        :math:`n \times n` covariance matrix.
+        If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
+        of :math:`L` is selected such that the included eigenvalues of the covariance
+        between landmark points account for the specified percentage of the
+        sum of eigenvalues. Defaults to 0.999.
     :type rank: int or float
     :param method: Explicitly specifies whether rank is to be interpreted as a
         fixed number of eigenvectors or a percent of eigenvalues to include

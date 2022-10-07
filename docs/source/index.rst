@@ -22,8 +22,7 @@
     Github Repo <https://github.com/settylab/Crowding>
 
 
-Indices
-==================
+Index
+=====
 
 * :ref:`genindex`
-* :ref:`modindex`

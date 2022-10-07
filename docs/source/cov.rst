@@ -36,8 +36,6 @@ two arrays of cell states returning the similatity between each pair.
 
    from Crowding import distance
    from Crowding import Covariance  # The Covariance base class __call__ method calls k.
-                                    # It also supports adding, multiplying, and taking the covariance
-                                    # to a power with the +, *, and ** operators.
 
    class Matern52(Covariance):
        def __init__(self, ls=1.0):
@@ -49,7 +47,8 @@ two arrays of cell states returning the similatity between each pair.
            similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
            return simiAlarity
 
-Covariance functions can be algebraically combined:
+The Covariance class upports adding, multiplying, and taking the covariance
+to a power with the +, \*, and \*\* operators:
 
 .. code-block:: python
    :caption: Combining two covariance functions.
