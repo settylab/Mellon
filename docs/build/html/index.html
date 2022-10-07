@@ -225,7 +225,7 @@
 </div>
 </section>
 <section id="usage-with-scanpy">
-<h1>Usage with scanpy<a class="headerlink" href="#usage-with-scanpy" title="Permalink to this heading">#</a></h1>
+<h1>Usage with Scanpy<a class="headerlink" href="#usage-with-scanpy" title="Permalink to this heading">#</a></h1>
 <p>We recomend using a diffusion map latent representation of cell states as
 input for the density computation. This latent represntation ensures that
 euclidian distance relates to cell-state disimilarity, some meaningless noise
@@ -323,13 +323,12 @@ to speed up the optimization.</p>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">(</span>
     <span class="n">n_landmarks</span><span class="o">=</span><span class="n">n_landmarks</span><span class="p">,</span>
-    <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
-    <span class="n">jitter</span><span class="o">=</span><span class="n">jitter</span><span class="p">,</span>
+    <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
     <span class="n">landmarks</span><span class="o">=</span><span class="n">landmarks</span><span class="p">,</span>
     <span class="n">nn_distances</span><span class="o">=</span><span class="n">nn_distances</span><span class="p">,</span>
     <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
     <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
-    <span class="n">ls</span><span class="o">=</span><span class="n">ls</span><span class="p">,</span>
+    <span class="n">ls</span><span class="o">=</span><span class="n">length_scale</span><span class="p">,</span>
     <span class="n">cov_func</span><span class="o">=</span><span class="n">cov_func</span><span class="p">,</span>
     <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span>
     <span class="n">initial_parameters</span><span class="o">=</span><span class="n">initial_parameters</span><span class="p">,</span>

@@ -25,7 +25,7 @@ Basic Usage
     log_density_y = model.predict(Y)
 
 
-Usage with scanpy
+Usage with Scanpy
 =================
 
 We recomend using a diffusion map latent representation of cell states as
@@ -150,13 +150,12 @@ to speed up the optimization.
 
     model = scd.CrowdingEstimator(
         n_landmarks=n_landmarks,
-        rank=rank, method=method,
-        jitter=jitter,
+        rank=rank,
         landmarks=landmarks,
         nn_distances=nn_distances,
         d=d,
         mu=mu,
-        ls=ls,
+        ls=length_scale,
         cov_func=cov_func,
         L=L,
         initial_parameters=initial_parameters,
