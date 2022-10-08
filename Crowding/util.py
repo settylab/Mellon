@@ -1,4 +1,4 @@
-from jax.numpy import eye, log, pi, repeat, newaxis, tensordot, sqrt
+from jax.numpy import eye, log, pi, repeat, newaxis, tensordot, sqrt, maximum
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
 
@@ -54,4 +54,4 @@ def distance(x, y):
     yy = repeat(arraysum(y * y, axis=1)[newaxis, :], n, axis=0)
     xy = tensordot(x, y, (1, 1))
     sq = xx - 2 * xy + yy + 1e-12
-    return sqrt(sq)
+    return sqrt(maximum(sq, 0))
