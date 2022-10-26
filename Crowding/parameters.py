@@ -88,7 +88,7 @@ def compute_ls(nn_distances):
     :return: ls - The geometric mean of the nearest neighbor distances times a constant.
     :rtype: float
     """
-    return exp(log(nn_distances).mean() + 3.1012095522922505)
+    return exp(log(nn_distances).mean() + 3.)
 
 
 def compute_cov_func(cov_func_curry, ls):
