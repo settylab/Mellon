@@ -165,7 +165,7 @@ def minimize_adam(
     losses = list()
     for i in range(n_iter):
         value, opt_state = step(i, opt_state)
-        losses.append(value)
+        losses.append(value.item())
     pre_transformation = get_params(opt_state)
     losses = stack(losses)
 
@@ -189,7 +189,7 @@ def minimize_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
     """
     opt = ScipyMinimize(fun=loss_func, method="L-BFGS-B", jit=jit).run(initial_value)
     Results = namedtuple("Results", "pre_transformation opt_state loss")
-    results = Results(opt.params, opt.state, opt.state.fun_val)
+    results = Results(opt.params, opt.state, opt.state.fun_val.item())
     return results
 
 
