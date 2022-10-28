@@ -1,7 +1,7 @@
 Parameter Selection
 ===================
 
-.. automodule:: Crowding.parameters
+.. automodule:: mellon.parameters
    :members:
    :undoc-members:
    :show-inheritance:

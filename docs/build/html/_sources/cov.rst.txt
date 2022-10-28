@@ -14,14 +14,14 @@ two arrays of cell states returning the similatity between each pair.
 .. code-block:: python
    :caption: Pass a predefined covariance function class (Default behavior)
 
-   from Crowding import Matern52
+   from mellon import Matern52
    cov_func_cury = Matern52
    cov_func = Matern52(length_scale)
 
 .. code-block:: python
    :caption: Write a function of one variable that returns a function k(x, y) :math:`\rightarrow` float
 
-   from Crowding import distance    # distance computes the distance between each point in x
+   from mellon import distance    # distance computes the distance between each point in x
                                     # and each point in y.
    def Matern52(ls=1.0):
        def k(x, y):
@@ -34,8 +34,8 @@ two arrays of cell states returning the similatity between each pair.
    :caption: Write a function of one variable that returns a function
     :math:`k(x, y) \rightarrow` float and inherit from the Covariance base class
 
-   from Crowding import distance
-   from Crowding import Covariance  # The Covariance base class __call__ method calls k.
+   from mellon import distance
+   from mellon import Covariance  # The Covariance base class __call__ method calls k.
 
    class Matern52(Covariance):
        def __init__(self, ls=1.0):
@@ -53,13 +53,13 @@ to a power with the +, \*, and \*\* operators:
 .. code-block:: python
    :caption: Combining two covariance functions.
 
-   from Crowding import Matern52, ExpQuad
+   from mellon import Matern52, ExpQuad
    cov_func = Matern52(length_scale)*.7 + ExpQuad(length_scale)*.3
 
 Implemented Covariance Functions
 --------------------------------
 
-.. automodule:: Crowding.cov
+.. automodule:: mellon.cov
    :members:
    :undoc-members:
    :show-inheritance:

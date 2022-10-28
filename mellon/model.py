@@ -34,10 +34,10 @@ from .util import DEFAULT_JITTER
 DEFAULT_COV_FUNC = Matern52
 
 
-class CrowdingEstimator:
+class DensityEstimator:
     R"""
     A non-parametric density estimator.
-    CrowdingEstimator performs Bayesian inference with a Gaussian process prior and Nearest
+    DensityEstimator performs Bayesian inference with a Gaussian process prior and Nearest
     Neighbor likelihood. All intermediate computations are cached as instance variables, so
     the user can view intermediate results and save computation time by passing precomputed
     values as arguments to a new model.

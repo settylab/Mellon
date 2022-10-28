@@ -1,7 +1,7 @@
 Utilities
 =========
 
-.. automodule:: Crowding.util
+.. automodule:: mellon.util
    :members:
    :undoc-members:
    :show-inheritance:

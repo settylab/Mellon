@@ -165,7 +165,7 @@
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="http://setty-lab.org"> Setty Lab</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/settylab/Crowding"> Github Repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/settylab/mellon"> Github Repo</a></li>
 </ul>
 
 </div>
@@ -200,14 +200,14 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-Crowding.model">
-<span id="model"></span><h1>Model<a class="headerlink" href="#module-Crowding.model" title="Permalink to this heading">#</a></h1>
+          <section id="module-mellon.model">
+<span id="model"></span><h1>Model<a class="headerlink" href="#module-mellon.model" title="Permalink to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.model.</span></span><span class="sig-name descname"><span class="pre">CrowdingEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'Crowding.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.model.</span></span><span class="sig-name descname"><span class="pre">DensityEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'mellon.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A non-parametric density estimator.
-CrowdingEstimator performs Bayesian inference with a Gaussian process prior and Nearest
+DensityEstimator performs Bayesian inference with a Gaussian process prior and Nearest
 Neighbor likelihood. All intermediate computations are cached as instance variables, so
 the user can view intermediate results and save computation time by passing precomputed
 values as arguments to a new model.</p>
@@ -312,8 +312,8 @@ loss of L-BFGS-B.</p></li>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.fit" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.fit" title="Permalink to this definition">#</a></dt>
 <dd><p>Fit the model from end to end.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -333,8 +333,8 @@ Defaults to True.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.fit_predict">
-<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.fit_predict">
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform Bayesian inference and return the log density at training points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -347,8 +347,8 @@ Defaults to True.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.gradient">
-<span class="sig-name descname"><span class="pre">gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.gradient" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.gradient">
+<span class="sig-name descname"><span class="pre">gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.gradient" title="Permalink to this definition">#</a></dt>
 <dd><p>Conputes the gradient of the predict function for each line in x.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -368,8 +368,8 @@ gradients.shape == x.shape</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.hessian">
-<span class="sig-name descname"><span class="pre">hessian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.hessian" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.hessian">
+<span class="sig-name descname"><span class="pre">hessian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.hessian" title="Permalink to this definition">#</a></dt>
 <dd><p>Conputes the hessian of the predict function for each line in x.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -389,8 +389,8 @@ hessians.shape == X.shape + X.shape[1:]</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.hessian_log_determinant">
-<span class="sig-name descname"><span class="pre">hessian_log_determinant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.hessian_log_determinant" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.hessian_log_determinant">
+<span class="sig-name descname"><span class="pre">hessian_log_determinant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.hessian_log_determinant" title="Permalink to this definition">#</a></dt>
 <dd><p>Conputes the logarirhm of the determinat of the predict function for
 each line in x.</p>
 <dl class="field-list simple">
@@ -412,8 +412,8 @@ signs.shape == log_determinants.shape == x.shape[0]</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.predict">
-<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.predict" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.predict" title="Permalink to this definition">#</a></dt>
 <dd><p>Predict the log density at each point in x.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -429,8 +429,8 @@ signs.shape == log_determinants.shape == x.shape[0]</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.prepare_inference">
-<span class="sig-name descname"><span class="pre">prepare_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.prepare_inference" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.prepare_inference">
+<span class="sig-name descname"><span class="pre">prepare_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.prepare_inference" title="Permalink to this definition">#</a></dt>
 <dd><p>Set all attributes in preparation for optimization, but do not
 perform Bayesian inference. It is not necessary to call this
 function before calling fit.</p>
@@ -449,8 +449,8 @@ initial guess for optimization.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.process_inference">
-<span class="sig-name descname"><span class="pre">process_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.process_inference" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.process_inference">
+<span class="sig-name descname"><span class="pre">process_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.process_inference" title="Permalink to this definition">#</a></dt>
 <dd><p>Use the optimized parameters to compute the log density at the
 training points. If build_predict, also build the prediction function.</p>
 <dl class="field-list simple">
@@ -472,8 +472,8 @@ Defaults to True.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.model.CrowdingEstimator.run_inference">
-<span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.model.CrowdingEstimator.run_inference" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator.run_inference">
+<span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.run_inference" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform Bayesian inference, optimizing the pre_transformation parameters.
 If you would like to run your own inference procedure, use the loss_function
 and initial_value attributes and set pre_transformation to the optimized
@@ -563,16 +563,16 @@ the stored initial_value attribute.</p></li>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Model</a><ul>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator</span></code></a><ul>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.fit"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.fit()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.fit_predict"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.fit_predict()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.gradient"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.gradient()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.hessian"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.hessian()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.hessian_log_determinant"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.hessian_log_determinant()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.predict"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.predict()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.prepare_inference"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.prepare_inference()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.process_inference"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.process_inference()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.model.CrowdingEstimator.run_inference"><code class="docutils literal notranslate"><span class="pre">CrowdingEstimator.run_inference()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator"><code class="docutils literal notranslate"><span class="pre">DensityEstimator</span></code></a><ul>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.fit"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.fit()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.fit_predict"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.fit_predict()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.gradient"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.gradient()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.hessian"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.hessian()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.hessian_log_determinant"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.hessian_log_determinant()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.predict"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.predict()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.prepare_inference"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.prepare_inference()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.process_inference"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.process_inference()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.DensityEstimator.run_inference"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.run_inference()</span></code></a></li>
 </ul>
 </li>
 </ul>

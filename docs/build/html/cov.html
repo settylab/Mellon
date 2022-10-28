@@ -165,7 +165,7 @@
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="http://setty-lab.org"> Setty Lab</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/settylab/Crowding"> Github Repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/settylab/mellon"> Github Repo</a></li>
 </ul>
 
 </div>
@@ -212,7 +212,7 @@ Alternatively, one can set the <cite>cov_func</cite> argument with a function ta
 two arrays of cell states returning the similatity between each pair.</p>
 <div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text">Pass a predefined covariance function class (Default behavior)</span><a class="headerlink" href="#id1" title="Permalink to this code">#</a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Matern52</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mellon</span> <span class="kn">import</span> <span class="n">Matern52</span>
 <span class="n">cov_func_cury</span> <span class="o">=</span> <span class="n">Matern52</span>
 <span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span><span class="p">(</span><span class="n">length_scale</span><span class="p">)</span>
 </pre></div>
@@ -220,7 +220,7 @@ two arrays of cell states returning the similatity between each pair.</p>
 </div>
 <div class="literal-block-wrapper docutils container" id="id2">
 <div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float</span><a class="headerlink" href="#id2" title="Permalink to this code">#</a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>    <span class="c1"># distance computes the distance between each point in x</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mellon</span> <span class="kn">import</span> <span class="n">distance</span>    <span class="c1"># distance computes the distance between each point in x</span>
                                  <span class="c1"># and each point in y.</span>
 <span class="k">def</span> <span class="nf">Matern52</span><span class="p">(</span><span class="n">ls</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
@@ -234,8 +234,8 @@ two arrays of cell states returning the similatity between each pair.</p>
 <div class="literal-block-wrapper docutils container" id="id3">
 <div class="code-block-caption"><span class="caption-text">Write a function of one variable that returns a function
 <span class="math notranslate nohighlight">\(k(x, y) \rightarrow\)</span> float and inherit from the Covariance base class</span><a class="headerlink" href="#id3" title="Permalink to this code">#</a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">distance</span>
-<span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Covariance</span>  <span class="c1"># The Covariance base class __call__ method calls k.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mellon</span> <span class="kn">import</span> <span class="n">distance</span>
+<span class="kn">from</span> <span class="nn">mellon</span> <span class="kn">import</span> <span class="n">Covariance</span>  <span class="c1"># The Covariance base class __call__ method calls k.</span>
 
 <span class="k">class</span> <span class="nc">Matern52</span><span class="p">(</span><span class="n">Covariance</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
@@ -253,56 +253,56 @@ two arrays of cell states returning the similatity between each pair.</p>
 to a power with the +, *, and ** operators:</p>
 <div class="literal-block-wrapper docutils container" id="id4">
 <div class="code-block-caption"><span class="caption-text">Combining two covariance functions.</span><a class="headerlink" href="#id4" title="Permalink to this code">#</a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Crowding</span> <span class="kn">import</span> <span class="n">Matern52</span><span class="p">,</span> <span class="n">ExpQuad</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mellon</span> <span class="kn">import</span> <span class="n">Matern52</span><span class="p">,</span> <span class="n">ExpQuad</span>
 <span class="n">cov_func</span> <span class="o">=</span> <span class="n">Matern52</span><span class="p">(</span><span class="n">length_scale</span><span class="p">)</span><span class="o">*</span><span class="mf">.7</span> <span class="o">+</span> <span class="n">ExpQuad</span><span class="p">(</span><span class="n">length_scale</span><span class="p">)</span><span class="o">*</span><span class="mf">.3</span>
 </pre></div>
 </div>
 </div>
-<section id="module-Crowding.cov">
-<span id="implemented-covariance-functions"></span><h2>Implemented Covariance Functions<a class="headerlink" href="#module-Crowding.cov" title="Permalink to this heading">#</a></h2>
+<section id="module-mellon.cov">
+<span id="implemented-covariance-functions"></span><h2>Implemented Covariance Functions<a class="headerlink" href="#module-mellon.cov" title="Permalink to this heading">#</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="Crowding.cov.ExpQuad">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">ExpQuad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.ExpQuad" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.ExpQuad">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.cov.</span></span><span class="sig-name descname"><span class="pre">ExpQuad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.ExpQuad" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.cov.ExpQuad.k">
-<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.ExpQuad.k" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.ExpQuad.k">
+<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.ExpQuad.k" title="Permalink to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(e^{-\frac{||x-y||^2}{2 l^2}}\)</span></p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="Crowding.cov.Exponential">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">Exponential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Exponential" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.Exponential">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.cov.</span></span><span class="sig-name descname"><span class="pre">Exponential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.Exponential" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.cov.Exponential.k">
-<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Exponential.k" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.Exponential.k">
+<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.Exponential.k" title="Permalink to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(e^{-\frac{||x-y||}{2l}}\)</span></p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="Crowding.cov.Matern32">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">Matern32</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Matern32" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.Matern32">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.cov.</span></span><span class="sig-name descname"><span class="pre">Matern32</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.Matern32" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.cov.Matern32.k">
-<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Matern32.k" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.Matern32.k">
+<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.Matern32.k" title="Permalink to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\((1 + \frac{\sqrt{3}||x-y||}{l}) \cdot e^{-\frac{\sqrt{3}||x-y||}{l}}\)</span></p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="Crowding.cov.Matern52">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">Matern52</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Matern52" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.Matern52">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.cov.</span></span><span class="sig-name descname"><span class="pre">Matern52</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.Matern52" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.cov.Matern52.k">
-<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.Matern52.k" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.Matern52.k">
+<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.Matern52.k" title="Permalink to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\((1 + \frac{\sqrt{5}||x-y||}{l} + \frac{5||x-y||^2}{3l^2})
 \cdot e^{-\frac{\sqrt{5}||x-y||}{l}}\)</span></p>
 </dd></dl>
@@ -310,12 +310,12 @@ to a power with the +, *, and ** operators:</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="Crowding.cov.RatQuad">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Crowding.cov.</span></span><span class="sig-name descname"><span class="pre">RatQuad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.RatQuad" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.RatQuad">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.cov.</span></span><span class="sig-name descname"><span class="pre">RatQuad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.RatQuad" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Covariance</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="Crowding.cov.RatQuad.k">
-<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.cov.RatQuad.k" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.cov.RatQuad.k">
+<span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.cov.RatQuad.k" title="Permalink to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\((1 + \frac{||x-y||^2}{2 \alpha l^2})^{-\alpha l}\)</span></p>
 </dd></dl>
 
@@ -387,25 +387,25 @@ to a power with the +, *, and ** operators:</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Covariance Functions</a><ul>
-<li><a class="reference internal" href="#module-Crowding.cov">Implemented Covariance Functions</a><ul>
-<li><a class="reference internal" href="#Crowding.cov.ExpQuad"><code class="docutils literal notranslate"><span class="pre">ExpQuad</span></code></a><ul>
-<li><a class="reference internal" href="#Crowding.cov.ExpQuad.k"><code class="docutils literal notranslate"><span class="pre">ExpQuad.k()</span></code></a></li>
+<li><a class="reference internal" href="#module-mellon.cov">Implemented Covariance Functions</a><ul>
+<li><a class="reference internal" href="#mellon.cov.ExpQuad"><code class="docutils literal notranslate"><span class="pre">ExpQuad</span></code></a><ul>
+<li><a class="reference internal" href="#mellon.cov.ExpQuad.k"><code class="docutils literal notranslate"><span class="pre">ExpQuad.k()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#Crowding.cov.Exponential"><code class="docutils literal notranslate"><span class="pre">Exponential</span></code></a><ul>
-<li><a class="reference internal" href="#Crowding.cov.Exponential.k"><code class="docutils literal notranslate"><span class="pre">Exponential.k()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.cov.Exponential"><code class="docutils literal notranslate"><span class="pre">Exponential</span></code></a><ul>
+<li><a class="reference internal" href="#mellon.cov.Exponential.k"><code class="docutils literal notranslate"><span class="pre">Exponential.k()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#Crowding.cov.Matern32"><code class="docutils literal notranslate"><span class="pre">Matern32</span></code></a><ul>
-<li><a class="reference internal" href="#Crowding.cov.Matern32.k"><code class="docutils literal notranslate"><span class="pre">Matern32.k()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.cov.Matern32"><code class="docutils literal notranslate"><span class="pre">Matern32</span></code></a><ul>
+<li><a class="reference internal" href="#mellon.cov.Matern32.k"><code class="docutils literal notranslate"><span class="pre">Matern32.k()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#Crowding.cov.Matern52"><code class="docutils literal notranslate"><span class="pre">Matern52</span></code></a><ul>
-<li><a class="reference internal" href="#Crowding.cov.Matern52.k"><code class="docutils literal notranslate"><span class="pre">Matern52.k()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.cov.Matern52"><code class="docutils literal notranslate"><span class="pre">Matern52</span></code></a><ul>
+<li><a class="reference internal" href="#mellon.cov.Matern52.k"><code class="docutils literal notranslate"><span class="pre">Matern52.k()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#Crowding.cov.RatQuad"><code class="docutils literal notranslate"><span class="pre">RatQuad</span></code></a><ul>
-<li><a class="reference internal" href="#Crowding.cov.RatQuad.k"><code class="docutils literal notranslate"><span class="pre">RatQuad.k()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.cov.RatQuad"><code class="docutils literal notranslate"><span class="pre">RatQuad</span></code></a><ul>
+<li><a class="reference internal" href="#mellon.cov.RatQuad.k"><code class="docutils literal notranslate"><span class="pre">RatQuad.k()</span></code></a></li>
 </ul>
 </li>
 </ul>

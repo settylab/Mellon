@@ -165,7 +165,7 @@
 <p class="caption" role="heading"><span class="caption-text">Links:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="http://setty-lab.org"> Setty Lab</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/settylab/Crowding"> Github Repo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/settylab/mellon"> Github Repo</a></li>
 </ul>
 
 </div>
@@ -200,11 +200,11 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-Crowding.inference">
-<span id="inference"></span><h1>Inference<a class="headerlink" href="#module-Crowding.inference" title="Permalink to this heading">#</a></h1>
+          <section id="module-mellon.inference">
+<span id="inference"></span><h1>Inference<a class="headerlink" href="#module-mellon.inference" title="Permalink to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.compute_conditional_mean">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_conditional_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_density_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_conditional_mean" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.inference.compute_conditional_mean">
+<span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">compute_conditional_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.compute_conditional_mean" title="Permalink to this definition">#</a></dt>
 <dd><p>Builds the mean function of the Gaussian process, conditioned on the log_density values.
 Returns a function equivalent to the predict function of the model.</p>
 <dl class="field-list simple">
@@ -212,7 +212,7 @@ Returns a function equivalent to the predict function of the model.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p></li>
 <li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points. Landmarks can be None if not using landmark points.</p></li>
-<li><p><strong>log_densities_x</strong> (<em>array-like</em>) – The log density at each point in x.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) – The log density at each point in x.</p></li>
 <li><p><strong>mu</strong> (<em>float</em>) – The original Gaussian process mean.</p></li>
 <li><p><strong>cov_func</strong> (<em>function</em>) – The Gaussian process covariance function.</p></li>
 <li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal for stability. Defaults to 1e-6.</p></li>
@@ -228,8 +228,8 @@ Returns a function equivalent to the predict function of the model.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.compute_log_density_x">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_log_density_x</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_log_density_x" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.inference.compute_log_density_x">
+<span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">compute_log_density_x</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.compute_log_density_x" title="Permalink to this definition">#</a></dt>
 <dd><p>Computes the log density at the training points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -248,8 +248,8 @@ where <span class="math notranslate nohighlight">\(K\)</span> is the covariance 
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.compute_loss_func">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_loss_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nn_distances</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_loss_func" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.inference.compute_loss_func">
+<span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">compute_loss_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nn_distances</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.compute_loss_func" title="Permalink to this definition">#</a></dt>
 <dd><p>Computes the Bayesian loss function -(prior(<span class="math notranslate nohighlight">\(z\)</span>) +
 likelihood(transform(<span class="math notranslate nohighlight">\(z\)</span>))).</p>
 <dl class="field-list simple">
@@ -273,8 +273,8 @@ where <span class="math notranslate nohighlight">\(K\)</span> is the covariance 
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.compute_transform">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">compute_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.compute_transform" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.inference.compute_transform">
+<span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">compute_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.compute_transform" title="Permalink to this definition">#</a></dt>
 <dd><p>Computes a function transform that maps <span class="math notranslate nohighlight">\(z \sim
 \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')\)</span>,
 where <span class="math notranslate nohighlight">\(I\)</span> is the identity matrix and <span class="math notranslate nohighlight">\(K \approx K' = L L^\top\)</span>,
@@ -294,8 +294,8 @@ covariance matrix.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.minimize_adam">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">minimize_adam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.minimize_adam" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.inference.minimize_adam">
+<span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">minimize_adam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.minimize_adam" title="Permalink to this definition">#</a></dt>
 <dd><p>Minimizes function with a starting guess of initial_value using
 adam and exponentially decaying learning rate.</p>
 <dl class="field-list simple">
@@ -318,8 +318,8 @@ parameters, final state of the optimizer, and history of loss values,</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="Crowding.inference.minimize_lbfgsb">
-<span class="sig-prename descclassname"><span class="pre">Crowding.inference.</span></span><span class="sig-name descname"><span class="pre">minimize_lbfgsb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Crowding.inference.minimize_lbfgsb" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.inference.minimize_lbfgsb">
+<span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">minimize_lbfgsb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.minimize_lbfgsb" title="Permalink to this definition">#</a></dt>
 <dd><p>Minimizes function with a starting guess of initial_value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -396,12 +396,12 @@ final loss value,</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Inference</a><ul>
-<li><a class="reference internal" href="#Crowding.inference.compute_conditional_mean"><code class="docutils literal notranslate"><span class="pre">compute_conditional_mean()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.inference.compute_log_density_x"><code class="docutils literal notranslate"><span class="pre">compute_log_density_x()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.inference.compute_loss_func"><code class="docutils literal notranslate"><span class="pre">compute_loss_func()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.inference.compute_transform"><code class="docutils literal notranslate"><span class="pre">compute_transform()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.inference.minimize_adam"><code class="docutils literal notranslate"><span class="pre">minimize_adam()</span></code></a></li>
-<li><a class="reference internal" href="#Crowding.inference.minimize_lbfgsb"><code class="docutils literal notranslate"><span class="pre">minimize_lbfgsb()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.inference.compute_conditional_mean"><code class="docutils literal notranslate"><span class="pre">compute_conditional_mean()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.inference.compute_log_density_x"><code class="docutils literal notranslate"><span class="pre">compute_log_density_x()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.inference.compute_loss_func"><code class="docutils literal notranslate"><span class="pre">compute_loss_func()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.inference.compute_transform"><code class="docutils literal notranslate"><span class="pre">compute_transform()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.inference.minimize_adam"><code class="docutils literal notranslate"><span class="pre">minimize_adam()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.inference.minimize_lbfgsb"><code class="docutils literal notranslate"><span class="pre">minimize_lbfgsb()</span></code></a></li>
 </ul>
 </li>
 </ul>
