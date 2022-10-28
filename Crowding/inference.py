@@ -212,7 +212,7 @@ def compute_log_density_x(pre_transformation, transform):
 def compute_conditional_mean(
     x,
     landmarks,
-    log_density_x,
+    y,
     mu,
     cov_func,
     jitter=DEFAULT_JITTER,
@@ -225,8 +225,8 @@ def compute_conditional_mean(
     :type x: array-like
     :param landmarks: The landmark points. Landmarks can be None if not using landmark points.
     :type landmarks: array-like
-    :param log_densities_x: The log density at each point in x.
-    :type log_densities_x: array-like
+    :param y: The log density at each point in x.
+    :type y: array-like
     :param mu: The original Gaussian process mean.
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
@@ -238,9 +238,9 @@ def compute_conditional_mean(
     """
     if landmarks is None:
         return _full_conditional_mean(
-            x, log_density_x, mu, cov_func, jitter=jitter,
+            x, y, mu, cov_func, jitter=jitter,
         )
     else:
         return _landmarks_conditional_mean(
-            x, landmarks, log_density_x, mu, cov_func, jitter=jitter,
+            x, landmarks, y, mu, cov_func, jitter=jitter,
         )

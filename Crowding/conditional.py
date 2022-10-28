@@ -6,15 +6,15 @@ from .util import stabilize, DEFAULT_JITTER
 
 
 def _full_conditional_mean(
-    x, log_density_x, mu, cov_func, jitter=DEFAULT_JITTER,
+    x, y, mu, cov_func, jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned Gaussian process.
 
     :param x: The training instances.
     :type x: array-like
-    :param log_densities_x: The log density at each point in x.
-    :type log_densities_x: array-like
+    :param y: The function value at each point in x.
+    :type y: array-like
     :param mu: The original Gaussian process mean.
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
@@ -26,7 +26,7 @@ def _full_conditional_mean(
     """
     K = cov_func(x, x)
     L = cholesky(stabilize(K, jitter=jitter))
-    weights = solve_triangular(L.T, solve_triangular(L, log_density_x, lower=True))
+    weights = solve_triangular(L.T, solve_triangular(L, y, lower=True))
 
     def mean(Xnew):
         Kus = cov_func(Xnew, x)
@@ -36,7 +36,7 @@ def _full_conditional_mean(
 
 
 def _landmarks_conditional_mean(
-    x, xu, log_density_x, mu, cov_func, jitter=DEFAULT_JITTER,
+    x, xu, y, mu, cov_func, jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned low rank gp, where rank
@@ -46,8 +46,8 @@ def _landmarks_conditional_mean(
     :type x: array-like
     :param xu: The landmark points.
     :type xu: array-like
-    :param log_densities_x: The log density at each point in x.
-    :type log_densities_x: array-like
+    :param y: The function value at each point in x.
+    :type y: array-like
     :param mu: The original Gaussian process mean.
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
@@ -62,7 +62,7 @@ def _landmarks_conditional_mean(
     Luu = cholesky(stabilize(Kuu, jitter))
     A = solve_triangular(Luu, Kuf, lower=True)
     L_B = cholesky(stabilize(dot(A, A.T), jitter))
-    r = log_density_x - mu
+    r = y - mu
     c = solve_triangular(L_B, dot(A, r), lower=True)
     z = solve_triangular(L_B.T, c)
     weights = solve_triangular(Luu.T, z)
