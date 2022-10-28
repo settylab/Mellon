@@ -205,14 +205,16 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="mellon.inference.compute_conditional_mean">
 <span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">compute_conditional_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.compute_conditional_mean" title="Permalink to this definition">#</a></dt>
-<dd><p>Builds the mean function of the Gaussian process, conditioned on the log_density values.
-Returns a function equivalent to the predict function of the model.</p>
+<dd><p>Builds the mean function of the Gaussian process, conditioned on the
+function values (e.g., log-density) on x.
+Returns a function that is defined on the whole domain of x.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p></li>
-<li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points. Landmarks can be None if not using landmark points.</p></li>
-<li><p><strong>y</strong> (<em>array-like</em>) – The log density at each point in x.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points for fast sparse computation.
+Landmarks can be None if not using landmark points.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) – The function values at each point in x.</p></li>
 <li><p><strong>mu</strong> (<em>float</em>) – The original Gaussian process mean.</p></li>
 <li><p><strong>cov_func</strong> (<em>function</em>) – The Gaussian process covariance function.</p></li>
 <li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal for stability. Defaults to 1e-6.</p></li>

@@ -218,14 +218,16 @@ def compute_conditional_mean(
     jitter=DEFAULT_JITTER,
 ):
     R"""
-    Builds the mean function of the Gaussian process, conditioned on the log_density values.
-    Returns a function equivalent to the predict function of the model.
+    Builds the mean function of the Gaussian process, conditioned on the
+    function values (e.g., log-density) on x.
+    Returns a function that is defined on the whole domain of x.
 
     :param x: The training instances.
     :type x: array-like
-    :param landmarks: The landmark points. Landmarks can be None if not using landmark points.
+    :param landmarks: The landmark points for fast sparse computation.
+        Landmarks can be None if not using landmark points.
     :type landmarks: array-like
-    :param y: The log density at each point in x.
+    :param y: The function values at each point in x.
     :type y: array-like
     :param mu: The original Gaussian process mean.
     :type mu: float
