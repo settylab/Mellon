@@ -14,13 +14,13 @@ Basic Usage
 
 .. code-block:: python
 
-    import mellon as scd
+    import mellon
     import numpy as np
 
     X = np.random.rand(100, 10)  # 10-dimensional state representation for 100 cells
     Y = np.random.rand(100, 10)  # arbitrary test data
 
-    model = scd.DensityEstimator()
+    model = mellon.DensityEstimator()
     log_density_x = model.fit_predict(X)
     log_density_y = model.predict(Y)
 
@@ -38,13 +38,13 @@ dimensionality of the phenotypic manifold.
 
 .. code-block:: python
 
-    import mellon as scd
+    import mellon
     import scanpy as sc
 
     adata = sc.read(h5ad_file_path)
     sc.external.tl.palantir(adata)
 
-    model = scd.DensityEstimator()
+    model = mellon.DensityEstimator()
     adata.obs['log_density'] = model.fit_predict(adata.obsm['DM_EigenVectors'])
 
 Alternatively, to compute the density for a subset of cells on the complete
@@ -52,13 +52,13 @@ dataset, the density of the subset can be evaluated on all cells:
 
 .. code-block:: python
 
-    import mellon as scd
+    import mellon
     import scanpy as sc
 
     adata = sc.read(h5ad_file_path)
     sc.external.tl.palantir(adata)
 
-    model = scd.DensityEstimator()
+    model = mellon.DensityEstimator()
     mask = adata.obs['condition'] == 'subset_value' # arbitrary mask
     model.fit(adata[mask, :].obsm['DM_EigenVectors'])
     adata.obs['log_density_conditional'] = model.predict(adata.obsm['DM_EigenVectors'])
@@ -71,7 +71,7 @@ Any parameters can be changed as desired.
 
 .. code-block:: python
 
-    import mellon as scd
+    import mellon
     import numpy as np
 
     X = np.random.rand(100, 10)  # 10-dimensional state representation for 100 cells
@@ -82,7 +82,7 @@ from each cell as the input data.
 
 .. code-block:: python
 
-    nn_distances = scd.compute_nn_distances(X)
+    nn_distances = mellon.compute_nn_distances(X)
 
 One aspect of the density inference through Mellon is controlling
 the rate of density change between similar cells. This is realized
@@ -91,13 +91,13 @@ values for pairs of cells. By default, we use the Matern52 kernel
 with a heuristic for the length-scale parameter. This produces a twice
 differentiable density function with reasonable rate of change. Variance,
 bias, and differentiability can be controlled through the choice of kernel.
-E.g., increasing the length-scale reduces variance and using `scd.ExpQuad`
+E.g., increasing the length-scale reduces variance and using `mellon.ExpQuad`
 increases differentiability.
 
 .. code-block:: python
 
-    length_scale = scd.compute_ls(nn_distances)
-    cov_func = scd.Matern52(length_scale)
+    length_scale = mellon.compute_ls(nn_distances)
+    cov_func = mellon.Matern52(length_scale)
 
 
 Landmarks in the data are used to approximate the covariance structure
@@ -109,7 +109,7 @@ of the resulting covariance matrix.
 .. code-block:: python
 
     n_landmarks = 5000
-    landmarks = scd.k_means(X, n_landmarks, n_init=1)[0]
+    landmarks = mellon.k_means(X, n_landmarks, n_init=1)[0]
 
 By default, we further reduce the rank of the covariance matrix with an
 improved Nyström approximation. The rank parameter can be used to either
@@ -120,7 +120,7 @@ approximated covariance matrix.
 .. code-block:: python
 
     rank = 0.999
-    L = scd.compute_L(X, cov_func, landmarks=landmarks, rank=rank)
+    L = mellon.compute_L(X, cov_func, landmarks=landmarks, rank=rank)
 
 
 By default, we assume that the data can vary along all its dimensions.
@@ -140,7 +140,7 @@ that the density drops of quickly away from the data.
 
 .. code-block:: python
 
-    mu = scd.compute_mu(nn_distances, d)
+    mu = mellon.compute_mu(nn_distances, d)
 
 
 An initial value, based on ridge regression, is used by default
@@ -148,9 +148,9 @@ to speed up the optimization.
 
 .. code-block:: python
 
-    initial_parameters = scd.compute_initial_value(nn_distances, d, mu, L)
+    initial_parameters = mellon.compute_initial_value(nn_distances, d, mu, L)
 
-    model = scd.DensityEstimator(
+    model = mellon.DensityEstimator(
         n_landmarks=n_landmarks,
         rank=rank,
         landmarks=landmarks,
@@ -175,7 +175,7 @@ three stages: prepare_inference, run_inference, and process_inference.
 
 .. code-block:: python
 
-   model = scd.DensityEstimator()
+   model = mellon.DensityEstimator()
    model.prepare_inference(X)
    model.run_inference()
    log_density_x = model.process_inference()
@@ -190,7 +190,7 @@ replace run_inference with your own optimizer:
        ...
        return optimal_parameters
 
-   model = scd.DensityEstimator()
+   model = mellon.DensityEstimator()
    loss_func, initial_parameters = model.prepare_inference(X)
    pre_transformation = optimize(loss_func, initial_parameters)
    log_density_x = model.process_inference(pre_transformation=pre_transformation)
