@@ -1,4 +1,4 @@
-Crowding is a non-parametric density estimator based on the NearestNeighbors distribution.
+Mellon is a non-parametric density estimator based on the NearestNeighbors distribution.
 
 Installation
 ============
@@ -7,20 +7,20 @@ To install with pip you can run:
 
 .. code-block:: bash
 
-   pip install Crowding
+   pip install mellon
 
 Basic Usage
 ===========
 
 .. code-block:: python
 
-    import Crowding as scd
+    import mellon as scd
     import numpy as np
 
     X = np.random.rand(100, 10)  # 10-dimensional state representation for 100 cells
     Y = np.random.rand(100, 10)  # arbitrary test data
 
-    model = scd.CrowdingEstimator()
+    model = scd.DensityEstimator()
     log_density_x = model.fit_predict(X)
     log_density_y = model.predict(Y)
 
@@ -29,7 +29,7 @@ Usage with Scanpy
 =================
 
 `Scanpy <https://scanpy.readthedocs.io/>`_ is a popular single-cell analysis
-toolkit that can be used in conjunction with Crowding.
+toolkit that can be used in conjunction with Mellon.
 We recomend using a diffusion map latent representation of cell states as
 input for the density computation. This latent represntation ensures that
 euclidian distance relates to cell-state disimilarity, some confounding noise
@@ -38,13 +38,13 @@ dimensionality of the phenotypic manifold.
 
 .. code-block:: python
 
-    import Crowding as scd
+    import mellon as scd
     import scanpy as sc
 
     adata = sc.read(h5ad_file_path)
     sc.external.tl.palantir(adata)
 
-    model = scd.CrowdingEstimator()
+    model = scd.DensityEstimator()
     adata.obs['log_density'] = model.fit_predict(adata.obsm['DM_EigenVectors'])
 
 Alternatively, to compute the density for a subset of cells on the complete
@@ -52,13 +52,13 @@ dataset, the density of the subset can be evaluated on all cells:
 
 .. code-block:: python
 
-    import Crowding as scd
+    import mellon as scd
     import scanpy as sc
 
     adata = sc.read(h5ad_file_path)
     sc.external.tl.palantir(adata)
 
-    model = scd.CrowdingEstimator()
+    model = scd.DensityEstimator()
     mask = adata.obs['condition'] == 'subset_value' # arbitrary mask
     model.fit(adata[mask, :].obsm['DM_EigenVectors'])
     adata.obs['log_density_conditional'] = model.predict(adata.obsm['DM_EigenVectors'])
@@ -71,20 +71,20 @@ Any parameters can be changed as desired.
 
 .. code-block:: python
 
-    import Crowding as scd
+    import mellon as scd
     import numpy as np
 
     X = np.random.rand(100, 10)  # 10-dimensional state representation for 100 cells
 
 
-The Crowding density estimation uses the distance to the nearest neighbor
+The Mellon density estimation uses the distance to the nearest neighbor
 from each cell as the input data.
 
 .. code-block:: python
 
     nn_distances = scd.compute_nn_distances(X)
 
-One aspect of the density inference through Crowding is controlling
+One aspect of the density inference through Mellon is controlling
 the rate of density change between similar cells. This is realized
 through a kernel function that computes the covariance of the log-density
 values for pairs of cells. By default, we use the Matern52 kernel
@@ -134,7 +134,7 @@ distribution to the cell-state density.
 
     d = X.shape[1]
 
-Crowding can automatically suggest a mean value `mu` for the Gaussian
+Mellon can automatically suggest a mean value `mu` for the Gaussian
 process of log-density to ensure scale invariance. A low value ensures
 that the density drops of quickly away from the data.
 
@@ -150,7 +150,7 @@ to speed up the optimization.
 
     initial_parameters = scd.compute_initial_value(nn_distances, d, mu, L)
 
-    model = scd.CrowdingEstimator(
+    model = scd.DensityEstimator(
         n_landmarks=n_landmarks,
         rank=rank,
         landmarks=landmarks,
@@ -175,7 +175,7 @@ three stages: prepare_inference, run_inference, and process_inference.
 
 .. code-block:: python
 
-   model = scd.CrowdingEstimator()
+   model = scd.DensityEstimator()
    model.prepare_inference(X)
    model.run_inference()
    log_density_x = model.process_inference()
@@ -190,7 +190,7 @@ replace run_inference with your own optimizer:
        ...
        return optimal_parameters
 
-   model = scd.CrowdingEstimator()
+   model = scd.DensityEstimator()
    loss_func, initial_parameters = model.prepare_inference(X)
    pre_transformation = optimize(loss_func, initial_parameters)
    log_density_x = model.process_inference(pre_transformation=pre_transformation)
