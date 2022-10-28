@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Model" href="model.html" />
 
     <meta name="generator" content="sphinx-5.2.3, furo 2022.09.29"/>
-        <title>Crowding 1.0.0 documentation</title>
+        <title>Mellon 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="#"><div class="brand">Crowding 1.0.0 documentation</div></a>
+      <a href="#"><div class="brand">Mellon 1.0.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
   
   
-  <span class="sidebar-brand-text">Crowding 1.0.0 documentation</span>
+  <span class="sidebar-brand-text">Mellon 1.0.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -202,23 +202,23 @@
         <article role="main">
           <div class="toctree-wrapper compound">
 </div>
-<p>Crowding is a non-parametric density estimator based on the NearestNeighbors distribution.</p>
+<p>Mellon is a non-parametric density estimator based on the NearestNeighbors distribution.</p>
 <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h1>
 <p>To install with pip you can run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install Crowding
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install mellon
 </pre></div>
 </div>
 </section>
 <section id="basic-usage">
 <h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this heading">#</a></h1>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Crowding</span> <span class="k">as</span> <span class="nn">scd</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mellon</span> <span class="k">as</span> <span class="nn">scd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># 10-dimensional state representation for 100 cells</span>
 <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># arbitrary test data</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">DensityEstimator</span><span class="p">()</span>
 <span class="n">log_density_x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 <span class="n">log_density_y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
 </pre></div>
@@ -227,31 +227,31 @@
 <section id="usage-with-scanpy">
 <h1>Usage with Scanpy<a class="headerlink" href="#usage-with-scanpy" title="Permalink to this heading">#</a></h1>
 <p><a class="reference external" href="https://scanpy.readthedocs.io/">Scanpy</a> is a popular single-cell analysis
-toolkit that can be used in conjunction with Crowding.
+toolkit that can be used in conjunction with Mellon.
 We recomend using a diffusion map latent representation of cell states as
 input for the density computation. This latent represntation ensures that
 euclidian distance relates to cell-state disimilarity, some confounding noise
 in cell state is removed, and the dimensionality approximates the
 dimensionality of the phenotypic manifold.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Crowding</span> <span class="k">as</span> <span class="nn">scd</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mellon</span> <span class="k">as</span> <span class="nn">scd</span>
 <span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
 
 <span class="n">adata</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">h5ad_file_path</span><span class="p">)</span>
 <span class="n">sc</span><span class="o">.</span><span class="n">external</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">palantir</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">DensityEstimator</span><span class="p">()</span>
 <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;log_density&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s1">&#39;DM_EigenVectors&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>Alternatively, to compute the density for a subset of cells on the complete
 dataset, the density of the subset can be evaluated on all cells:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Crowding</span> <span class="k">as</span> <span class="nn">scd</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mellon</span> <span class="k">as</span> <span class="nn">scd</span>
 <span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
 
 <span class="n">adata</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">h5ad_file_path</span><span class="p">)</span>
 <span class="n">sc</span><span class="o">.</span><span class="n">external</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">palantir</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">DensityEstimator</span><span class="p">()</span>
 <span class="n">mask</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;condition&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;subset_value&#39;</span> <span class="c1"># arbitrary mask</span>
 <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">adata</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s1">&#39;DM_EigenVectors&#39;</span><span class="p">])</span>
 <span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;log_density_conditional&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s1">&#39;DM_EigenVectors&#39;</span><span class="p">])</span>
@@ -262,18 +262,18 @@ dataset, the density of the subset can be evaluated on all cells:</p>
 <h1>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading">#</a></h1>
 <p>Above, all parameters are set automatically. The following code is equivalent.
 Any parameters can be changed as desired.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Crowding</span> <span class="k">as</span> <span class="nn">scd</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mellon</span> <span class="k">as</span> <span class="nn">scd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># 10-dimensional state representation for 100 cells</span>
 </pre></div>
 </div>
-<p>The Crowding density estimation uses the distance to the nearest neighbor
+<p>The Mellon density estimation uses the distance to the nearest neighbor
 from each cell as the input data.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">nn_distances</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">compute_nn_distances</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>One aspect of the density inference through Crowding is controlling
+<p>One aspect of the density inference through Mellon is controlling
 the rate of density change between similar cells. This is realized
 through a kernel function that computes the covariance of the log-density
 values for pairs of cells. By default, we use the Matern52 kernel
@@ -313,7 +313,7 @@ distribution to the cell-state density.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>Crowding can automatically suggest a mean value <cite>mu</cite> for the Gaussian
+<p>Mellon can automatically suggest a mean value <cite>mu</cite> for the Gaussian
 process of log-density to ensure scale invariance. A low value ensures
 that the density drops of quickly away from the data.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mu</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">compute_mu</span><span class="p">(</span><span class="n">nn_distances</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
@@ -323,7 +323,7 @@ that the density drops of quickly away from the data.</p>
 to speed up the optimization.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">initial_parameters</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">compute_initial_value</span><span class="p">(</span><span class="n">nn_distances</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">L</span><span class="p">)</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">(</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">DensityEstimator</span><span class="p">(</span>
     <span class="n">n_landmarks</span><span class="o">=</span><span class="n">n_landmarks</span><span class="p">,</span>
     <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
     <span class="n">landmarks</span><span class="o">=</span><span class="n">landmarks</span><span class="p">,</span>
@@ -344,7 +344,7 @@ to speed up the optimization.</p>
 <h1>Stages API<a class="headerlink" href="#stages-api" title="Permalink to this heading">#</a></h1>
 <p>Instead of fitting the model with the fit function, you may split training into
 three stages: prepare_inference, run_inference, and process_inference.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">DensityEstimator</span><span class="p">()</span>
 <span class="n">model</span><span class="o">.</span><span class="n">prepare_inference</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 <span class="n">model</span><span class="o">.</span><span class="n">run_inference</span><span class="p">()</span>
 <span class="n">log_density_x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">process_inference</span><span class="p">()</span>
@@ -357,7 +357,7 @@ replace run_inference with your own optimizer:</p>
     <span class="o">...</span>
     <span class="k">return</span> <span class="n">optimal_parameters</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">CrowdingEstimator</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">scd</span><span class="o">.</span><span class="n">DensityEstimator</span><span class="p">()</span>
 <span class="n">loss_func</span><span class="p">,</span> <span class="n">initial_parameters</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">prepare_inference</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 <span class="n">pre_transformation</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">loss_func</span><span class="p">,</span> <span class="n">initial_parameters</span><span class="p">)</span>
 <span class="n">log_density_x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">process_inference</span><span class="p">(</span><span class="n">pre_transformation</span><span class="o">=</span><span class="n">pre_transformation</span><span class="p">)</span>
@@ -414,7 +414,7 @@ cell-states.</p>
           </div>
           <div class="right-details">
             <div class="icons">
-              <a class="muted-link " href="https://github.com/settylab/Crowding" aria-label="GitHub">
+              <a class="muted-link " href="https://github.com/settylab/mellon" aria-label="GitHub">
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
                 </svg>
