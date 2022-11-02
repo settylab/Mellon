@@ -502,7 +502,7 @@ class DensityEstimator:
 
     def gradient(self, x, jit=True):
         R"""
-        Conputes the gradient of the predict function for each line in x.
+        Computes the gradient of the predict function for each line in x.
 
         :param x: Data points.
         :type x: array-like
@@ -516,7 +516,7 @@ class DensityEstimator:
 
     def hessian(self, x, jit=True):
         R"""
-        Conputes the hessian of the predict function for each line in x.
+        Computes the hessian of the predict function for each line in x.
 
         :param x: Data points.
         :type x: array-like
@@ -530,7 +530,7 @@ class DensityEstimator:
 
     def hessian_log_determinant(self, x, jit=True):
         R"""
-        Conputes the logarirhm of the determinat of the predict function for
+        Computes the logarithm of the determinant of the predict function for
         each line in x.
 
         :param x: Data points.

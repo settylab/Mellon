@@ -2,7 +2,7 @@ import jax
 
 def gradient(function, x, jit=True):
     R"""
-    Conputes the gradient of the function for each line in x.
+    Computes the gradient of the function for each line in x.
 
     :param function: A function returning one value per
         line in x. function(x).shape == (x.shape[0], )
@@ -23,7 +23,7 @@ def gradient(function, x, jit=True):
 
 def hessian(function, x, jit=True):
     R"""
-    Conputes the hessian of the function for each line in x.
+    Computes the hessian of the function for each line in x.
 
     :param function: A function returning one value per
         line in x. function(x).shape == (x.shape[0], )
@@ -44,7 +44,7 @@ def hessian(function, x, jit=True):
 
 def hessian_log_determinant(function, x, jit=True):
     R"""
-    Conputes the logarirhm of the determinat of the function for each line in x.
+    Computes the logarithm of the determinant of the function for each line in x.
 
     :param function: A function returning one value per
         line in x. function(x).shape == (x.shape[0], )

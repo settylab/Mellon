@@ -113,7 +113,7 @@ def compute_loss_func(nn_distances, d, transform, k):
     :param k: dimension of transform input
     :type k: int
     :return: loss_func - The Bayesian loss function
-    :rtype: function, function
+    :rtype: function
     """
     prior = _normal(k)
     likelihood = _nearest_neighbors(nn_distances, d)
