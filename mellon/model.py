@@ -455,7 +455,7 @@ class DensityEstimator:
             self._set_log_density_func()
         return self.log_density_x
 
-    def fit(self, x, build_predict=True):
+    def fit(self, x=None, build_predict=True):
         R"""
         Fit the model from end to end.
 
@@ -470,6 +470,11 @@ class DensityEstimator:
         if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             raise ValueError(message)
+        if self.x is None and x is None:
+            message = "Required argument x is missing and self.x has not been set."
+            raise ValueError(message)
+        if x is None:
+            x = self.x
 
         self.prepare_inference(x)
         self.run_inference()
@@ -489,7 +494,7 @@ class DensityEstimator:
             self._set_log_density_func()
         return self.log_density_func(x)
 
-    def fit_predict(self, x, build_predict=False):
+    def fit_predict(self, x=None, build_predict=False):
         R"""
         Perform Bayesian inference and return the log density at training points.
 
@@ -497,6 +502,15 @@ class DensityEstimator:
         :type x: array-like
         :return: log_density_x - The log density at each training point in x.
         """
+        if self.x is not None and self.x is not x:
+            message = "self.x has been set already, but is not equal to the argument x."
+            raise ValueError(message)
+        if self.x is None and x is None:
+            message = "Required argument x is missing and self.x has not been set."
+            raise ValueError(message)
+        if x is None:
+            x = self.x
+
         self.fit(x, build_predict=build_predict)
         return self.log_density_x
 
