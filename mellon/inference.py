@@ -68,7 +68,7 @@ def _nearest_neighbors(r, d):
     """
     constant1 = pi ** (d / 2) / exp(gammaln(d / 2 + 1))
     V = constant1 * (r**d)
-    constant2 = log(d) + (d * log(pi) / 2) - gammaln(d / 2 + 1)
+    constant2 = log(d+1e-16) + (d * log(pi) / 2) - gammaln(d / 2 + 1)
     Vdr = constant2 + ((d - 1) * log(r))
 
     def logpdf(log_density):
@@ -215,6 +215,7 @@ def compute_conditional_mean(
     y,
     mu,
     cov_func,
+    sigma=0,
     jitter=DEFAULT_JITTER,
 ):
     R"""
@@ -233,6 +234,8 @@ def compute_conditional_mean(
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
+    :param sigma: White moise veriance. Defaults to 0.
+    :type sigma: float
     :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
     :type jitter: float
     :return: conditional_mean - The conditioned Gaussian process mean function.
@@ -244,5 +247,5 @@ def compute_conditional_mean(
         )
     else:
         return _landmarks_conditional_mean(
-            x, landmarks, y, mu, cov_func, jitter=jitter,
+            x, landmarks, y, mu, cov_func, sigma=sigma, jitter=jitter,
         )

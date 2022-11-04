@@ -6,7 +6,7 @@ from .util import stabilize, DEFAULT_JITTER
 
 
 def _full_conditional_mean(
-    x, y, mu, cov_func, jitter=DEFAULT_JITTER,
+    x, y, mu, cov_func, sigma=0, jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned Gaussian process.
@@ -19,13 +19,16 @@ def _full_conditional_mean(
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
+    :param sigma: White moise veriance. Defaults to 0.
+    :type sigma: float
     :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
     :type jitter: float
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
     K = cov_func(x, x)
-    L = cholesky(stabilize(K, jitter=jitter))
+    sigma = max(sigma, jitter)
+    L = cholesky(stabilize(K, jitter=sigma))
     weights = solve_triangular(L.T, solve_triangular(L, y, lower=True))
 
     def mean(Xnew):
@@ -36,7 +39,7 @@ def _full_conditional_mean(
 
 
 def _landmarks_conditional_mean(
-    x, xu, y, mu, cov_func, jitter=DEFAULT_JITTER,
+    x, xu, y, mu, cov_func, sigma=0, jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned low rank gp, where rank
@@ -52,6 +55,8 @@ def _landmarks_conditional_mean(
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
+    :param sigma: White moise veriance. Defaults to 0.
+    :type sigma: float
     :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
     :type jitter: float
     :return: conditional_mean - The conditioned Gaussian process mean function.
@@ -61,7 +66,8 @@ def _landmarks_conditional_mean(
     Kuf = cov_func(xu, x)
     Luu = cholesky(stabilize(Kuu, jitter))
     A = solve_triangular(Luu, Kuf, lower=True)
-    L_B = cholesky(stabilize(dot(A, A.T), jitter))
+    sigma = max(sigma, jitter)
+    L_B = cholesky(stabilize(dot(A, A.T), sigma))
     r = y - mu
     c = solve_triangular(L_B, dot(A, r), lower=True)
     z = solve_triangular(L_B.T, c)
