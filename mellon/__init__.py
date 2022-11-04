@@ -34,4 +34,8 @@ from .derivatives import (
     hessian,
     hessian_log_determinant,
 )
-from .model import DensityEstimator, DEFAULT_COV_FUNC
+from .model import (
+    DensityEstimator,
+    FunctionEstimator,
+    DEFAULT_COV_FUNC,
+)

@@ -34,7 +34,310 @@ from .util import DEFAULT_JITTER
 DEFAULT_COV_FUNC = Matern52
 
 
-class DensityEstimator:
+class BaseEstimator:
+    R"""
+    Base class for mellon estimators.
+
+    :param cov_func_curry: The generator of the Gaussian process covariance function.
+        Must be a curry that takes one length scale argument and returns a
+        covariance function of the form k(x, y) :math:`\rightarrow` float.
+        Defaults to the type Matern52.
+    :type cov_func_curry: function or type
+    :param n_landmarks: The number of landmark points. If less than 1 or greater than or
+        equal to the number of training points, does not compute or use inducing points.
+        Defaults to 5000.
+    :type n_landmarks: int
+    :param rank: The rank of the approximate covariance matrix.
+        If rank is an int, an :math:`n \times` rank matrix
+        :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
+        :math:`n \times n` covariance matrix.
+        If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
+        of :math:`L` is selected such that the included eigenvalues of the covariance
+        between landmark points account for the specified percentage of the
+        sum of eigenvalues. Defaults to 0.999.
+    :type rank: int or float
+    :param method: Explicitly specifies whether rank is to be interpreted as a
+        fixed number of eigenvectors or a percent of eigenvalues to include
+        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
+        If 'auto', interprets rank as a fixed number of eigenvectors if it is
+        an int and interprets rank as a percent of eigenvalues if it is a float.
+        Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
+        Defaults to 'auto'.
+    :type method: str
+    :param jitter: A small amount to add to the diagonal of the covariance
+        matrix to bind eigenvalues numerically away from 0 ensuring numerical
+        stabilitity. Defaults to 1e-6.
+    :type jitter: float
+    :param landmarks: The points to quantize the data for the approximate covariance. If None,
+        landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
+        is greater than or equal to the number of training points. Defaults to None.
+    :type landmarks: array-like or None
+    :param nn_distances: The nearest neighbor distances at each
+        data point. If None, computes the nearest neighbor distances automatically, with
+        a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
+        Defaults to None.
+    :type nn_distances: array-like or None
+    :param mu: The mean of the Gaussian process. Defaults to 0.
+    :type mu: float or None
+    :param ls: The length scale of the Gaussian process covariance function. If None,
+        sets ls to the geometric mean of the nearest neighbor distances times a constant.
+        If cov_func is supplied explictly, ls has no effect. Defaults to None.
+    :type ls: float or None
+    :param cov_func: The Gaussian process covariance function of the form
+        k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
+        function cov_func = cov_func_curry(ls). Defaults to None.
+    :type cov_func: function or None
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
+        If None, automatically computes L. Defaults to None.
+    :type L: array-like or None
+    :ivar cov_func_curry: The generator of the Gaussian process covariance function.
+    :ivar n_landmarks: The number of landmark points.
+    :ivar rank: The rank of approximate covariance matrix or percentage of
+        eigenvalues included in approximate covariance matrix.
+    :ivar method: The method to interpret the rank as a fixed number of eigenvectors
+        or a percentage of eigenvalues.
+    :ivar jitter: A small amount added to the diagonal of the covariance matrix
+        for numerical stability.
+    :ivar landmarks: The points to quantize the data.
+    :ivar nn_distances: The nearest neighbor distances for each data point.
+    :ivar mu: The Gaussian process mean.
+    :ivar ls: The Gaussian process covariance function length scale.
+    :ivar ls_factor: Factor to scale the automatically selected length scale.
+        Defaults to 1.
+    :ivar cov_func: The Gaussian process covariance function.
+    :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
+    :ivar x: The training data.
+    """
+
+    def __init__(
+        self,
+        cov_func_curry=DEFAULT_COV_FUNC,
+        n_landmarks=DEFAULT_N_LANDMARKS,
+        rank=DEFAULT_RANK,
+        method=DEFAULT_METHOD,
+        jitter=DEFAULT_JITTER,
+        optimizer=DEFAULT_OPTIMIZER,
+        n_iter=DEFAULT_N_ITER,
+        init_learn_rate=DEFAULT_INIT_LEARN_RATE,
+        landmarks=None,
+        nn_distances=None,
+        d=None,
+        mu=0,
+        ls=None,
+        ls_factor=1,
+        cov_func=None,
+        L=None,
+        initial_value=None,
+    ):
+        self.cov_func_curry = cov_func_curry
+        self.n_landmarks = n_landmarks
+        self.rank = rank
+        self.method = method
+        self.jitter = jitter
+        self.landmarks = landmarks
+        self.nn_distances = nn_distances
+        self.mu = mu
+        self.ls = ls
+        self.ls_factor = ls_factor
+        self.cov_func = cov_func
+        self.L = L
+        self.x = None
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        string = (
+            f"{name}("
+            f"cov_func_curry={self.cov_func_curry}, "
+            f"n_landmarks={self.n_landmarks}, "
+            f"rank={self.rank}, "
+            f"method='{self.method}', "
+            f"jitter={self.jitter}, "
+            f"n_iter={self.n_iter}, "
+            f"landmarks={self.landmarks}, "
+        )
+        if self.nn_distances is None:
+            string += "nn_distances=None, "
+        else:
+            string += "nn_distances=nn_distances, "
+        string += (
+            f"d={self.d}, "
+            f"mu={self.mu}, "
+            f"ls={self.mu}, "
+            f"cov_func={self.cov_func}, "
+        )
+        if self.L is None:
+            string += "L=None, "
+        else:
+            string += "L=L, "
+        return string
+
+    def _set_x(self, x):
+        self.x = x
+
+    def _compute_landmarks(self):
+        x = self.x
+        n_landmarks = self.n_landmarks
+        landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
+        return landmarks
+
+    def _compute_nn_distances(self):
+        x = self.x
+        nn_distances = compute_nn_distances(x)
+        return nn_distances
+
+    def _compute_ls(self):
+        nn_distances = self.nn_distances
+        ls = compute_ls(nn_distances)
+        ls *= self.ls_factor
+        return ls
+
+    def _compute_cov_func(self):
+        cov_func_curry = self.cov_func_curry
+        ls = self.ls
+        cov_func = compute_cov_func(cov_func_curry, ls)
+        return cov_func
+
+    def _compute_L(self):
+        x = self.x
+        cov_func = self.cov_func
+        landmarks = self.landmarks
+        rank = self.rank
+        method = self.method
+        jitter = self.jitter
+        L = compute_L(
+            x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
+        )
+        return L
+
+    def _run_inference(self):
+        function = self.loss_func
+        initial_value = self.initial_value
+        n_iter = self.n_iter
+        init_learn_rate = self.init_learn_rate
+        optimizer = self.optimizer
+        if optimizer == "adam":
+            results = minimize_adam(
+                function,
+                initial_value,
+                n_iter=n_iter,
+                init_learn_rate=init_learn_rate,
+                jit=self.jit,
+            )
+            self.pre_transformation = results.pre_transformation
+            self.opt_state = results.opt_state
+            self.losses = results.losses
+        elif optimizer == "L-BFGS-B":
+            results = minimize_lbfgsb(
+                function,
+                initial_value,
+                jit=self.jit,
+            )
+            self.pre_transformation = results.pre_transformation
+            self.opt_state = results.opt_state
+            self.losses = [
+                results.loss,
+            ]
+        else:
+            raise ValueError(
+                f"Unknown optimizer {optimizer}. You can use .loss_func and "
+                ".initial_value as loss function and initial state for an "
+                "external optimization. Write optimal state to "
+                ".pre_transformation to enable prediction with .predict()."
+            )
+
+    def _prepare_attribute(self, attribute):
+        R"""
+        If self.attribute is None, sets self.attribute to the value of its
+        corresponding _compute_attribute function. If self.attribute is None, does nothing.
+
+        :param attribute: The name of the attribute.
+        :type attribute: str
+        """
+        if getattr(self, attribute) is not None:
+            return
+        function_name = "_compute_" + attribute
+        function = getattr(self, function_name)
+        value = function()
+        setattr(self, attribute, value)
+
+    def prepare_inference(self, x):
+        R"""
+        Set all attributes in preparation for optimization, but do not
+        perform Bayesian inference. It is not necessary to call this
+        function before calling fit.
+
+        :param x: The training instances to estimate density function.
+        :type x: array-like
+        :return: loss_func, initial_value - The Bayesian loss function and
+            initial guess for optimization.
+        :rtype: function, array-like
+        """
+        self._set_x(x)
+        self._prepare_attribute("nn_distances")
+        self._prepare_attribute("ls")
+        self._prepare_attribute("cov_func")
+        self._prepare_attribute("landmarks")
+        self._prepare_attribute("L")
+        return
+
+    def fit(self, x=None, build_predict=True):
+        ...
+
+    def predict(self, x):
+        ...
+
+    def fit_predict(self, x=None, build_predict=False):
+        ...
+
+    def gradient(self, x, jit=True):
+        R"""
+        Conputes the gradient of the predict function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: gradiants - The gradient of function at each point in x.
+            gradients.shape == x.shape
+        :rtype: array-like
+        """
+        return gradient(self.predict, x, jit=jit)
+
+    def hessian(self, x, jit=True):
+        R"""
+        Conputes the hessian of the predict function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: hessians - The hessian matrix of function at each point in x.
+            hessians.shape == X.shape + X.shape[1:]
+        :rtype: array-like
+        """
+        return hessian(self.predict, x, jit=jit)
+
+    def hessian_log_determinant(self, x, jit=True):
+        R"""
+        Conputes the logarirhm of the determinat of the predict function for
+        each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: signs, log_determinants - The sign of the determinant
+            at each point x and the logarithm of its absolute value.
+            signs.shape == log_determinants.shape == x.shape[0]
+        :rtype: array-like, array-like
+        """
+        return hessian_log_determinant(self.predict, x, jit=jit)
+
+
+class DensityEstimator(BaseEstimator):
     R"""
     A non-parametric density estimator.
     DensityEstimator performs Bayesian inference with a Gaussian process prior and Nearest
@@ -174,25 +477,25 @@ class DensityEstimator:
         initial_value=None,
         jit=DEFAULT_JIT,
     ):
-        self.cov_func_curry = cov_func_curry
-        self.n_landmarks = n_landmarks
-        self.rank = rank
-        self.method = method
-        self.jitter = jitter
+        super().__init__(
+            cov_func_curry = cov_func_curry,
+            n_landmarks = n_landmarks,
+            rank = rank,
+            method = method,
+            jitter = jitter,
+            landmarks = landmarks,
+            nn_distances = nn_distances,
+            mu = mu,
+            ls = ls,
+            ls_factor = ls_factor,
+            cov_func = cov_func,
+            L = L,
+        )
         self.optimizer = optimizer
         self.n_iter = n_iter
         self.init_learn_rate = init_learn_rate
-        self.landmarks = landmarks
-        self.nn_distances = nn_distances
-        self.d = d
-        self.mu = mu
-        self.ls = ls
-        self.ls_factor = ls_factor
-        self.cov_func = cov_func
-        self.L = L
         self.initial_value = initial_value
-        self.jit = jit
-        self.x = None
+        self.d = d
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -200,9 +503,7 @@ class DensityEstimator:
         self.pre_transformation = None
         self.log_density_x = None
         self.log_density_func = None
-
-    def __str__(self):
-        return self.__repr__()
+        self.jit = jit
 
     def __repr__(self):
         name = self.__class__.__name__
@@ -242,19 +543,6 @@ class DensityEstimator:
         )
         return string
 
-    def _set_x(self, x):
-        self.x = x
-
-    def _compute_landmarks(self):
-        x = self.x
-        n_landmarks = self.n_landmarks
-        landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
-        return landmarks
-
-    def _compute_nn_distances(self):
-        x = self.x
-        nn_distances = compute_nn_distances(x)
-        return nn_distances
 
     def _compute_d(self):
         x = self.x
@@ -273,30 +561,6 @@ class DensityEstimator:
         d = self.d
         mu = compute_mu(nn_distances, d)
         return mu
-
-    def _compute_ls(self):
-        nn_distances = self.nn_distances
-        ls = compute_ls(nn_distances)
-        ls *= self.ls_factor
-        return ls
-
-    def _compute_cov_func(self):
-        cov_func_curry = self.cov_func_curry
-        ls = self.ls
-        cov_func = compute_cov_func(cov_func_curry, ls)
-        return cov_func
-
-    def _compute_L(self):
-        x = self.x
-        cov_func = self.cov_func
-        landmarks = self.landmarks
-        rank = self.rank
-        method = self.method
-        jitter = self.jitter
-        L = compute_L(
-            x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
-        )
-        return L
 
     def _compute_initial_value(self):
         nn_distances = self.nn_distances
@@ -519,47 +783,232 @@ class DensityEstimator:
         self.fit(x, build_predict=build_predict)
         return self.log_density_x
 
-    def gradient(self, x, jit=True):
-        R"""
-        Conputes the gradient of the predict function for each line in x.
 
-        :param x: Data points.
+class FunctionEstimator(BaseEstimator):
+    R"""
+    Uses a conditional normal distribution to smoothen and extend a function
+    on all cell states using the Mellon abstractions.
+
+    :param cov_func_curry: The generator of the Gaussian process covariance function.
+        Must be a curry that takes one length scale argument and returns a
+        covariance function of the form k(x, y) :math:`\rightarrow` float.
+        Defaults to the type Matern52.
+    :type cov_func_curry: function or type
+    :param n_landmarks: The number of landmark points. If less than 1 or greater than or
+        equal to the number of training points, does not compute or use inducing points.
+        Defaults to 5000.
+    :type n_landmarks: int
+    :param rank: The rank of the approximate covariance matrix.
+        If rank is an int, an :math:`n \times` rank matrix
+        :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
+        :math:`n \times n` covariance matrix.
+        If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
+        of :math:`L` is selected such that the included eigenvalues of the covariance
+        between landmark points account for the specified percentage of the
+        sum of eigenvalues. Defaults to 0.999.
+    :type rank: int or float
+    :param method: Explicitly specifies whether rank is to be interpreted as a
+        fixed number of eigenvectors or a percent of eigenvalues to include
+        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
+        If 'auto', interprets rank as a fixed number of eigenvectors if it is
+        an int and interprets rank as a percent of eigenvalues if it is a float.
+        Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
+        Defaults to 'auto'.
+    :type method: str
+    :param jitter: A small amount to add to the diagonal of the covariance
+        matrix to bind eigenvalues numerically away from 0 ensuring numerical
+        stabilitity. Defaults to 1e-6.
+    :type jitter: float
+    :param landmarks: The points to quantize the data for the approximate covariance. If None,
+        landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
+        is greater than or equal to the number of training points. Defaults to None.
+    :type landmarks: array-like or None
+    :param nn_distances: The nearest neighbor distances at each
+        data point. If None, computes the nearest neighbor distances automatically, with
+        a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
+        Defaults to None.
+    :type nn_distances: array-like or None
+    :param mu: The mean of the Gaussian process. Defaults to 0.
+    :type mu: float or None
+    :param ls: The length scale of the Gaussian process covariance function. If None,
+        sets ls to the geometric mean of the nearest neighbor distances times a constant.
+        If cov_func is supplied explictly, ls has no effect. Defaults to None.
+    :type ls: float or None
+    :param cov_func: The Gaussian process covariance function of the form
+        k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
+        function cov_func = cov_func_curry(ls). Defaults to None.
+    :type cov_func: function or None
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
+        If None, automatically computes L. Defaults to None.
+    :type L: array-like or None
+    :param sigma: The white moise variance. Defaults to 0.
+    :type sigma: float
+    :ivar n_landmarks: The number of landmark points.
+    :ivar rank: The rank of approximate covariance matrix or percentage of
+        eigenvalues included in approximate covariance matrix.
+    :ivar method: The method to interpret the rank as a fixed number of eigenvectors
+        or a percentage of eigenvalues.
+    :ivar jitter: A small amount added to the diagonal of the covariance matrix
+        for numerical stability.
+    :ivar landmarks: The points to quantize the data.
+    :ivar nn_distances: The nearest neighbor distances for each data point.
+    :ivar d: The local dimensionality of the data.
+    :ivar mu: The Gaussian process mean.
+    :ivar ls: The Gaussian process covariance function length scale.
+    :ivar ls_factor: Factor to scale the automatically selected length scale.
+        Defaults to 1.
+    :ivar cov_func: The Gaussian process covariance function.
+    :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
+    :ivar sigma: White noise variance.
+    :ivar x: The cell states.
+    :ivar y: Function values on cell states.
+    """
+
+    def __init__(
+        self,
+        cov_func_curry=DEFAULT_COV_FUNC,
+        n_landmarks=DEFAULT_N_LANDMARKS,
+        rank=DEFAULT_RANK,
+        method=DEFAULT_METHOD,
+        jitter=DEFAULT_JITTER,
+        optimizer=DEFAULT_OPTIMIZER,
+        n_iter=DEFAULT_N_ITER,
+        init_learn_rate=DEFAULT_INIT_LEARN_RATE,
+        landmarks=None,
+        nn_distances=None,
+        d=None,
+        mu=0,
+        ls=None,
+        ls_factor=1,
+        cov_func=None,
+        L=None,
+        sigma=0,
+    ):
+        super().__init__(
+            cov_func_curry = cov_func_curry,
+            n_landmarks = n_landmarks,
+            rank = rank,
+            method = method,
+            jitter = jitter,
+            landmarks = landmarks,
+            nn_distances = nn_distances,
+            mu = mu,
+            ls = ls,
+            ls_factor = ls_factor,
+            cov_func = cov_func,
+            L = L,
+        )
+        self.y = None
+        self.sigma = sigma
+
+
+    def _prepare_attribute(self, attribute):
+        R"""
+        If self.attribute is None, sets self.attribute to the value of its
+        corresponding _compute_attribute function. If self.attribute is None, does nothing.
+
+        :param attribute: The name of the attribute.
+        :type attribute: str
+        """
+        if getattr(self, attribute) is not None:
+            return
+        function_name = "_compute_" + attribute
+        function = getattr(self, function_name)
+        value = function()
+        setattr(self, attribute, value)
+
+    def _set_y(self, y):
+        self.y = y
+
+    def prepare_inference(self, x, y):
+        R"""
+        Set all attributes in preparation. It is not necessary to call this
+        function before calling fit.
+
+        :param x: The cell states.
         :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: gradiants - The gradient of function at each point in x.
-            gradients.shape == x.shape
+        :param y: The function values on the cell states.
+        :type y: array-like
+        :return: loss_func, initial_value - The Bayesian loss function and
+            initial guess for optimization.
+        :rtype: function, array-like
+        """
+        self._set_x(x)
+        self._set_y(y)
+        self._prepare_attribute("nn_distances")
+        self._prepare_attribute("ls")
+        self._prepare_attribute("cov_func")
+        self._prepare_attribute("landmarks")
+        self._prepare_attribute("L")
+        return
+
+
+    def compute_conditional(self, x=None, y=None):
+        if self.x is not None and self.x is not x:
+            message = "self.x has been set already, but is not equal to the argument x."
+            raise ValueError(message)
+        if self.x is None and x is None:
+            message = "Required argument x is missing and self.x has not been set."
+            raise ValueError(message)
+        if x is None:
+            x = self.x
+        if self.y is not None and self.y is not y:
+            message = "self.y has been set already, but is not equal to the argument y."
+            raise ValueError(message)
+        if self.y is None and y is None:
+            message = "Required argument y is missing and self.y has not been set."
+            raise ValueError(message)
+        if y is None:
+            y = self.y
+        landmarks = self.landmarks
+        mu = self.mu
+        cov_func = self.cov_func
+        sigma = self.sigma
+        jitter = self.jitter
+        conditional = compute_conditional_mean(
+            x, landmarks, y, mu, cov_func, sigma, jitter=jitter,
+        )
+        self.conditional = conditional
+        return conditional
+
+    def fit(self, x=None, y=None):
+        R"""
+        Fit the model from end to end.
+
+        :param x: The training instances to estimate density function.
+        :type x: array-like
+        :param build_predict: Whether or not to build the prediction function.
+            Defaults to True.
+        :type build_predict: bool
+        :return: self - A fitted instance of this estimator.
+        :rtype: Object
+        """
+
+        self.prepare_inference(x, y)
+        self.compute_conditional(x, y)
+        return self
+
+    def predict(self, x):
+        R"""
+        Predict the function at each point in x.
+
+        :param x: The new data to predict.
+        :type x: array-like
+        :return: condition_mean - The conditional mean function value at each test point in x.
         :rtype: array-like
         """
-        return gradient(self.predict, x, jit=jit)
+        return self.conditional(x)
 
-    def hessian(self, x, jit=True):
+    def fit_predict(self, x=None, y=None):
         R"""
-        Conputes the hessian of the predict function for each line in x.
+        Compute the conditional mean and return the smoothed function values
+        at the points x.
 
-        :param x: Data points.
+        :param x: The training instances to estimate density function.
         :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: hessians - The hessian matrix of function at each point in x.
-            hessians.shape == X.shape + X.shape[1:]
+        :return: condition_mean - The conditional mean function value at each test point in x.
         :rtype: array-like
         """
-        return hessian(self.predict, x, jit=jit)
 
-    def hessian_log_determinant(self, x, jit=True):
-        R"""
-        Conputes the logarirhm of the determinat of the predict function for
-        each line in x.
-
-        :param x: Data points.
-        :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: signs, log_determinants - The sign of the determinant
-            at each point x and the logarithm of its absolute value.
-            signs.shape == log_determinants.shape == x.shape[0]
-        :rtype: array-like, array-like
-        """
-        return hessian_log_determinant(self.predict, x, jit=jit)
-
+        self.fit(x, y)
+        return self.predict(x)
