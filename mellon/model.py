@@ -131,6 +131,8 @@ class DensityEstimator:
     :ivar d: The local dimensionality of the data.
     :ivar mu: The Gaussian process mean.
     :ivar ls: The Gaussian process covariance function length scale.
+    :ivar ls_factor: Factor to scale the automatically selected length scale.
+        Defaults to 1.
     :ivar cov_func: The Gaussian process covariance function.
     :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
     :ivar initial_value: The initial guess for Maximum A Posteriori optimization.
@@ -166,6 +168,7 @@ class DensityEstimator:
         d=None,
         mu=None,
         ls=None,
+        ls_factor=1,
         cov_func=None,
         L=None,
         initial_value=None,
@@ -184,6 +187,7 @@ class DensityEstimator:
         self.d = d
         self.mu = mu
         self.ls = ls
+        self.ls_factor = ls_factor
         self.cov_func = cov_func
         self.L = L
         self.initial_value = initial_value
@@ -273,6 +277,7 @@ class DensityEstimator:
     def _compute_ls(self):
         nn_distances = self.nn_distances
         ls = compute_ls(nn_distances)
+        ls *= self.ls_factor
         return ls
 
     def _compute_cov_func(self):
