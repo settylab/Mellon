@@ -37,76 +37,6 @@ DEFAULT_COV_FUNC = Matern52
 class BaseEstimator:
     R"""
     Base class for mellon estimators.
-
-    :param cov_func_curry: The generator of the Gaussian process covariance function.
-        Must be a curry that takes one length scale argument and returns a
-        covariance function of the form k(x, y) :math:`\rightarrow` float.
-        Defaults to the type Matern52.
-    :type cov_func_curry: function or type
-    :param n_landmarks: The number of landmark points. If less than 1 or greater than or
-        equal to the number of training points, does not compute or use inducing points.
-        Defaults to 5000.
-    :type n_landmarks: int
-    :param rank: The rank of the approximate covariance matrix.
-        If rank is an int, an :math:`n \times` rank matrix
-        :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
-        :math:`n \times n` covariance matrix.
-        If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
-        of :math:`L` is selected such that the included eigenvalues of the covariance
-        between landmark points account for the specified percentage of the
-        sum of eigenvalues. Defaults to 0.999.
-    :type rank: int or float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
-        Defaults to 'auto'.
-    :type method: str
-    :param jitter: A small amount to add to the diagonal of the covariance
-        matrix to bind eigenvalues numerically away from 0 ensuring numerical
-        stabilitity. Defaults to 1e-6.
-    :type jitter: float
-    :param landmarks: The points to quantize the data for the approximate covariance. If None,
-        landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
-        is greater than or equal to the number of training points. Defaults to None.
-    :type landmarks: array-like or None
-    :param nn_distances: The nearest neighbor distances at each
-        data point. If None, computes the nearest neighbor distances automatically, with
-        a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
-        Defaults to None.
-    :type nn_distances: array-like or None
-    :param mu: The mean of the Gaussian process. Defaults to 0.
-    :type mu: float or None
-    :param ls: The length scale of the Gaussian process covariance function. If None,
-        sets ls to the geometric mean of the nearest neighbor distances times a constant.
-        If cov_func is supplied explictly, ls has no effect. Defaults to None.
-    :type ls: float or None
-    :param cov_func: The Gaussian process covariance function of the form
-        k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
-        function cov_func = cov_func_curry(ls). Defaults to None.
-    :type cov_func: function or None
-    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-        If None, automatically computes L. Defaults to None.
-    :type L: array-like or None
-    :ivar cov_func_curry: The generator of the Gaussian process covariance function.
-    :ivar n_landmarks: The number of landmark points.
-    :ivar rank: The rank of approximate covariance matrix or percentage of
-        eigenvalues included in approximate covariance matrix.
-    :ivar method: The method to interpret the rank as a fixed number of eigenvectors
-        or a percentage of eigenvalues.
-    :ivar jitter: A small amount added to the diagonal of the covariance matrix
-        for numerical stability.
-    :ivar landmarks: The points to quantize the data.
-    :ivar nn_distances: The nearest neighbor distances for each data point.
-    :ivar mu: The Gaussian process mean.
-    :ivar ls: The Gaussian process covariance function length scale.
-    :ivar ls_factor: Factor to scale the automatically selected length scale.
-        Defaults to 1.
-    :ivar cov_func: The Gaussian process covariance function.
-    :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-    :ivar x: The training data.
     """
 
     def __init__(
@@ -265,31 +195,37 @@ class BaseEstimator:
 
     def prepare_inference(self, x):
         R"""
-        Set all attributes in preparation for optimization, but do not
-        perform Bayesian inference. It is not necessary to call this
-        function before calling fit.
-
-        :param x: The training instances to estimate density function.
-        :type x: array-like
-        :return: loss_func, initial_value - The Bayesian loss function and
-            initial guess for optimization.
-        :rtype: function, array-like
+        Set all attributes in preparation for fitting. It is not necessary
+        to call this function before calling fit.
         """
-        self._set_x(x)
-        self._prepare_attribute("nn_distances")
-        self._prepare_attribute("ls")
-        self._prepare_attribute("cov_func")
-        self._prepare_attribute("landmarks")
-        self._prepare_attribute("L")
-        return
+        ...
 
-    def fit(self, x=None, build_predict=True):
+    def fit(self):
+        R"""
+        Fit the model.
+        """
         ...
 
     def predict(self, x):
+        R"""
+        Make prediction for new data x.
+
+        :param x: Data points.
+        :type x: array-like
+        :return: Predictions.
+        :rtype: array-like
+        """
         ...
 
-    def fit_predict(self, x=None, build_predict=False):
+    def fit_predict(self, x):
+        R"""
+        Fit model and make prediction on training data x.
+
+        :param x: Data points.
+        :type x: array-like
+        :return: Predictions.
+        :rtype: array-like
+        """
         ...
 
     def gradient(self, x, jit=True):
