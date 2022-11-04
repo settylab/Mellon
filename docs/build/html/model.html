@@ -203,9 +203,184 @@
           <section id="module-mellon.model">
 <span id="model"></span><h1>Model<a class="headerlink" href="#module-mellon.model" title="Permalink to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="mellon.model.DensityEstimator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.model.</span></span><span class="sig-name descname"><span class="pre">DensityEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'mellon.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mellon.model.BaseEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.model.</span></span><span class="sig-name descname"><span class="pre">BaseEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'mellon.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_factor=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.BaseEstimator" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for mellon estimators.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cov_func_curry</strong> (<em>function</em><em> or </em><em>type</em>) – The generator of the Gaussian process covariance function.
+Must be a curry that takes one length scale argument and returns a
+covariance function of the form k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float.
+Defaults to the type Matern52.</p></li>
+<li><p><strong>n_landmarks</strong> (<em>int</em>) – The number of landmark points. If less than 1 or greater than or
+equal to the number of training points, does not compute or use inducing points.
+Defaults to 5000.</p></li>
+<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the approximate covariance matrix.
+If rank is an int, an <span class="math notranslate nohighlight">\(n \times\)</span> rank matrix
+<span class="math notranslate nohighlight">\(L\)</span> is computed such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, the exact
+<span class="math notranslate nohighlight">\(n \times n\)</span> covariance matrix.
+If rank is a float 0.0 <span class="math notranslate nohighlight">\(\le\)</span> rank <span class="math notranslate nohighlight">\(\le\)</span> 1.0, the rank/size
+of <span class="math notranslate nohighlight">\(L\)</span> is selected such that the included eigenvalues of the covariance
+between landmark points account for the specified percentage of the
+sum of eigenvalues. Defaults to 0.999.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Explicitly specifies whether rank is to be interpreted as a
+fixed number of eigenvectors or a percent of eigenvalues to include
+in the low rank approximation. Supports ‘fixed’, ‘percent’, or ‘auto’.
+If ‘auto’, interprets rank as a fixed number of eigenvectors if it is
+an int and interprets rank as a percent of eigenvalues if it is a float.
+Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
+Defaults to ‘auto’.</p></li>
+<li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal of the covariance
+matrix to bind eigenvalues numerically away from 0 ensuring numerical
+stabilitity. Defaults to 1e-6.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em><em> or </em><em>None</em>) – The points to quantize the data for the approximate covariance. If None,
+landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
+is greater than or equal to the number of training points. Defaults to None.</p></li>
+<li><p><strong>nn_distances</strong> (<em>array-like</em><em> or </em><em>None</em>) – The nearest neighbor distances at each
+data point. If None, computes the nearest neighbor distances automatically, with
+a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
+Defaults to None.</p></li>
+<li><p><strong>mu</strong> (<em>float</em><em> or </em><em>None</em>) – The mean of the Gaussian process. Defaults to 0.</p></li>
+<li><p><strong>ls</strong> (<em>float</em><em> or </em><em>None</em>) – The length scale of the Gaussian process covariance function. If None,
+sets ls to the geometric mean of the nearest neighbor distances times a constant.
+If cov_func is supplied explictly, ls has no effect. Defaults to None.</p></li>
+<li><p><strong>cov_func</strong> (<em>function</em><em> or </em><em>None</em>) – The Gaussian process covariance function of the form
+k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float. If None, automatically generates the covariance
+function cov_func = cov_func_curry(ls). Defaults to None.</p></li>
+<li><p><strong>L</strong> (<em>array-like</em><em> or </em><em>None</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.
+If None, automatically computes L. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>cov_func_curry</strong> – The generator of the Gaussian process covariance function.</p></li>
+<li><p><strong>n_landmarks</strong> – The number of landmark points.</p></li>
+<li><p><strong>rank</strong> – The rank of approximate covariance matrix or percentage of
+eigenvalues included in approximate covariance matrix.</p></li>
+<li><p><strong>method</strong> – The method to interpret the rank as a fixed number of eigenvectors
+or a percentage of eigenvalues.</p></li>
+<li><p><strong>jitter</strong> – A small amount added to the diagonal of the covariance matrix
+for numerical stability.</p></li>
+<li><p><strong>landmarks</strong> – The points to quantize the data.</p></li>
+<li><p><strong>nn_distances</strong> – The nearest neighbor distances for each data point.</p></li>
+<li><p><strong>mu</strong> – The Gaussian process mean.</p></li>
+<li><p><strong>ls</strong> – The Gaussian process covariance function length scale.</p></li>
+<li><p><strong>ls_factor</strong> – Factor to scale the automatically selected length scale.
+Defaults to 1.</p></li>
+<li><p><strong>cov_func</strong> – The Gaussian process covariance function.</p></li>
+<li><p><strong>L</strong> – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
+<li><p><strong>x</strong> – The training data.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.BaseEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.BaseEstimator.fit" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.BaseEstimator.fit_predict">
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.BaseEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.BaseEstimator.gradient">
+<span class="sig-name descname"><span class="pre">gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.BaseEstimator.gradient" title="Permalink to this definition">#</a></dt>
+<dd><p>Conputes the gradient of the predict function for each line in x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>gradiants - The gradient of function at each point in x.
+gradients.shape == x.shape</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.BaseEstimator.hessian">
+<span class="sig-name descname"><span class="pre">hessian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.BaseEstimator.hessian" title="Permalink to this definition">#</a></dt>
+<dd><p>Conputes the hessian of the predict function for each line in x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>hessians - The hessian matrix of function at each point in x.
+hessians.shape == X.shape + X.shape[1:]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.BaseEstimator.hessian_log_determinant">
+<span class="sig-name descname"><span class="pre">hessian_log_determinant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.BaseEstimator.hessian_log_determinant" title="Permalink to this definition">#</a></dt>
+<dd><p>Conputes the logarirhm of the determinat of the predict function for
+each line in x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
+<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>signs, log_determinants - The sign of the determinant
+at each point x and the logarithm of its absolute value.
+signs.shape == log_determinants.shape == x.shape[0]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like, array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.BaseEstimator.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.BaseEstimator.predict" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.BaseEstimator.prepare_inference">
+<span class="sig-name descname"><span class="pre">prepare_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.BaseEstimator.prepare_inference" title="Permalink to this definition">#</a></dt>
+<dd><p>Set all attributes in preparation for optimization, but do not
+perform Bayesian inference. It is not necessary to call this
+function before calling fit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>loss_func, initial_value - The Bayesian loss function and
+initial guess for optimization.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function, array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mellon.model.DensityEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.model.</span></span><span class="sig-name descname"><span class="pre">DensityEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'mellon.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_factor=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mellon.model.BaseEstimator" title="mellon.model.BaseEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></a></p>
 <p>A non-parametric density estimator.
 DensityEstimator performs Bayesian inference with a Gaussian process prior and Nearest
 Neighbor likelihood. All intermediate computations are cached as instance variables, so
@@ -290,6 +465,8 @@ for numerical stability.</p></li>
 <li><p><strong>d</strong> – The local dimensionality of the data.</p></li>
 <li><p><strong>mu</strong> – The Gaussian process mean.</p></li>
 <li><p><strong>ls</strong> – The Gaussian process covariance function length scale.</p></li>
+<li><p><strong>ls_factor</strong> – Factor to scale the automatically selected length scale.
+Defaults to 1.</p></li>
 <li><p><strong>cov_func</strong> – The Gaussian process covariance function.</p></li>
 <li><p><strong>L</strong> – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
 <li><p><strong>initial_value</strong> – The initial guess for Maximum A Posteriori optimization.</p></li>
@@ -313,7 +490,7 @@ loss of L-BFGS-B.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mellon.model.DensityEstimator.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.fit" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.fit" title="Permalink to this definition">#</a></dt>
 <dd><p>Fit the model from end to end.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -334,7 +511,7 @@ Defaults to True.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mellon.model.DensityEstimator.fit_predict">
-<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_predict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform Bayesian inference and return the log density at training points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -342,71 +519,6 @@ Defaults to True.</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>log_density_x - The log density at each training point in x.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mellon.model.DensityEstimator.gradient">
-<span class="sig-name descname"><span class="pre">gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.gradient" title="Permalink to this definition">#</a></dt>
-<dd><p>Conputes the gradient of the predict function for each line in x.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
-<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>gradiants - The gradient of function at each point in x.
-gradients.shape == x.shape</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array-like</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mellon.model.DensityEstimator.hessian">
-<span class="sig-name descname"><span class="pre">hessian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.hessian" title="Permalink to this definition">#</a></dt>
-<dd><p>Conputes the hessian of the predict function for each line in x.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
-<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>hessians - The hessian matrix of function at each point in x.
-hessians.shape == X.shape + X.shape[1:]</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array-like</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="mellon.model.DensityEstimator.hessian_log_determinant">
-<span class="sig-name descname"><span class="pre">hessian_log_determinant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.DensityEstimator.hessian_log_determinant" title="Permalink to this definition">#</a></dt>
-<dd><p>Conputes the logarirhm of the determinat of the predict function for
-each line in x.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array-like</em>) – Data points.</p></li>
-<li><p><strong>jit</strong> (<em>bool</em>) – Use jax just in time compilation. Defaults to True.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>signs, log_determinants - The sign of the determinant
-at each point x and the logarithm of its absolute value.
-signs.shape == log_determinants.shape == x.shape[0]</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array-like, array-like</p>
 </dd>
 </dl>
 </dd></dl>
@@ -498,6 +610,168 @@ the stored initial_value attribute.</p></li>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="mellon.model.FunctionEstimator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mellon.model.</span></span><span class="sig-name descname"><span class="pre">FunctionEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cov_func_curry=&lt;class</span> <span class="pre">'mellon.cov.Matern52'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_landmarks=5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_learn_rate=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nn_distances=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ls_factor=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mellon.model.BaseEstimator" title="mellon.model.BaseEstimator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></a></p>
+<p>Uses a conditional normal distribution to smoothen and extend a function
+on all cell states using the Mellon abstractions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cov_func_curry</strong> (<em>function</em><em> or </em><em>type</em>) – The generator of the Gaussian process covariance function.
+Must be a curry that takes one length scale argument and returns a
+covariance function of the form k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float.
+Defaults to the type Matern52.</p></li>
+<li><p><strong>n_landmarks</strong> (<em>int</em>) – The number of landmark points. If less than 1 or greater than or
+equal to the number of training points, does not compute or use inducing points.
+Defaults to 5000.</p></li>
+<li><p><strong>rank</strong> (<em>int</em><em> or </em><em>float</em>) – The rank of the approximate covariance matrix.
+If rank is an int, an <span class="math notranslate nohighlight">\(n \times\)</span> rank matrix
+<span class="math notranslate nohighlight">\(L\)</span> is computed such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, the exact
+<span class="math notranslate nohighlight">\(n \times n\)</span> covariance matrix.
+If rank is a float 0.0 <span class="math notranslate nohighlight">\(\le\)</span> rank <span class="math notranslate nohighlight">\(\le\)</span> 1.0, the rank/size
+of <span class="math notranslate nohighlight">\(L\)</span> is selected such that the included eigenvalues of the covariance
+between landmark points account for the specified percentage of the
+sum of eigenvalues. Defaults to 0.999.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Explicitly specifies whether rank is to be interpreted as a
+fixed number of eigenvectors or a percent of eigenvalues to include
+in the low rank approximation. Supports ‘fixed’, ‘percent’, or ‘auto’.
+If ‘auto’, interprets rank as a fixed number of eigenvectors if it is
+an int and interprets rank as a percent of eigenvalues if it is a float.
+Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
+Defaults to ‘auto’.</p></li>
+<li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal of the covariance
+matrix to bind eigenvalues numerically away from 0 ensuring numerical
+stabilitity. Defaults to 1e-6.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em><em> or </em><em>None</em>) – The points to quantize the data for the approximate covariance. If None,
+landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
+is greater than or equal to the number of training points. Defaults to None.</p></li>
+<li><p><strong>nn_distances</strong> (<em>array-like</em><em> or </em><em>None</em>) – The nearest neighbor distances at each
+data point. If None, computes the nearest neighbor distances automatically, with
+a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
+Defaults to None.</p></li>
+<li><p><strong>mu</strong> (<em>float</em><em> or </em><em>None</em>) – The mean of the Gaussian process. Defaults to 0.</p></li>
+<li><p><strong>ls</strong> (<em>float</em><em> or </em><em>None</em>) – The length scale of the Gaussian process covariance function. If None,
+sets ls to the geometric mean of the nearest neighbor distances times a constant.
+If cov_func is supplied explictly, ls has no effect. Defaults to None.</p></li>
+<li><p><strong>cov_func</strong> (<em>function</em><em> or </em><em>None</em>) – The Gaussian process covariance function of the form
+k(x, y) <span class="math notranslate nohighlight">\(\rightarrow\)</span> float. If None, automatically generates the covariance
+function cov_func = cov_func_curry(ls). Defaults to None.</p></li>
+<li><p><strong>L</strong> (<em>array-like</em><em> or </em><em>None</em>) – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.
+If None, automatically computes L. Defaults to None.</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – The white moise variance. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>n_landmarks</strong> – The number of landmark points.</p></li>
+<li><p><strong>rank</strong> – The rank of approximate covariance matrix or percentage of
+eigenvalues included in approximate covariance matrix.</p></li>
+<li><p><strong>method</strong> – The method to interpret the rank as a fixed number of eigenvectors
+or a percentage of eigenvalues.</p></li>
+<li><p><strong>jitter</strong> – A small amount added to the diagonal of the covariance matrix
+for numerical stability.</p></li>
+<li><p><strong>landmarks</strong> – The points to quantize the data.</p></li>
+<li><p><strong>nn_distances</strong> – The nearest neighbor distances for each data point.</p></li>
+<li><p><strong>d</strong> – The local dimensionality of the data.</p></li>
+<li><p><strong>mu</strong> – The Gaussian process mean.</p></li>
+<li><p><strong>ls</strong> – The Gaussian process covariance function length scale.</p></li>
+<li><p><strong>ls_factor</strong> – Factor to scale the automatically selected length scale.
+Defaults to 1.</p></li>
+<li><p><strong>cov_func</strong> – The Gaussian process covariance function.</p></li>
+<li><p><strong>L</strong> – A matrix such that <span class="math notranslate nohighlight">\(L L^\top \approx K\)</span>, where <span class="math notranslate nohighlight">\(K\)</span> is the covariance matrix.</p></li>
+<li><p><strong>sigma</strong> – White noise variance.</p></li>
+<li><p><strong>x</strong> – The cell states.</p></li>
+<li><p><strong>y</strong> – Function values on cell states.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.FunctionEstimator.compute_conditional">
+<span class="sig-name descname"><span class="pre">compute_conditional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.compute_conditional" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.FunctionEstimator.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.fit" title="Permalink to this definition">#</a></dt>
+<dd><p>Fit the model from end to end.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p></li>
+<li><p><strong>build_predict</strong> (<em>bool</em>) – Whether or not to build the prediction function.
+Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>self - A fitted instance of this estimator.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.FunctionEstimator.fit_predict">
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.fit_predict" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the conditional mean and return the smoothed function values
+at the points x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>condition_mean - The conditional mean function value at each test point in x.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.FunctionEstimator.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.predict" title="Permalink to this definition">#</a></dt>
+<dd><p>Predict the function at each point in x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The new data to predict.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>condition_mean - The conditional mean function value at each test point in x.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.FunctionEstimator.prepare_inference">
+<span class="sig-name descname"><span class="pre">prepare_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.prepare_inference" title="Permalink to this definition">#</a></dt>
+<dd><p>Set all attributes in preparation. It is not necessary to call this
+function before calling fit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The cell states.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) – The function values on the cell states.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>loss_func, initial_value - The Bayesian loss function and
+initial guess for optimization.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function, array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -563,16 +837,31 @@ the stored initial_value attribute.</p></li>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Model</a><ul>
+<li><a class="reference internal" href="#mellon.model.BaseEstimator"><code class="docutils literal notranslate"><span class="pre">BaseEstimator</span></code></a><ul>
+<li><a class="reference internal" href="#mellon.model.BaseEstimator.fit"><code class="docutils literal notranslate"><span class="pre">BaseEstimator.fit()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.BaseEstimator.fit_predict"><code class="docutils literal notranslate"><span class="pre">BaseEstimator.fit_predict()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.BaseEstimator.gradient"><code class="docutils literal notranslate"><span class="pre">BaseEstimator.gradient()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.BaseEstimator.hessian"><code class="docutils literal notranslate"><span class="pre">BaseEstimator.hessian()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.BaseEstimator.hessian_log_determinant"><code class="docutils literal notranslate"><span class="pre">BaseEstimator.hessian_log_determinant()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.BaseEstimator.predict"><code class="docutils literal notranslate"><span class="pre">BaseEstimator.predict()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.BaseEstimator.prepare_inference"><code class="docutils literal notranslate"><span class="pre">BaseEstimator.prepare_inference()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#mellon.model.DensityEstimator"><code class="docutils literal notranslate"><span class="pre">DensityEstimator</span></code></a><ul>
 <li><a class="reference internal" href="#mellon.model.DensityEstimator.fit"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.fit()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.DensityEstimator.fit_predict"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.fit_predict()</span></code></a></li>
-<li><a class="reference internal" href="#mellon.model.DensityEstimator.gradient"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.gradient()</span></code></a></li>
-<li><a class="reference internal" href="#mellon.model.DensityEstimator.hessian"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.hessian()</span></code></a></li>
-<li><a class="reference internal" href="#mellon.model.DensityEstimator.hessian_log_determinant"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.hessian_log_determinant()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.DensityEstimator.predict"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.predict()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.DensityEstimator.prepare_inference"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.prepare_inference()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.DensityEstimator.process_inference"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.process_inference()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.DensityEstimator.run_inference"><code class="docutils literal notranslate"><span class="pre">DensityEstimator.run_inference()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mellon.model.FunctionEstimator"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator</span></code></a><ul>
+<li><a class="reference internal" href="#mellon.model.FunctionEstimator.compute_conditional"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.compute_conditional()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.FunctionEstimator.fit"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.fit()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.FunctionEstimator.fit_predict"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.fit_predict()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.FunctionEstimator.predict"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.predict()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.FunctionEstimator.prepare_inference"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.prepare_inference()</span></code></a></li>
 </ul>
 </li>
 </ul>
