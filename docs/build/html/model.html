@@ -634,7 +634,22 @@ Defaults to 1.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="mellon.model.FunctionEstimator.compute_conditional">
 <span class="sig-name descname"><span class="pre">compute_conditional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.compute_conditional" title="Permalink to this definition">#</a></dt>
-<dd></dd></dl>
+<dd><p>Compute and return the conditional mean function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) – The training function values on cell states.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>condition_mean_function - The conditional mean function.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mellon.model.FunctionEstimator.fit">
@@ -643,7 +658,8 @@ Defaults to 1.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p></li>
+<li><p><strong>x</strong> (<em>array-like</em>) – The training cell states.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) – The training function values on cell states.</p></li>
 <li><p><strong>build_predict</strong> (<em>bool</em>) – Whether or not to build the prediction function.
 Defaults to True.</p></li>
 </ul>
@@ -664,7 +680,10 @@ Defaults to True.</p></li>
 at the points x.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) – The training function values on cell states.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>condition_mean - The conditional mean function value at each test point in x.</p>

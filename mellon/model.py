@@ -880,6 +880,16 @@ class FunctionEstimator(BaseEstimator):
 
 
     def compute_conditional(self, x=None, y=None):
+        R"""
+        Compute and return the conditional mean function.
+
+        :param x: The training instances to estimate density function.
+        :type x: array-like
+        :param y: The training function values on cell states.
+        :type y: array-like
+        :return: condition_mean_function - The conditional mean function.
+        :rtype: array-like
+        """
         if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             raise ValueError(message)
@@ -911,8 +921,10 @@ class FunctionEstimator(BaseEstimator):
         R"""
         Fit the model from end to end.
 
-        :param x: The training instances to estimate density function.
+        :param x: The training cell states.
         :type x: array-like
+        :param y: The training function values on cell states.
+        :type y: array-like
         :param build_predict: Whether or not to build the prediction function.
             Defaults to True.
         :type build_predict: bool
@@ -942,6 +954,8 @@ class FunctionEstimator(BaseEstimator):
 
         :param x: The training instances to estimate density function.
         :type x: array-like
+        :param y: The training function values on cell states.
+        :type y: array-like
         :return: condition_mean - The conditional mean function value at each test point in x.
         :rtype: array-like
         """
