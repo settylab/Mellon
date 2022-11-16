@@ -1,4 +1,4 @@
-from jax.numpy import dot, ones_like, eye
+from jax.numpy import dot, ones_like, eye, square
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
@@ -19,16 +19,17 @@ def _full_conditional_mean(
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
-    :param sigma: White moise veriance. Defaults to 0.
+    :param sigma: White moise standard deviation. Defaults to 0.
     :type sigma: float
     :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
     :type jitter: float
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
+    sigma2 = square(sigma)
     K = cov_func(x, x)
-    sigma = max(sigma, jitter)
-    L = cholesky(stabilize(K, jitter=sigma))
+    sigma2 = max(sigma2, jitter)
+    L = cholesky(stabilize(K, jitter=sigma2))
     weights = solve_triangular(L.T, solve_triangular(L, y, lower=True))
 
     def mean(Xnew):
@@ -55,19 +56,20 @@ def _landmarks_conditional_mean(
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
-    :param sigma: White moise veriance. Defaults to 0.
+    :param sigma: White moise standard deviation. Defaults to 0.
     :type sigma: float
     :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
     :type jitter: float
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
+    sigma2 = square(sigma)
     Kuu = cov_func(xu, xu)
     Kuf = cov_func(xu, x)
     Luu = cholesky(stabilize(Kuu, jitter))
     A = solve_triangular(Luu, Kuf, lower=True)
-    sigma = max(sigma, jitter)
-    L_B = cholesky(stabilize(dot(A, A.T), sigma))
+    sigma2 = max(sigma2, jitter)
+    L_B = cholesky(stabilize(dot(A, A.T), sigma2))
     r = y - mu
     c = solve_triangular(L_B, dot(A, r), lower=True)
     z = solve_triangular(L_B.T, c)

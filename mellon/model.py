@@ -777,7 +777,7 @@ class FunctionEstimator(BaseEstimator):
     :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
         If None, automatically computes L. Defaults to None.
     :type L: array-like or None
-    :param sigma: The white moise variance. Defaults to 0.
+    :param sigma: The white moise standard deviation. Defaults to 0.
     :type sigma: float
     :ivar n_landmarks: The number of landmark points.
     :ivar rank: The rank of approximate covariance matrix or percentage of
@@ -795,7 +795,7 @@ class FunctionEstimator(BaseEstimator):
         Defaults to 1.
     :ivar cov_func: The Gaussian process covariance function.
     :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-    :ivar sigma: White noise variance.
+    :ivar sigma: White noise standard deviation.
     :ivar x: The cell states.
     :ivar y: Function values on cell states.
     """
