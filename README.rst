@@ -14,8 +14,8 @@ Documentation
 
 Please read the
 `documentation <https://mellon.readthedocs.io/en/latest/index.html>`_
-and this
-`basic tutorial <https://mellon.readthedocs.io/en/latest/notebooks/basic_tutorial.html>`_.
+or use this
+`basic tutorial notebook <https://github.com/settylab/Mellon/blob/main/notebooks/basic_tutorial.ipynb>`_.
 
 
 Basic Usage
