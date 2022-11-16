@@ -12,6 +12,12 @@
    Parameter Selection <parameters>
    Inference <inference>
 
+.. toctree::
+   :hidden:
+   :caption: Tutorials:
+
+   notebooks/basic_tutorial.ipynb
+
 .. include:: ../../README.rst
 
 .. toctree::
