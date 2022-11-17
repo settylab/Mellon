@@ -1,3 +1,6 @@
+.. image:: https://zenodo.org/badge/558998366.svg
+   :target: https://zenodo.org/badge/latestdoi/558998366
+
 Mellon is a non-parametric density estimator based on the NearestNeighbors distribution.
 
 Installation
