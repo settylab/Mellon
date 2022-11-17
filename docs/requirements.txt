@@ -1,0 +1,5 @@
+sphinxcontrib-autoprogram
+sphinx-mdinclude
+m2r2
+nbsphinx
+furo
