@@ -6,3 +6,4 @@ mellon/__pycache__
 *.egg-info/
 build/
 notebooks/data
+dist/
