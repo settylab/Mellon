@@ -142,9 +142,10 @@ class BaseEstimator:
             x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
         )
         new_rank = L.shape[1]
-        if new_rank > (.8*rank):
+        old_rank = landmarks.shape[0]
+        if new_rank > (.8*old_rank):
             warn(
-                f'Shallow rank reduction from {rank:,} to {new_rank:,} '
+                f'Shallow rank reduction from {old_rank:,} to {new_rank:,} '
                 'indicates underrepresentation by landmarks. Consider '
                 'increasing n_landmarks!'
             )
