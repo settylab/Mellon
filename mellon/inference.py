@@ -246,6 +246,8 @@ def compute_conditional_mean(
             x, y, mu, cov_func, jitter=jitter,
         )
     else:
+        if len(landmarks.shape) < 2:
+            landmarks = landmarks[:, None]
         return _landmarks_conditional_mean(
             x, landmarks, y, mu, cov_func, sigma=sigma, jitter=jitter,
         )

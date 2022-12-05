@@ -26,15 +26,22 @@ def _full_conditional_mean(
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
+    if d1 := len(x.shape) < 2:
+        x = x[:, None]
     sigma2 = square(sigma)
     K = cov_func(x, x)
     sigma2 = max(sigma2, jitter)
     L = cholesky(stabilize(K, jitter=sigma2))
     weights = solve_triangular(L.T, solve_triangular(L, y, lower=True))
 
-    def mean(Xnew):
-        Kus = cov_func(Xnew, x)
-        return mu + dot(Kus, weights)
+    if d1:
+        def mean(Xnew):
+            Kus = cov_func(Xnew[:, None], x)
+            return mu + dot(Kus, weights)
+    else:
+        def mean(Xnew):
+            Kus = cov_func(Xnew, x)
+            return mu + dot(Kus, weights)
 
     return mean
 
@@ -63,6 +70,10 @@ def _landmarks_conditional_mean(
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
+    if d1 := len(x.shape) < 2:
+        x = x[:, None]
+    if len(xu.shape) < 2:
+        xu = xu[:, None]
     sigma2 = square(sigma)
     Kuu = cov_func(xu, xu)
     Kuf = cov_func(xu, x)
@@ -75,8 +86,13 @@ def _landmarks_conditional_mean(
     z = solve_triangular(L_B.T, c)
     weights = solve_triangular(Luu.T, z)
 
-    def mean(Xnew):
-        Kus = cov_func(Xnew, xu)
-        return mu + dot(Kus, weights)
+    if d1:
+        def mean(Xnew):
+            Kus = cov_func(Xnew[:, None], xu)
+            return mu + dot(Kus, weights)
+    else:
+        def mean(Xnew):
+            Kus = cov_func(Xnew, xu)
+            return mu + dot(Kus, weights)
 
     return mean

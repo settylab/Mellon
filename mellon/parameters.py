@@ -30,6 +30,8 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     :rtype: array-like
     """
     n = x.shape[0]
+    if len(x.shape) < 2:
+        x = x[:, None]
     assert n_landmarks > 1, "n_landmarks musst be larger 1"
     if n_landmarks >= n:
         return x
@@ -45,6 +47,8 @@ def compute_nn_distances(x):
     :return: nn_distances - The observed nearest neighbor distances.
     :rtype: array-like
     """
+    if len(x.shape) < 2:
+        x = x[:, None]
     if x.shape[1] >= 20:
         tree = BallTree(x, metric="euclidean")
     else:
@@ -60,6 +64,8 @@ def compute_d(x):
     :param x: The training instances.
     :type x: array-like
     """
+    if len(x.shape) < 2:
+        return 1
     return x.shape[1]
 
 
@@ -145,6 +151,11 @@ def compute_L(
     :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
+    if len(x.shape) < 2:
+        x = x[:, None]
+    if len(landmarks.shape) < 2:
+        landmarks = landmarks[:, None]
+
     if landmarks is None:
         n = x.shape[0]
         method = _check_method(rank, n, method)
