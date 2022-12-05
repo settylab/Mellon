@@ -7,7 +7,9 @@ from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
 from .conditional import (
     _full_conditional_mean,
+    _full_conditional_mean_y,
     _landmarks_conditional_mean,
+    _landmarks_conditional_mean_y,
 )
 from .util import DEFAULT_JITTER
 
@@ -250,4 +252,47 @@ def compute_conditional_mean(
             landmarks = landmarks[:, None]
         return _landmarks_conditional_mean(
             x, landmarks, y, mu, cov_func, sigma=sigma, jitter=jitter,
+        )
+
+def compute_conditional_mean_y(
+    x,
+    landmarks,
+    Xnew,
+    mu,
+    cov_func,
+    sigma=0,
+    jitter=DEFAULT_JITTER,
+):
+    R"""
+    Builds the mean function of the Gaussian process, conditioned on the
+    function values (e.g., log-density) on x, and for fixed
+    output locations Xnew and therefor flexible output values y.
+
+    :param x: The training instances.
+    :type x: array-like
+    :param landmarks: The landmark points for fast sparse computation.
+        Landmarks can be None if not using landmark points.
+    :type landmarks: array-like
+    :param Xnew: The output locations.
+    :type Xnew: array-like
+    :param mu: The original Gaussian process mean.
+    :type mu: float
+    :param cov_func: The Gaussian process covariance function.
+    :type cov_func: function
+    :param sigma: White moise veriance. Defaults to 0.
+    :type sigma: float
+    :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
+    :type jitter: float
+    :return: conditional_mean - The conditioned Gaussian process mean function.
+    :rtype: function
+    """
+    if landmarks is None:
+        return _full_conditional_mean_y(
+            x, Xnew, mu, cov_func, jitter=jitter,
+        )
+    else:
+        if len(landmarks.shape) < 2:
+            landmarks = landmarks[:, None]
+        return _landmarks_conditional_mean_y(
+            x, landmarks, Xnew, mu, cov_func, sigma=sigma, jitter=jitter,
         )

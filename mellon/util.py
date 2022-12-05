@@ -1,6 +1,7 @@
 from jax.numpy import eye, log, pi, repeat, newaxis, tensordot, sqrt, maximum
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
+from jax import jit, vmap
 
 
 DEFAULT_JITTER = 1e-6
@@ -55,3 +56,21 @@ def distance(x, y):
     xy = tensordot(x, y, (1, 1))
     sq = xx - 2 * xy + yy + 1e-12
     return sqrt(maximum(sq, 0))
+
+def vector_map(fun, X, in_axis=0):
+    """
+    Applies jax just in time compilation and vmap to quickly evaluate a
+    function for multiple input arrays.
+
+    :param fun: The function to evaluate.
+    :type fun: function
+    :param X: Array of intput arrays.
+    :type X: array-like
+    :param in_axis: An integer, None, or (nested) standard Python container
+        (tuple/list/dict) thereof specifying which input array axes to map over.
+        S. documantation of jax.vmap.
+    :return: Stacked results of the function calls.
+    :rtype: array-like
+    """
+    vfun = vmap(jit(fun), in_axis)
+    return vfun(X)

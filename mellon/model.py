@@ -8,6 +8,7 @@ from .inference import (
     minimize_lbfgsb,
     compute_log_density_x,
     compute_conditional_mean,
+    compute_conditional_mean_y,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_JIT,
@@ -29,7 +30,7 @@ from .derivatives import (
     hessian,
     hessian_log_determinant,
 )
-from .util import DEFAULT_JITTER
+from .util import DEFAULT_JITTER, vector_map
 
 
 DEFAULT_COV_FUNC = Matern52
@@ -843,7 +844,6 @@ class FunctionEstimator(BaseEstimator):
             cov_func = cov_func,
             L = L,
         )
-        self.y = None
         self.sigma = sigma
 
 
@@ -862,10 +862,7 @@ class FunctionEstimator(BaseEstimator):
         value = function()
         setattr(self, attribute, value)
 
-    def _set_y(self, y):
-        self.y = y
-
-    def prepare_inference(self, x, y):
+    def prepare_inference(self, x):
         R"""
         Set all attributes in preparation. It is not necessary to call this
         function before calling fit.
@@ -879,7 +876,6 @@ class FunctionEstimator(BaseEstimator):
         :rtype: function, array-like
         """
         self._set_x(x)
-        self._set_y(y)
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")
@@ -907,14 +903,9 @@ class FunctionEstimator(BaseEstimator):
             raise ValueError(message)
         if x is None:
             x = self.x
-        if self.y is not None and self.y is not y:
-            message = "self.y has been set already, but is not equal to the argument y."
-            raise ValueError(message)
-        if self.y is None and y is None:
-            message = "Required argument y is missing and self.y has not been set."
-            raise ValueError(message)
         if y is None:
-            y = self.y
+            message = "Required argument y is missing."
+            raise ValueError(message)
         landmarks = self.landmarks
         mu = self.mu
         cov_func = self.cov_func
@@ -941,7 +932,7 @@ class FunctionEstimator(BaseEstimator):
         :rtype: Object
         """
 
-        self.prepare_inference(x, y)
+        self.prepare_inference(x)
         self.compute_conditional(x, y)
         return self
 
@@ -961,7 +952,7 @@ class FunctionEstimator(BaseEstimator):
         Compute the conditional mean and return the smoothed function values
         at the points x.
 
-        :param x: The training instances to estimate density function.
+        :param x: The training instances to estimate function.
         :type x: array-like
         :param y: The training function values on cell states.
         :type y: array-like
@@ -971,3 +962,35 @@ class FunctionEstimator(BaseEstimator):
 
         self.fit(x, y)
         return self.predict(x)
+
+    def multi_fit_predict(self, x=None, Y=None, Xnew=None):
+        R"""
+        Compute the conditional mean and return the smoothed function values
+        at the points Xnew for each line of values in Y.
+
+        :param x: The training instances to estimate density function.
+        :type x: array-like
+        :param y: The training function values on cell states.
+        :type y: array-like
+        :param Xnew: The new data to predict.
+        :type Xnew: array-like
+        :return: condition_mean - The conditional mean function value at each test point in x.
+        :rtype: array-like
+        """
+
+        if Xnew is None:
+            Xnew = x
+
+        self.prepare_inference(x)
+
+        landmarks = self.landmarks
+        mu = self.mu
+        cov_func = self.cov_func
+        sigma = self.sigma
+        jitter = self.jitter
+
+        conditional = compute_conditional_mean_y(
+            x, landmarks, Xnew, mu, cov_func, sigma, jitter=jitter,
+        )
+
+        return vector_map(conditional, Y)
