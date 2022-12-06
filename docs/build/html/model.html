@@ -691,8 +691,30 @@ at the points x.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate function.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em>) – The training function values on cell states.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>condition_mean - The conditional mean function value at each test point in x.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mellon.model.FunctionEstimator.multi_fit_predict">
+<span class="sig-name descname"><span class="pre">multi_fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Xnew</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.multi_fit_predict" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the conditional mean and return the smoothed function values
+at the points Xnew for each line of values in Y.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>array-like</em>) – The training instances to estimate density function.</p></li>
 <li><p><strong>y</strong> (<em>array-like</em>) – The training function values on cell states.</p></li>
+<li><p><strong>Xnew</strong> (<em>array-like</em>) – The new data to predict.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -723,7 +745,7 @@ at the points x.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mellon.model.FunctionEstimator.prepare_inference">
-<span class="sig-name descname"><span class="pre">prepare_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.prepare_inference" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">prepare_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.model.FunctionEstimator.prepare_inference" title="Permalink to this definition">#</a></dt>
 <dd><p>Set all attributes in preparation. It is not necessary to call this
 function before calling fit.</p>
 <dl class="field-list simple">
@@ -833,6 +855,7 @@ initial guess for optimization.</p>
 <li><a class="reference internal" href="#mellon.model.FunctionEstimator.compute_conditional"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.compute_conditional()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.FunctionEstimator.fit"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.fit()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.FunctionEstimator.fit_predict"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.fit_predict()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.model.FunctionEstimator.multi_fit_predict"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.multi_fit_predict()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.FunctionEstimator.predict"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.predict()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.model.FunctionEstimator.prepare_inference"><code class="docutils literal notranslate"><span class="pre">FunctionEstimator.prepare_inference()</span></code></a></li>
 </ul>

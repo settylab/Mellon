@@ -275,6 +275,30 @@ d \cdot \log(nn\text{_}distances)\)</span></p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="mellon.util.vector_map">
+<span class="sig-prename descclassname"><span class="pre">mellon.util.</span></span><span class="sig-name descname"><span class="pre">vector_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.util.vector_map" title="Permalink to this definition">#</a></dt>
+<dd><p>Applies jax just in time compilation and vmap to quickly evaluate a
+function for multiple input arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fun</strong> (<em>function</em>) – The function to evaluate.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em>) – Array of intput arrays.</p></li>
+<li><p><strong>in_axis</strong> – An integer, None, or (nested) standard Python container
+(tuple/list/dict) thereof specifying which input array axes to map over.
+S. documantation of jax.vmap.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stacked results of the function calls.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
         </article>
@@ -343,6 +367,7 @@ d \cdot \log(nn\text{_}distances)\)</span></p>
 <li><a class="reference internal" href="#mellon.util.distance"><code class="docutils literal notranslate"><span class="pre">distance()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.util.mle"><code class="docutils literal notranslate"><span class="pre">mle()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.util.stabilize"><code class="docutils literal notranslate"><span class="pre">stabilize()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.util.vector_map"><code class="docutils literal notranslate"><span class="pre">vector_map()</span></code></a></li>
 </ul>
 </li>
 </ul>

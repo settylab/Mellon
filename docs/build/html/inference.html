@@ -241,6 +241,34 @@ Landmarks can be None if not using landmark points.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="mellon.inference.compute_conditional_mean_y">
+<span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">compute_conditional_mean_y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Xnew</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.compute_conditional_mean_y" title="Permalink to this definition">#</a></dt>
+<dd><p>Builds the mean function of the Gaussian process, conditioned on the
+function values (e.g., log-density) on x, and for fixed
+output locations Xnew and therefor flexible output values y.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em>) – The training instances.</p></li>
+<li><p><strong>landmarks</strong> (<em>array-like</em>) – The landmark points for fast sparse computation.
+Landmarks can be None if not using landmark points.</p></li>
+<li><p><strong>Xnew</strong> (<em>array-like</em>) – The output locations.</p></li>
+<li><p><strong>mu</strong> (<em>float</em>) – The original Gaussian process mean.</p></li>
+<li><p><strong>cov_func</strong> (<em>function</em>) – The Gaussian process covariance function.</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – White moise veriance. Defaults to 0.</p></li>
+<li><p><strong>jitter</strong> (<em>float</em>) – A small amount to add to the diagonal for stability. Defaults to 1e-6.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>conditional_mean - The conditioned Gaussian process mean function.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="mellon.inference.compute_log_density_x">
 <span class="sig-prename descclassname"><span class="pre">mellon.inference.</span></span><span class="sig-name descname"><span class="pre">compute_log_density_x</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_transformation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mellon.inference.compute_log_density_x" title="Permalink to this definition">#</a></dt>
 <dd><p>Computes the log density at the training points.</p>
@@ -418,6 +446,7 @@ final loss value,</p>
             <ul>
 <li><a class="reference internal" href="#">Inference</a><ul>
 <li><a class="reference internal" href="#mellon.inference.compute_conditional_mean"><code class="docutils literal notranslate"><span class="pre">compute_conditional_mean()</span></code></a></li>
+<li><a class="reference internal" href="#mellon.inference.compute_conditional_mean_y"><code class="docutils literal notranslate"><span class="pre">compute_conditional_mean_y()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.inference.compute_log_density_x"><code class="docutils literal notranslate"><span class="pre">compute_log_density_x()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.inference.compute_loss_func"><code class="docutils literal notranslate"><span class="pre">compute_loss_func()</span></code></a></li>
 <li><a class="reference internal" href="#mellon.inference.compute_transform"><code class="docutils literal notranslate"><span class="pre">compute_transform()</span></code></a></li>
