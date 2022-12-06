@@ -70,7 +70,7 @@ def _nearest_neighbors(r, d):
     """
     constant1 = pi ** (d / 2) / exp(gammaln(d / 2 + 1))
     V = constant1 * (r**d)
-    constant2 = log(d+1e-16) + (d * log(pi) / 2) - gammaln(d / 2 + 1)
+    constant2 = log(d + 1e-16) + (d * log(pi) / 2) - gammaln(d / 2 + 1)
     Vdr = constant2 + ((d - 1) * log(r))
 
     def logpdf(log_density):
@@ -245,14 +245,25 @@ def compute_conditional_mean(
     """
     if landmarks is None:
         return _full_conditional_mean(
-            x, y, mu, cov_func, jitter=jitter,
+            x,
+            y,
+            mu,
+            cov_func,
+            jitter=jitter,
         )
     else:
         if len(landmarks.shape) < 2:
             landmarks = landmarks[:, None]
         return _landmarks_conditional_mean(
-            x, landmarks, y, mu, cov_func, sigma=sigma, jitter=jitter,
+            x,
+            landmarks,
+            y,
+            mu,
+            cov_func,
+            sigma=sigma,
+            jitter=jitter,
         )
+
 
 def compute_conditional_mean_y(
     x,
@@ -288,11 +299,21 @@ def compute_conditional_mean_y(
     """
     if landmarks is None:
         return _full_conditional_mean_y(
-            x, Xnew, mu, cov_func, jitter=jitter,
+            x,
+            Xnew,
+            mu,
+            cov_func,
+            jitter=jitter,
         )
     else:
         if len(landmarks.shape) < 2:
             landmarks = landmarks[:, None]
         return _landmarks_conditional_mean_y(
-            x, landmarks, Xnew, mu, cov_func, sigma=sigma, jitter=jitter,
+            x,
+            landmarks,
+            Xnew,
+            mu,
+            cov_func,
+            sigma=sigma,
+            jitter=jitter,
         )

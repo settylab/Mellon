@@ -144,11 +144,11 @@ class BaseEstimator:
         )
         new_rank = L.shape[1]
         old_rank = landmarks.shape[0]
-        if new_rank > (.8*old_rank):
+        if new_rank > (0.8 * old_rank):
             warn(
-                f'Shallow rank reduction from {old_rank:,} to {new_rank:,} '
-                'indicates underrepresentation by landmarks. Consider '
-                'increasing n_landmarks!'
+                f"Shallow rank reduction from {old_rank:,} to {new_rank:,} "
+                "indicates underrepresentation by landmarks. Consider "
+                "increasing n_landmarks!"
             )
         return L
 
@@ -424,18 +424,18 @@ class DensityEstimator(BaseEstimator):
         jit=DEFAULT_JIT,
     ):
         super().__init__(
-            cov_func_curry = cov_func_curry,
-            n_landmarks = n_landmarks,
-            rank = rank,
-            method = method,
-            jitter = jitter,
-            landmarks = landmarks,
-            nn_distances = nn_distances,
-            mu = mu,
-            ls = ls,
-            ls_factor = ls_factor,
-            cov_func = cov_func,
-            L = L,
+            cov_func_curry=cov_func_curry,
+            n_landmarks=n_landmarks,
+            rank=rank,
+            method=method,
+            jitter=jitter,
+            landmarks=landmarks,
+            nn_distances=nn_distances,
+            mu=mu,
+            ls=ls,
+            ls_factor=ls_factor,
+            cov_func=cov_func,
+            L=L,
         )
         self.optimizer = optimizer
         self.n_iter = n_iter
@@ -483,12 +483,8 @@ class DensityEstimator(BaseEstimator):
             string += "initial_value=None, "
         else:
             string += "initial_value=initial_value, "
-        string += (
-            f"jit={self.jit}"
-            ")"
-        )
+        string += f"jit={self.jit}" ")"
         return string
-
 
     def _compute_d(self):
         x = self.x
@@ -580,7 +576,12 @@ class DensityEstimator(BaseEstimator):
         cov_func = self.cov_func
         jitter = self.jitter
         log_density_func = compute_conditional_mean(
-            x, landmarks, log_density_x, mu, cov_func, jitter=jitter,
+            x,
+            landmarks,
+            log_density_x,
+            mu,
+            cov_func,
+            jitter=jitter,
         )
         self.log_density_func = log_density_func
 
@@ -831,21 +832,20 @@ class FunctionEstimator(BaseEstimator):
         sigma=0,
     ):
         super().__init__(
-            cov_func_curry = cov_func_curry,
-            n_landmarks = n_landmarks,
-            rank = rank,
-            method = method,
-            jitter = jitter,
-            landmarks = landmarks,
-            nn_distances = nn_distances,
-            mu = mu,
-            ls = ls,
-            ls_factor = ls_factor,
-            cov_func = cov_func,
-            L = L,
+            cov_func_curry=cov_func_curry,
+            n_landmarks=n_landmarks,
+            rank=rank,
+            method=method,
+            jitter=jitter,
+            landmarks=landmarks,
+            nn_distances=nn_distances,
+            mu=mu,
+            ls=ls,
+            ls_factor=ls_factor,
+            cov_func=cov_func,
+            L=L,
         )
         self.sigma = sigma
-
 
     def _prepare_attribute(self, attribute):
         R"""
@@ -883,7 +883,6 @@ class FunctionEstimator(BaseEstimator):
         self._prepare_attribute("L")
         return
 
-
     def compute_conditional(self, x=None, y=None):
         R"""
         Compute and return the conditional mean function.
@@ -912,7 +911,13 @@ class FunctionEstimator(BaseEstimator):
         sigma = self.sigma
         jitter = self.jitter
         conditional = compute_conditional_mean(
-            x, landmarks, y, mu, cov_func, sigma, jitter=jitter,
+            x,
+            landmarks,
+            y,
+            mu,
+            cov_func,
+            sigma,
+            jitter=jitter,
         )
         self.conditional = conditional
         return conditional
@@ -990,7 +995,13 @@ class FunctionEstimator(BaseEstimator):
         jitter = self.jitter
 
         conditional = compute_conditional_mean_y(
-            x, landmarks, Xnew, mu, cov_func, sigma, jitter=jitter,
+            x,
+            landmarks,
+            Xnew,
+            mu,
+            cov_func,
+            sigma,
+            jitter=jitter,
         )
 
         return vector_map(conditional, Y)

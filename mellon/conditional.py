@@ -6,7 +6,12 @@ from .util import stabilize, DEFAULT_JITTER
 
 
 def _full_conditional_mean(
-    x, y, mu, cov_func, sigma=0, jitter=DEFAULT_JITTER,
+    x,
+    y,
+    mu,
+    cov_func,
+    sigma=0,
+    jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned Gaussian process.
@@ -35,18 +40,27 @@ def _full_conditional_mean(
     weights = solve_triangular(L.T, solve_triangular(L, y, lower=True))
 
     if d1:
+
         def mean(Xnew):
             Kus = cov_func(Xnew[:, None], x)
             return mu + dot(Kus, weights)
+
     else:
+
         def mean(Xnew):
             Kus = cov_func(Xnew, x)
             return mu + dot(Kus, weights)
 
     return mean
 
+
 def _full_conditional_mean_y(
-    x, Xnew, mu, cov_func, sigma=0, jitter=DEFAULT_JITTER,
+    x,
+    Xnew,
+    mu,
+    cov_func,
+    sigma=0,
+    jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned Gaussian process for fixed
@@ -85,7 +99,13 @@ def _full_conditional_mean_y(
 
 
 def _landmarks_conditional_mean(
-    x, xu, y, mu, cov_func, sigma=0, jitter=DEFAULT_JITTER,
+    x,
+    xu,
+    y,
+    mu,
+    cov_func,
+    sigma=0,
+    jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned low rank gp, where rank
@@ -125,10 +145,13 @@ def _landmarks_conditional_mean(
     weights = solve_triangular(Luu.T, z)
 
     if d1:
+
         def mean(Xnew):
             Kus = cov_func(Xnew[:, None], xu)
             return mu + dot(Kus, weights)
+
     else:
+
         def mean(Xnew):
             Kus = cov_func(Xnew, xu)
             return mu + dot(Kus, weights)
@@ -137,7 +160,13 @@ def _landmarks_conditional_mean(
 
 
 def _landmarks_conditional_mean_y(
-    x, xu, Xnew, mu, cov_func, sigma=0, jitter=DEFAULT_JITTER,
+    x,
+    xu,
+    Xnew,
+    mu,
+    cov_func,
+    sigma=0,
+    jitter=DEFAULT_JITTER,
 ):
     """
     Builds the mean function of the conditioned low rank gp, where rank

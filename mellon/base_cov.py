@@ -38,9 +38,7 @@ class Add(Covariance):
         return self.__repr__()
 
     def __repr__(self):
-        return (
-            "(" + repr(self.left) + " + " + repr(self.right) + ")"
-        )
+        return "(" + repr(self.left) + " + " + repr(self.right) + ")"
 
     def __call__(self, x, y):
         if callable(self.right):
@@ -62,9 +60,7 @@ class Mul(Covariance):
         return self.__repr__()
 
     def __repr__(self):
-        return (
-            "(" + repr(self.left) + " * " + repr(self.right) + ")"
-        )
+        return "(" + repr(self.left) + " * " + repr(self.right) + ")"
 
     def __call__(self, x, y):
         if callable(self.right):
@@ -85,9 +81,7 @@ class Pow(Covariance):
         return self.__repr__()
 
     def __repr__(self):
-        return (
-            "(" + repr(self.left) + " ** " + repr(self.right) + ")"
-        )
+        return "(" + repr(self.left) + " ** " + repr(self.right) + ")"
 
     def __call__(self, x, y):
         return self.left(x, y) ** self.right

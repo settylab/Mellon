@@ -57,6 +57,7 @@ def distance(x, y):
     sq = xx - 2 * xy + yy + 1e-12
     return sqrt(maximum(sq, 0))
 
+
 def vector_map(fun, X, in_axis=0):
     """
     Applies jax just in time compilation and vmap to quickly evaluate a
