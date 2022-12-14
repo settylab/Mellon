@@ -1,9 +1,9 @@
-import warnings
 from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER
+from . import logger
 
 
 DEFAULT_RANK = 0.999
@@ -28,8 +28,8 @@ def _check_method(rank, full, method):
     :return: method - The detected method.
     :rtype: str
     """
-    percent = (type(rank) is float) and (0 < rank) and (rank <= 1)
-    fixed = (type(rank) is int) and (1 <= rank) and (rank <= full)
+    percent = isinstance(rank, float) and (0 < rank) and (rank <= 1)
+    fixed = isinstance(rank, int) and (1 <= rank) and (rank <= full)
     if not (percent or fixed):
         message = """rank must be a float 0.0 <=rank <= 1.0 or
     an int 1 <= rank <= q. q equals the number of landmarks
@@ -50,15 +50,15 @@ def _check_method(rank, full, method):
     eigenvalues to include in the low rank approximation.
     To bypass this warning, explictly set method='percent'.
     If this is not the intended behavior, explicitly set
-    method='percent'."""
+    method='fixed'."""
         else:
             message = """rank is 1, which is ambiguous. Because
     rank is an int, it is interpreted as the number of
     eigenvectors to include in the low rank approximation.
     To bypass this warning, explictly set method='fixed'.
     If this is not the intended behavior, explicitly set
-    method='fixed'."""
-        warnings.warn(message, UserWarning)
+    method='percent'."""
+        logger.warning(message)
     if percent:
         return "percent"
     else:

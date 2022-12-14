@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
 from jax.config import config as jaxconfig
 
 jaxconfig.update("jax_enable_x64", True)

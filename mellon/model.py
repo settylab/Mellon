@@ -1,4 +1,3 @@
-from warnings import warn
 from .cov import Matern52
 from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
 from .inference import (
@@ -30,15 +29,19 @@ from .derivatives import (
     hessian,
     hessian_log_determinant,
 )
-from .util import DEFAULT_JITTER, vector_map
+from .util import (
+    DEFAULT_JITTER,
+    vector_map,
+    configure_logger,
+)
+from . import logger
 
 
 DEFAULT_COV_FUNC = Matern52
 
-
 class BaseEstimator:
     R"""
-    Base class for mellon estimators.
+    Base class for the mellon estimators.
     """
 
     def __init__(
@@ -61,6 +64,7 @@ class BaseEstimator:
         L=None,
         initial_value=None,
     ):
+        configure_logger(logger)
         self.cov_func_curry = cov_func_curry
         self.n_landmarks = n_landmarks
         self.rank = rank
@@ -74,6 +78,7 @@ class BaseEstimator:
         self.cov_func = cov_func
         self.L = L
         self.x = None
+        self.logger = logger
 
     def __str__(self):
         return self.__repr__()
@@ -112,6 +117,7 @@ class BaseEstimator:
     def _compute_landmarks(self):
         x = self.x
         n_landmarks = self.n_landmarks
+        logger.info(f'Computing {n_landmarks:,} landmarks with k-means clustering.')
         landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
         return landmarks
 
@@ -130,26 +136,37 @@ class BaseEstimator:
         cov_func_curry = self.cov_func_curry
         ls = self.ls
         cov_func = compute_cov_func(cov_func_curry, ls)
+        logger.info('Using covariance function %s.', str(cov_func))
         return cov_func
 
     def _compute_L(self):
         x = self.x
         cov_func = self.cov_func
         landmarks = self.landmarks
+        n_landmarks = landmarks.shape[0]
         rank = self.rank
         method = self.method
         jitter = self.jitter
+        if isinstance(rank, float):
+            logger.info(
+                f'Computing rank reduction using "{method}" method '
+                f'retaining > {rank:.2%} of variance.'
+            )
+        else:
+            logger.info(
+                f'Computing rank reduction to rank {rank} using "{method}" method.'
+            )
         L = compute_L(
             x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
         )
         new_rank = L.shape[1]
-        old_rank = landmarks.shape[0]
-        if new_rank > (0.8 * old_rank):
-            warn(
-                f"Shallow rank reduction from {old_rank:,} to {new_rank:,} "
+        if new_rank > (0.8 * n_landmarks):
+            logger.warning(
+                f"Shallow rank reduction from {n_landmarks:,} to {new_rank:,} "
                 "indicates underrepresentation by landmarks. Consider "
                 "increasing n_landmarks!"
             )
+        logger.info(f'Using rank {new_rank:,} covariance representation.')
         return L
 
     def _run_inference(self):
@@ -158,6 +175,7 @@ class BaseEstimator:
         n_iter = self.n_iter
         init_learn_rate = self.init_learn_rate
         optimizer = self.optimizer
+        logger.info('Running inference using %s.', optimizer)
         if optimizer == "adam":
             results = minimize_adam(
                 function,
@@ -181,12 +199,14 @@ class BaseEstimator:
                 results.loss,
             ]
         else:
-            raise ValueError(
+            error = ValueError(
                 f"Unknown optimizer {optimizer}. You can use .loss_func and "
                 ".initial_value as loss function and initial state for an "
                 "external optimization. Write optimal state to "
                 ".pre_transformation to enable prediction with .predict()."
             )
+            logger.error(error)
+            raise error
 
     def _prepare_attribute(self, attribute):
         R"""
@@ -526,45 +546,10 @@ class DensityEstimator(BaseEstimator):
         loss_func = compute_loss_func(nn_distances, d, transform, k)
         return loss_func
 
-    def _run_inference(self):
-        function = self.loss_func
-        initial_value = self.initial_value
-        n_iter = self.n_iter
-        init_learn_rate = self.init_learn_rate
-        optimizer = self.optimizer
-        if optimizer == "adam":
-            results = minimize_adam(
-                function,
-                initial_value,
-                n_iter=n_iter,
-                init_learn_rate=init_learn_rate,
-                jit=self.jit,
-            )
-            self.pre_transformation = results.pre_transformation
-            self.opt_state = results.opt_state
-            self.losses = results.losses
-        elif optimizer == "L-BFGS-B":
-            results = minimize_lbfgsb(
-                function,
-                initial_value,
-                jit=self.jit,
-            )
-            self.pre_transformation = results.pre_transformation
-            self.opt_state = results.opt_state
-            self.losses = [
-                results.loss,
-            ]
-        else:
-            raise ValueError(
-                f"Unknown optimizer {optimizer}. You can use .loss_func and "
-                ".initial_value as loss function and initial state for an "
-                "external optimization. Write optimal state to "
-                ".pre_transformation to enable prediction with .predict()."
-            )
-
     def _set_log_density_x(self):
         pre_transformation = self.pre_transformation
         transform = self.transform
+        logger.info('Decoding latent density representation.')
         log_density_x = compute_log_density_x(pre_transformation, transform)
         self.log_density_x = log_density_x
 
@@ -575,6 +560,7 @@ class DensityEstimator(BaseEstimator):
         mu = self.mu
         cov_func = self.cov_func
         jitter = self.jitter
+        logger.info('Computing predictive function.')
         log_density_func = compute_conditional_mean(
             x,
             landmarks,
@@ -720,10 +706,14 @@ class DensityEstimator(BaseEstimator):
         """
         if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
-            raise ValueError(message)
+            error = ValueError(message)
+            logger.error(error)
+            raise error
         if self.x is None and x is None:
             message = "Required argument x is missing and self.x has not been set."
-            raise ValueError(message)
+            error = ValueError(message)
+            logger.error(error)
+            raise error
         if x is None:
             x = self.x
 
