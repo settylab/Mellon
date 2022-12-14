@@ -7,7 +7,7 @@ this_directory = Path(__file__).parent
 
 setup(
     name="mellon",
-    version="1.0.1",
+    version="1.0.2",
     description="Non-parametric density estimator.",
     url="https://github.com/settylab/mellon",
     author="Setty Lab",
