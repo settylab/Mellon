@@ -67,7 +67,8 @@ def _check_method(rank, full, method):
 
 def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     R"""
-    Decompose :math:`A` into its largest rank eigenvectors and eigenvalues.
+    Decompose :math:`A` into its largest positive `rank` and
+    at least one eigenvector(s) and eigenvalue(s).
 
     :param A: A square matrix.
     :type A: array-like
@@ -85,11 +86,12 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     """
 
     s, v = eigh(A)
+    p = count_nonzero(s > 0) # stability
     if method == "percent":
         # automatically choose rank to capture some percent of the eigenvalues
-        target = arraysum(s) * rank
-        rank = searchsorted(cumsum(s[::-1]), target)
-    p = min(count_nonzero(s > 0), rank)  # stability
+        target = arraysum(s[-p:]) * rank
+        rank = searchsorted(cumsum(s[:-p-1:-1]), target)
+    p = min(p, rank)
     s_ = s[-p:]
     v_ = v[:, -p:]
     return s_, v_
