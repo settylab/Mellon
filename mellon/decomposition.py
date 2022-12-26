@@ -87,11 +87,21 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
 
     s, v = eigh(A)
     p = count_nonzero(s > 0) # stability
+    summed = cumsum(s[:-p-1:-1])
     if method == "percent":
         # automatically choose rank to capture some percent of the eigenvalues
-        target = arraysum(s[-p:]) * rank
-        rank = searchsorted(cumsum(s[:-p-1:-1]), target)
-    p = min(p, rank)
+        target = summed[-1] * rank
+        p = searchsorted(summed, target)
+        if p == 0:
+            logger.warning(
+                f'Low variance percentage {rank:%} indicated rank=0. '
+                'Bumping rank to 1.'
+            )
+            p = 1
+    else:
+        p = min(rank, p)
+    frac = summed[p]/summed[-1]
+    logger.info(f'Recovering {frac:%} variance in rank reduction.')
     s_ = s[-p:]
     v_ = v[:, -p:]
     return s_, v_
