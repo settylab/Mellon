@@ -148,7 +148,7 @@ class BaseEstimator:
         rank = self.rank
         method = self.method
         jitter = self.jitter
-        if isinstance(rank, float):
+        if isinstance(rank, float) and method != 'fixed':
             logger.info(
                 f'Computing rank reduction using "{method}" method '
                 f"retaining > {rank:.2%} of variance."
@@ -161,7 +161,7 @@ class BaseEstimator:
             x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
         )
         new_rank = L.shape[1]
-        if new_rank > (0.8 * n_landmarks):
+        if method != 'fixed' and new_rank > (rank * 0.8 * n_landmarks):
             logger.warning(
                 f"Shallow rank reduction from {n_landmarks:,} to {new_rank:,} "
                 "indicates underrepresentation by landmarks. Consider "
