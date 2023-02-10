@@ -6,7 +6,7 @@ from .util import stabilize, DEFAULT_JITTER
 from . import logger
 
 
-DEFAULT_RANK = 0.999
+DEFAULT_RANK = 0.99
 DEFAULT_METHOD = "auto"
 
 
@@ -101,7 +101,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     else:
         p = min(rank, p)
     frac = summed[p]/summed[-1]
-    logger.info(f'Recovering {frac:%} variance in rank reduction.')
+    logger.info(f'Recovering {frac:%} variance in eigendecomposition.')
     s_ = s[-p:]
     v_ = v[:, -p:]
     return s_, v_
