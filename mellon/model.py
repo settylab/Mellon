@@ -776,9 +776,6 @@ class FunctionEstimator(BaseEstimator):
         k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
         function cov_func = cov_func_curry(ls). Defaults to None.
     :type cov_func: function or None
-    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-        If None, automatically computes L. Defaults to None.
-    :type L: array-like or None
     :param sigma: The white moise standard deviation. Defaults to 0.
     :type sigma: float
     :ivar n_landmarks: The number of landmark points.
@@ -819,7 +816,6 @@ class FunctionEstimator(BaseEstimator):
         ls=None,
         ls_factor=1,
         cov_func=None,
-        L=None,
         sigma=0,
     ):
         super().__init__(
@@ -834,7 +830,6 @@ class FunctionEstimator(BaseEstimator):
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
-            L=L,
         )
         self.sigma = sigma
 
@@ -871,7 +866,6 @@ class FunctionEstimator(BaseEstimator):
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
-        self._prepare_attribute("L")
         return
 
     def compute_conditional(self, x=None, y=None):
