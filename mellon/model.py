@@ -93,7 +93,6 @@ class BaseEstimator:
             f"rank={self.rank}, "
             f"method='{self.method}', "
             f"jitter={self.jitter}, "
-            f"n_iter={self.n_iter}, "
             f"landmarks={self.landmarks}, "
         )
         if self.nn_distances is None:
