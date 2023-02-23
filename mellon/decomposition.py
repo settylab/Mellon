@@ -6,7 +6,7 @@ from .util import stabilize, DEFAULT_JITTER
 from . import logger
 
 
-DEFAULT_RANK = 0.99
+DEFAULT_RANK = 1.0
 DEFAULT_METHOD = "auto"
 
 
@@ -43,22 +43,6 @@ def _check_method(rank, full, method):
         message = f"""The argument method={method} does not match the rank={rank}.
     The detected method from the rank is 'fixed'."""
         raise ValueError(message)
-    elif rank == 1 and method == "auto":
-        if percent:
-            message = """rank is 1.0, which is ambiguous. Because
-    rank is a float, it is interpreted as the percentage of
-    eigenvalues to include in the low rank approximation.
-    To bypass this warning, explictly set method='percent'.
-    If this is not the intended behavior, explicitly set
-    method='fixed'."""
-        else:
-            message = """rank is 1, which is ambiguous. Because
-    rank is an int, it is interpreted as the number of
-    eigenvectors to include in the low rank approximation.
-    To bypass this warning, explictly set method='fixed'.
-    If this is not the intended behavior, explicitly set
-    method='percent'."""
-        logger.warning(message)
     if percent:
         return "percent"
     else:

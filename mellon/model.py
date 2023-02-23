@@ -50,7 +50,6 @@ class BaseEstimator:
         cov_func_curry=DEFAULT_COV_FUNC,
         n_landmarks=DEFAULT_N_LANDMARKS,
         rank=DEFAULT_RANK,
-        method=DEFAULT_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -69,7 +68,6 @@ class BaseEstimator:
         self.cov_func_curry = cov_func_curry
         self.n_landmarks = n_landmarks
         self.rank = rank
-        self.method = method
         self.jitter = jitter
         self.landmarks = landmarks
         self.nn_distances = nn_distances
@@ -91,7 +89,6 @@ class BaseEstimator:
             f"cov_func_curry={self.cov_func_curry}, "
             f"n_landmarks={self.n_landmarks}, "
             f"rank={self.rank}, "
-            f"method='{self.method}', "
             f"jitter={self.jitter}, "
             f"landmarks={self.landmarks}, "
         )
