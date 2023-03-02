@@ -32,13 +32,13 @@ from .derivatives import (
 from .util import (
     DEFAULT_JITTER,
     vector_map,
-    configure_logger,
+    Log,
 )
-from . import logger
 
 
 DEFAULT_COV_FUNC = Matern52
 
+logger = Log()
 
 class BaseEstimator:
     R"""
@@ -64,7 +64,6 @@ class BaseEstimator:
         L=None,
         initial_value=None,
     ):
-        configure_logger(logger)
         self.cov_func_curry = cov_func_curry
         self.n_landmarks = n_landmarks
         self.rank = rank
@@ -77,7 +76,6 @@ class BaseEstimator:
         self.cov_func = cov_func
         self.L = L
         self.x = None
-        self.logger = logger
 
     def __str__(self):
         return self.__repr__()
@@ -122,7 +120,7 @@ class BaseEstimator:
         x = self.x
         logger.info('Computing nearest neighbor distances.')
         nn_distances = compute_nn_distances(x)
-        Areturn nn_distances
+        return nn_distances
 
     def _compute_ls(self):
         nn_distances = self.nn_distances

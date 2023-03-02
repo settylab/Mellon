@@ -2,13 +2,13 @@ from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
-from .util import stabilize, DEFAULT_JITTER
-from . import logger
+from .util import stabilize, DEFAULT_JITTER, Log
 
 
 DEFAULT_RANK = 0.99
 DEFAULT_METHOD = "auto"
 
+logger = Log()
 
 def _check_method(rank, full, method):
     R"""

@@ -79,39 +79,15 @@ def vector_map(fun, X, in_axis=0):
     vfun = vmap(jit(fun), in_axis)
     return vfun(X)
 
-
-def logger_is_configured(logger):
-    """
-    Checks if the logger has any other handlers than the NullHandler.
-
-    :param logger: A logger from the logging module.
-    :type logger: logging.Logger
-    :return: If the logger is configured.
-    :rtype: bool
-    """
-    for handler in logger.handlers:
-        if not isinstance(handler, logging.NullHandler):
-            return True
-    return False
-
-
-def configure_logger(logger, force=False):
-    """
-    Applies default configuration to the logger if it is not configured yet.
-
-    :param logger: A logger from the logging module.
-    :type logger: logging.Logger
-    :param force: If True, apply configuratuion even if configured.
-        Defaults to False.
-    :type force: bool
-    :return: The passed logger.
-    :rtype: logging.Logger
-    """
-    if force or not logger_is_configured(logger):
-        logger.setLevel(logging.INFO)
-        handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.propagate = False
-    return logger
+class Log(object):
+    def __new__(cls):
+        if not hasattr(cls, 'logger'):
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+            handler = logging.StreamHandler(sys.stdout)
+            formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+            logger.propagate = False
+            cls.logger = logger
+        return cls.logger

@@ -1,15 +1,10 @@
-import logging
-
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
 from jax.config import config as jaxconfig
 
 jaxconfig.update("jax_enable_x64", True)
 jaxconfig.update("jax_platform_name", "cpu")
 
 from .base_cov import Covariance
-from .util import stabilize, mle, distance
+from .util import stabilize, mle, distance, Log
 from .cov import Matern32, Matern52, ExpQuad, Exponential, RatQuad
 from .inference import (
     compute_transform,
