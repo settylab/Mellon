@@ -6,7 +6,7 @@ from .util import stabilize, DEFAULT_JITTER
 from . import logger
 
 
-DEFAULT_RANK = 1.0
+DEFAULT_RANK = 0.99
 DEFAULT_METHOD = "auto"
 
 

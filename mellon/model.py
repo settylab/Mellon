@@ -120,8 +120,9 @@ class BaseEstimator:
 
     def _compute_nn_distances(self):
         x = self.x
+        logger.info('Computing nearest neighbor distances.')
         nn_distances = compute_nn_distances(x)
-        return nn_distances
+        Areturn nn_distances
 
     def _compute_ls(self):
         nn_distances = self.nn_distances
@@ -444,7 +445,6 @@ class DensityEstimator(BaseEstimator):
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
             rank=rank,
-            method=method,
             jitter=jitter,
             landmarks=landmarks,
             nn_distances=nn_distances,
@@ -454,6 +454,7 @@ class DensityEstimator(BaseEstimator):
             cov_func=cov_func,
             L=L,
         )
+        self.method = method
         self.optimizer = optimizer
         self.n_iter = n_iter
         self.init_learn_rate = init_learn_rate
@@ -818,7 +819,6 @@ class FunctionEstimator(BaseEstimator):
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
             rank=rank,
-            method=method,
             jitter=jitter,
             landmarks=landmarks,
             nn_distances=nn_distances,
