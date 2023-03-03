@@ -545,7 +545,6 @@ class DensityEstimator(BaseEstimator):
     def _set_log_density_x(self):
         pre_transformation = self.pre_transformation
         transform = self.transform
-        logger.info("Decoding latent density representation.")
         log_density_x = compute_log_density_x(pre_transformation, transform)
         self.log_density_x = log_density_x
 
