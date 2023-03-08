@@ -68,13 +68,12 @@ def _nearest_neighbors(r, d):
     :return: The likelihood function.
     :rtype: function
     """
-    constant1 = pi ** (d / 2) / exp(gammaln(d / 2 + 1))
-    V = constant1 * (r**d)
-    constant2 = log(d + 1e-16) + (d * log(pi) / 2) - gammaln(d / 2 + 1)
-    Vdr = constant2 + ((d - 1) * log(r))
+    const = (d * log(pi) / 2) - gammaln(d / 2 + 1)
+    V = log(r) * d + const
+    Vdr = log(d) + ((d - 1) * log(r)) + const
 
     def logpdf(log_density):
-        A = exp(log_density) * V
+        A = exp(log_density + V)
         B = log_density + Vdr
         return arraysum(B - A)
 
