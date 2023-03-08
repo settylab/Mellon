@@ -156,7 +156,12 @@ class BaseEstimator:
             x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
         )
         new_rank = L.shape[1]
-        if method != 'fixed' and new_rank > (rank * 0.8 * n_landmarks):
+        if not (
+            type(rank) is int
+            and rank == n_landmarks
+            or type(rank) is float
+            and rank == 1.0
+        ) and method != 'fixed' and new_rank > (rank * 0.8 * n_landmarks):
             logger.warning(
                 f"Shallow rank reduction from {n_landmarks:,} to {new_rank:,} "
                 "indicates underrepresentation by landmarks. Consider "
