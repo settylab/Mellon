@@ -84,8 +84,9 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
             p = 1
     else:
         p = min(rank, p)
-    frac = summed[p]/summed[-1]
-    logger.info(f'Recovering {frac:%} variance in eigendecomposition.')
+    if (method == "percent" and rank < 1) or rank < len(summed):
+        frac = summed[p]/summed[-1]
+        logger.info(f'Recovering {frac:%} variance in eigendecomposition.')
     s_ = s[-p:]
     v_ = v[:, -p:]
     return s_, v_
