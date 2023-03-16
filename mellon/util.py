@@ -79,15 +79,32 @@ def vector_map(fun, X, in_axis=0):
     vfun = vmap(jit(fun), in_axis)
     return vfun(X)
 
+
 class Log(object):
+    """Access the Mellon logging/verbosity. Log() returns the singelon logger and
+    Log.off() and Log.on() disable or enable logging respectively."""
+
     def __new__(cls):
-        if not hasattr(cls, 'logger'):
+        """Return the singelton Logger."""
+        if not hasattr(cls, "logger"):
             logger = logging.getLogger(__name__)
             logger.setLevel(logging.INFO)
-            handler = logging.StreamHandler(sys.stdout)
+            cls.handler = logging.StreamHandler(sys.stdout)
             formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
+            cls.handler.setFormatter(formatter)
+            logger.addHandler(cls.handler)
             logger.propagate = False
             cls.logger = logger
         return cls.logger
+
+    @classmethod
+    def off(cls):
+        """Turn off all logging."""
+        cls.__new__(cls)
+        cls.logger.setLevel(logging.CRITICAL + 1)
+
+    @classmethod
+    def on(cls):
+        """Turn on logging."""
+        cls.__new__(cls)
+        cls.logger.setLevel(logging.INFO)
