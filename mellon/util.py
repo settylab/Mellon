@@ -80,38 +80,31 @@ def vector_map(fun, X, in_axis=0):
     return vfun(X)
 
 
-def logger_is_configured(logger):
-    """
-    Checks if the logger has any other handlers than the NullHandler.
+class Log(object):
+    """Access the Mellon logging/verbosity. Log() returns the singelon logger and
+    Log.off() and Log.on() disable or enable logging respectively."""
 
-    :param logger: A logger from the logging module.
-    :type logger: logging.Logger
-    :return: If the logger is configured.
-    :rtype: bool
-    """
-    for handler in logger.handlers:
-        if not isinstance(handler, logging.NullHandler):
-            return True
-    return False
+    def __new__(cls):
+        """Return the singelton Logger."""
+        if not hasattr(cls, "logger"):
+            logger = logging.getLogger(__name__)
+            logger.setLevel(logging.INFO)
+            cls.handler = logging.StreamHandler(sys.stdout)
+            formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
+            cls.handler.setFormatter(formatter)
+            logger.addHandler(cls.handler)
+            logger.propagate = False
+            cls.logger = logger
+        return cls.logger
 
+    @classmethod
+    def off(cls):
+        """Turn off all logging."""
+        cls.__new__(cls)
+        cls.logger.setLevel(logging.CRITICAL + 1)
 
-def configure_logger(logger, force=False):
-    """
-    Applies default configuration to the logger if it is not configured yet.
-
-    :param logger: A logger from the logging module.
-    :type logger: logging.Logger
-    :param force: If True, apply configuratuion even if configured.
-        Defaults to False.
-    :type force: bool
-    :return: The passed logger.
-    :rtype: logging.Logger
-    """
-    if force or not logger_is_configured(logger):
-        logger.setLevel(logging.INFO)
-        handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.propagate = False
-    return logger
+    @classmethod
+    def on(cls):
+        """Turn on logging."""
+        cls.__new__(cls)
+        cls.logger.setLevel(logging.INFO)

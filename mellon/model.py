@@ -32,13 +32,13 @@ from .derivatives import (
 from .util import (
     DEFAULT_JITTER,
     vector_map,
-    configure_logger,
+    Log,
 )
-from . import logger
 
 
 DEFAULT_COV_FUNC = Matern52
 
+logger = Log()
 
 class BaseEstimator:
     R"""
@@ -50,7 +50,6 @@ class BaseEstimator:
         cov_func_curry=DEFAULT_COV_FUNC,
         n_landmarks=DEFAULT_N_LANDMARKS,
         rank=DEFAULT_RANK,
-        method=DEFAULT_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -65,11 +64,9 @@ class BaseEstimator:
         L=None,
         initial_value=None,
     ):
-        configure_logger(logger)
         self.cov_func_curry = cov_func_curry
         self.n_landmarks = n_landmarks
         self.rank = rank
-        self.method = method
         self.jitter = jitter
         self.landmarks = landmarks
         self.nn_distances = nn_distances
@@ -79,7 +76,6 @@ class BaseEstimator:
         self.cov_func = cov_func
         self.L = L
         self.x = None
-        self.logger = logger
 
     def __str__(self):
         return self.__repr__()
@@ -91,9 +87,7 @@ class BaseEstimator:
             f"cov_func_curry={self.cov_func_curry}, "
             f"n_landmarks={self.n_landmarks}, "
             f"rank={self.rank}, "
-            f"method='{self.method}', "
             f"jitter={self.jitter}, "
-            f"n_iter={self.n_iter}, "
             f"landmarks={self.landmarks}, "
         )
         if self.nn_distances is None:
@@ -124,6 +118,7 @@ class BaseEstimator:
 
     def _compute_nn_distances(self):
         x = self.x
+        logger.info('Computing nearest neighbor distances.')
         nn_distances = compute_nn_distances(x)
         return nn_distances
 
@@ -148,7 +143,7 @@ class BaseEstimator:
         rank = self.rank
         method = self.method
         jitter = self.jitter
-        if isinstance(rank, float):
+        if isinstance(rank, float) and method != 'fixed':
             logger.info(
                 f'Computing rank reduction using "{method}" method '
                 f"retaining > {rank:.2%} of variance."
@@ -161,7 +156,12 @@ class BaseEstimator:
             x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
         )
         new_rank = L.shape[1]
-        if new_rank > (0.8 * n_landmarks):
+        if not (
+            type(rank) is int
+            and rank == n_landmarks
+            or type(rank) is float
+            and rank == 1.0
+        ) and method != 'fixed' and new_rank > (rank * 0.8 * n_landmarks):
             logger.warning(
                 f"Shallow rank reduction from {n_landmarks:,} to {new_rank:,} "
                 "indicates underrepresentation by landmarks. Consider "
@@ -448,7 +448,6 @@ class DensityEstimator(BaseEstimator):
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
             rank=rank,
-            method=method,
             jitter=jitter,
             landmarks=landmarks,
             nn_distances=nn_distances,
@@ -458,6 +457,7 @@ class DensityEstimator(BaseEstimator):
             cov_func=cov_func,
             L=L,
         )
+        self.method = method
         self.optimizer = optimizer
         self.n_iter = n_iter
         self.init_learn_rate = init_learn_rate
@@ -550,7 +550,6 @@ class DensityEstimator(BaseEstimator):
     def _set_log_density_x(self):
         pre_transformation = self.pre_transformation
         transform = self.transform
-        logger.info("Decoding latent density representation.")
         log_density_x = compute_log_density_x(pre_transformation, transform)
         self.log_density_x = log_density_x
 
@@ -776,9 +775,6 @@ class FunctionEstimator(BaseEstimator):
         k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
         function cov_func = cov_func_curry(ls). Defaults to None.
     :type cov_func: function or None
-    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-        If None, automatically computes L. Defaults to None.
-    :type L: array-like or None
     :param sigma: The white moise standard deviation. Defaults to 0.
     :type sigma: float
     :ivar n_landmarks: The number of landmark points.
@@ -819,14 +815,12 @@ class FunctionEstimator(BaseEstimator):
         ls=None,
         ls_factor=1,
         cov_func=None,
-        L=None,
         sigma=0,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
             rank=rank,
-            method=method,
             jitter=jitter,
             landmarks=landmarks,
             nn_distances=nn_distances,
@@ -834,7 +828,6 @@ class FunctionEstimator(BaseEstimator):
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
-            L=L,
         )
         self.sigma = sigma
 
@@ -871,7 +864,6 @@ class FunctionEstimator(BaseEstimator):
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
-        self._prepare_attribute("L")
         return
 
     def compute_conditional(self, x=None, y=None):

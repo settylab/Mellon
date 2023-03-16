@@ -12,7 +12,19 @@
 #
 import os
 import sys
+from pathlib import Path
+
 sys.path.insert(0, os.path.abspath('../..'))
+
+this_directory = Path(__file__).parent
+
+def get_version(rel_path):
+    for line in (this_directory / rel_path).read_text().splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
 # -- Project information -----------------------------------------------------
 
 project = 'Mellon'
@@ -20,7 +32,7 @@ copyright = '2022, Setty Lab'
 author = 'Setty Lab'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.2'
+release = get_version('../../mellon/__init__.py')
 
 
 # -- General configuration ---------------------------------------------------
