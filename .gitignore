@@ -7,3 +7,4 @@ mellon/__pycache__
 build/
 notebooks/data
 dist/
+__pycache__/
