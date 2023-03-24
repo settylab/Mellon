@@ -153,9 +153,6 @@ def compute_L(
     """
     if len(x.shape) < 2:
         x = x[:, None]
-    if len(landmarks.shape) < 2:
-        landmarks = landmarks[:, None]
-
     if landmarks is None:
         n = x.shape[0]
         method = _check_method(rank, n, method)
@@ -167,6 +164,9 @@ def compute_L(
                 x, cov_func, rank=rank, method=method, jitter=jitter
             )
     else:
+        if len(landmarks.shape) < 2:
+            landmarks = landmarks[:, None]
+
         n_landmarks = landmarks.shape[0]
         method = _check_method(rank, n_landmarks, method)
 
