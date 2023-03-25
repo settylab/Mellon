@@ -96,7 +96,6 @@ class BaseEstimator:
         else:
             string += "nn_distances=nn_distances, "
         string += (
-            f"d={self.d}, "
             f"mu={self.mu}, "
             f"ls={self.mu}, "
             f"cov_func={self.cov_func}, "
