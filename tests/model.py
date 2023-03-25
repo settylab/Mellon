@@ -93,6 +93,7 @@ def test_FunctionEstimator():
     cov = L.T.dot(L)
     X = jax.random.multivariate_normal(key, jnp.ones(d), cov, (n,))
     y = jnp.sum(jnp.sin(X / 2), axis=1)
+    Y = jnp.stack([y, y])
 
     est = mellon.FunctionEstimator()
     pred = est.fit_predict(X, y)
@@ -103,12 +104,23 @@ def test_FunctionEstimator():
     err = jnp.std(y - pred)
     assert err < 1e-5, "The prediction should be close to the intput value."
 
+    m_pred = est.multi_fit_predict(X, Y, X)
+    assert m_pred.shape == (
+        2,
+        n,
+    ), "There should be a value for each sample and location."
+
     est_full = mellon.FunctionEstimator(rank=1.0, method="percent", n_landmarks=0)
     full_pred = est_full.fit_predict(X, y)
     err = jnp.max(jnp.abs(full_pred - pred))
     assert (
         err < 1e-4
     ), "The default approximation should be close to the full rank result."
+
+    m_pred_full = est_full.multi_fit_predict(X, Y, X)
+    assert (
+        jnp.mean(jnp.std(m_pred - m_pred_full)) < 1e-50
+    ), "The approximated multipredict should be consistent with the full one."
 
     est = mellon.FunctionEstimator(rank=1.0, method="percent", n_landmarks=10)
     pred_appr = est.fit_predict(X, y)
@@ -121,6 +133,16 @@ def test_FunctionEstimator():
     assert (
         err < 1e-1
     ), "The low landmarks + Nystrom approximation should be close to the default."
+
+    m_pred_xu = est_full.multi_fit_predict(X, Y, est.landmarks)
+    m_pred_app = est.multi_fit_predict(X, Y, est.landmarks)
+    assert m_pred_xu.shape == (
+        2,
+        est.landmarks.shape[0],
+    ), "There should be a value for each sample and location."
+    assert (
+        jnp.mean(jnp.std(m_pred_xu - m_pred_app)) < 1e-5
+    ), "The approximated multipredict should be consistent with the default one."
 
     est = mellon.FunctionEstimator(rank=50, n_landmarks=80)
     pred_appr = est.fit_predict(X, y)
@@ -138,3 +160,6 @@ def test_FunctionEstimator():
     assert (
         jnp.std(d1_pred - d1_pred_full) < 1e-5
     ), "The scalar state function estimations be consistent under approximation."
+
+    Y = jnp.stack([y, y])
+    m_pred = est.multi_fit_predict(X, Y, X)
