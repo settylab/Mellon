@@ -1,5 +1,7 @@
 .. image:: https://zenodo.org/badge/558998366.svg
    :target: https://zenodo.org/badge/latestdoi/558998366
+.. image:: https://codecov.io/github/settylab/Mellon/branch/main/graph/badge.svg?token=TKIKXK4MPG 
+    :target: https://codecov.io/github/settylab/Mellon
 
 Mellon is a non-parametric density estimator based on the NearestNeighbors distribution.
 
