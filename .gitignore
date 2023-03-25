@@ -8,3 +8,4 @@ build/
 notebooks/data
 dist/
 __pycache__/
+.coverage
