@@ -2,10 +2,13 @@ import jax.numpy as jnp
 import mellon
 
 
-def test_Matern32():
+def test_Add():
     n = 2
     d = 2
-    cov = mellon.Matern32(1.2)
+    cov1 = mellon.Matern32(1.4)
+    cov2 = mellon.Exponential(3.4)
+
+    cov = cov1 + cov2
     assert (
         len(str(cov)) > 0
     ), "The covariance function should have a string representation."
@@ -17,10 +20,13 @@ def test_Matern32():
     ), "Covariance should be computed for each pair of samples."
 
 
-def test_Matern52():
+def test_Mul():
     n = 2
     d = 2
-    cov = mellon.Matern52(1.2)
+    cov1 = mellon.Matern32(1.4)
+    cov2 = mellon.Exponential(3.4)
+
+    cov = cov1 * cov2
     assert (
         len(str(cov)) > 0
     ), "The covariance function should have a string representation."
@@ -32,40 +38,12 @@ def test_Matern52():
     ), "Covariance should be computed for each pair of samples."
 
 
-def test_ExpQuad():
+def test_Pow():
     n = 2
     d = 2
-    cov = mellon.ExpQuad(1.2)
-    assert (
-        len(str(cov)) > 0
-    ), "The covariance function should have a string representation."
-    x = jnp.ones((n, d))
-    values = cov(x, 2 * x)
-    assert values.shape == (
-        d,
-        d,
-    ), "Covariance should be computed for each pair of samples."
+    cov1 = mellon.Matern32(1.4)
 
-
-def test_Exponential():
-    n = 2
-    d = 2
-    cov = mellon.Exponential(1.2)
-    assert (
-        len(str(cov)) > 0
-    ), "The covariance function should have a string representation."
-    x = jnp.ones((n, d))
-    values = cov(x, 2 * x)
-    assert values.shape == (
-        d,
-        d,
-    ), "Covariance should be computed for each pair of samples."
-
-
-def test_RatQuad():
-    n = 2
-    d = 2
-    cov = mellon.RatQuad(3, 1.2)
+    cov = cov1**3.2
     assert (
         len(str(cov)) > 0
     ), "The covariance function should have a string representation."
