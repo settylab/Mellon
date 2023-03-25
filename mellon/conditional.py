@@ -36,7 +36,8 @@ def _full_conditional_mean(
     K = cov_func(x, x)
     sigma2 = max(sigma2, jitter)
     L = cholesky(stabilize(K, jitter=sigma2))
-    weights = solve_triangular(L.T, solve_triangular(L, y, lower=True))
+    r = y - mu
+    weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
 
     if d1:
 

@@ -29,12 +29,14 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     :return: landmark_points - k-means centroids.
     :rtype: array-like
     """
+    if n_landmarks == 0:
+        return None
     n = x.shape[0]
     if len(x.shape) < 2:
         x = x[:, None]
-    assert n_landmarks > 1, "n_landmarks musst be larger 1"
+    assert n_landmarks > 1, "n_landmarks musst be larger 1 or euqual to 0"
     if n_landmarks >= n:
-        return x
+        return None
     return k_means(x, n_landmarks, n_init=1)[0]
 
 

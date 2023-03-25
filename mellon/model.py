@@ -139,7 +139,7 @@ class BaseEstimator:
         x = self.x
         cov_func = self.cov_func
         landmarks = self.landmarks
-        n_landmarks = landmarks.shape[0]
+        n_landmarks = x.shape[0] if landmarks is None else landmarks.shape[0]
         rank = self.rank
         method = self.method
         jitter = self.jitter
