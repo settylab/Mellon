@@ -1,5 +1,4 @@
 from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt
-from jax.numpy import sum as arraysum
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
@@ -9,6 +8,7 @@ DEFAULT_RANK = 0.99
 DEFAULT_METHOD = "auto"
 
 logger = Log()
+
 
 def _check_method(rank, full, method):
     R"""
@@ -28,6 +28,7 @@ def _check_method(rank, full, method):
     :return: method - The detected method.
     :rtype: str
     """
+
     percent = isinstance(rank, float) and (0 < rank) and (rank <= 1)
     fixed = isinstance(rank, int) and (1 <= rank) and (rank <= full)
     if not (percent or fixed):
@@ -70,7 +71,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     """
 
     s, v = eigh(A)
-    p = count_nonzero(s > 0) # stability
+    p = count_nonzero(s > 0)  # stability
     summed = cumsum(s[:-p-1:-1])
     if method == "percent":
         # automatically choose rank to capture some percent of the eigenvalues

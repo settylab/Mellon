@@ -40,6 +40,7 @@ DEFAULT_COV_FUNC = Matern52
 
 logger = Log()
 
+
 class BaseEstimator:
     R"""
     Base class for the mellon estimators.

@@ -1,5 +1,4 @@
-from jax.numpy import dot, ones_like, eye, square
-from jax.numpy import sum as arraysum
+from jax.numpy import dot, square
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER

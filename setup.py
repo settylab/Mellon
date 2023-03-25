@@ -5,6 +5,7 @@ from pathlib import Path
 
 this_directory = Path(__file__).parent
 
+
 def get_version(rel_path):
     for line in (this_directory / rel_path).read_text().splitlines():
         if line.startswith('__version__'):
@@ -12,6 +13,7 @@ def get_version(rel_path):
             return line.split(delim)[1]
     else:
         raise RuntimeError("Unable to find version string.")
+
 
 setup(
     name="mellon",
