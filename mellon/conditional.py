@@ -82,9 +82,9 @@ def _full_conditional_mean_y(
     :rtype: function
     """
     if len(x.shape) < 2:
-        x = x[:, none]
+        x = x[:, None]
     if len(Xnew.shape) < 2:
-        Xnew = Xnew[:, none]
+        Xnew = Xnew[:, None]
     sigma2 = square(sigma)
     K = cov_func(x, x)
     sigma2 = max(sigma2, jitter)
