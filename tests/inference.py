@@ -24,22 +24,30 @@ def test_compute_loss_func():
 def test_minimize_adam():
     din = 2
     def loss_f(x):
-        return jnp.sum(x)
+        return jnp.sum(x**2)
+    known_optimum = jnp.zeros(din)
     init = jnp.ones(din)
     result = mellon.minimize_adam(loss_f, init, n_iter=2)
     assert hasattr(result, "pre_transformation")
     assert hasattr(result, "opt_state")
     assert hasattr(result, "losses")
+    diff = jnp.abs(result.pre_transformation - known_optimum)
+    assert jnp.max(diff) < 1e0, \
+        "Optimization result shoud be close to known minimum."
 
 def test_minimize_lbfgsb():
     din = 2
     def loss_f(x):
-        return jnp.sum(x)
+        return jnp.sum(x**2)
+    known_optimum = jnp.zeros(din)
     init = jnp.ones(din)
     result = mellon.minimize_lbfgsb(loss_f, init)
     assert hasattr(result, "pre_transformation")
     assert hasattr(result, "opt_state")
     assert hasattr(result, "loss")
+    diff = jnp.abs(result.pre_transformation - known_optimum)
+    assert jnp.max(diff) < 1e-10, \
+        "Optimization result shoud be close to known minimum."
 
 def test_compute_log_density_x():
     def test_trans(x):
