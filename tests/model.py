@@ -45,6 +45,12 @@ def test_DensityEstimator():
 
     assert len(str(est)) > 0, "The model should have a string representation."
 
+    adam_est = mellon.DensityEstimator(optimizer="adam")
+    adam_dens = adam_est.fit_predict(X)
+    assert (
+        relative_err(adam_dens) < 1e-3
+    ), "The adam ptimizer should produce similar results to the default."
+
     est_full = mellon.DensityEstimator(rank=1.0, method="percent", n_landmarks=n)
     est_full.fit(X)
     full_log_dens = est_full.predict(X)
