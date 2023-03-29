@@ -1,10 +1,26 @@
 import sys
 import logging
 
-from jax.numpy import eye, log, pi, repeat, newaxis, tensordot, sqrt, maximum
+from jax.numpy import (
+    eye,
+    log,
+    pi,
+    repeat,
+    newaxis,
+    tensordot,
+    sqrt,
+    maximum,
+    triu_indices,
+    sort,
+    ones,
+    arange,
+    concatenate,
+)
 from jax.numpy import sum as arraysum
+from jax.numpy.linalg import norm, lstsq
 from jax.scipy.special import gammaln
 from jax import jit, vmap
+from sklearn.neighbors import BallTree, KDTree
 
 
 DEFAULT_JITTER = 1e-6
@@ -78,6 +94,30 @@ def vector_map(fun, X, in_axis=0):
     """
     vfun = vmap(jit(fun), in_axis)
     return vfun(X)
+
+
+def local_dimensionality(x, k=30, x_query=None):
+    if x_query is None:
+        x_query = x
+    if x.shape[1] >= 20:
+        tree = BallTree(x, metric="euclidean")
+    else:
+        tree = KDTree(x, metric="euclidean")
+    neighbors = x[tree.query(x_query, k=k)[1]]
+    i, j = triu_indices(k, k=1)
+    neighbor_distances = norm(neighbors[..., i, :] - neighbors[..., j, :], axis=-1)
+    neighborhood_distances = sort(neighbor_distances, axis=-1)
+
+    kc2 = k * (k - 1) // 2
+    A = concatenate(
+        [log(neighborhood_distances)[..., None], ones((x_query.shape[0], kc2, 1))],
+        axis=-1,
+    )
+    y = log(arange(1, kc2 + 1))[:, None]
+
+    vreg = vmap(lstsq, in_axes=(0, None))
+    w = vreg(A, y)
+    return w[0][:, 0, 0]
 
 
 class Log(object):

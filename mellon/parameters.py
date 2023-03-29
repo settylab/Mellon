@@ -1,8 +1,9 @@
 from jax.numpy import exp, log, quantile
+from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle, DEFAULT_JITTER
+from .util import mle, local_dimensionality, DEFAULT_JITTER
 from .decomposition import (
     _check_method,
     _full_rank,
@@ -69,6 +70,30 @@ def compute_d(x):
     if len(x.shape) < 2:
         return 1
     return x.shape[1]
+
+
+def compute_d_factal(x, k=30, n=1000, seed=432):
+    R"""
+    Computes the dimensionality of the data based on the average fractal
+    dimension around n randomly selected cells.
+
+    :param x: The training instances.
+    :type x: array-like
+    :param n: Number of samples.
+    :type n: int
+    :param seed: Random seed for sampling.
+    :type seed: int
+    """
+    if len(x.shape) < 2:
+        return 1
+    if n < x.shape[0]:
+        key = random.PRNGKey(seed)
+        idx = random.choice(key, x.shape[0], shape=(n,), replace=False)
+        x_query = x[idx, ...]
+    else:
+        x_query = x
+    local_dims = local_dimensionality(x, k=k, x_query=x_query)
+    return local_dims.mean()
 
 
 def compute_mu(nn_distances, d):

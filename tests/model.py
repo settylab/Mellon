@@ -45,6 +45,15 @@ def test_DensityEstimator():
 
     assert len(str(est)) > 0, "The model should have a string representation."
 
+    frac_est = mellon.DensityEstimator(d_method="fractal")
+    log_dens_frac = frac_est.fit_predict(X)
+    assert (
+        frac_est.d != X.shape[1]
+    ), "The fractal dimension should not equal the embedding dimension"
+    assert log_dens_frac.shape == (
+        n,
+    ), "There should be one density value for each sample."
+
     adam_est = mellon.DensityEstimator(optimizer="adam")
     adam_dens = adam_est.fit_predict(X)
     assert (

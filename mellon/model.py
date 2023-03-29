@@ -17,6 +17,7 @@ from .parameters import (
     compute_landmarks,
     compute_nn_distances,
     compute_d,
+    compute_d_factal,
     compute_mu,
     compute_ls,
     compute_cov_func,
@@ -37,6 +38,7 @@ from .util import (
 
 
 DEFAULT_COV_FUNC = Matern52
+DEFAULT_D_METHOD = "embedding"
 
 logger = Log()
 
@@ -95,11 +97,7 @@ class BaseEstimator:
             string += "nn_distances=None, "
         else:
             string += "nn_distances=nn_distances, "
-        string += (
-            f"mu={self.mu}, "
-            f"ls={self.mu}, "
-            f"cov_func={self.cov_func}, "
-        )
+        string += f"mu={self.mu}, " f"ls={self.mu}, " f"cov_func={self.cov_func}, "
         if self.L is None:
             string += "L=None, "
         else:
@@ -118,7 +116,7 @@ class BaseEstimator:
 
     def _compute_nn_distances(self):
         x = self.x
-        logger.info('Computing nearest neighbor distances.')
+        logger.info("Computing nearest neighbor distances.")
         nn_distances = compute_nn_distances(x)
         return nn_distances
 
@@ -143,7 +141,7 @@ class BaseEstimator:
         rank = self.rank
         method = self.method
         jitter = self.jitter
-        if isinstance(rank, float) and method != 'fixed':
+        if isinstance(rank, float) and method != "fixed":
             logger.info(
                 f'Computing rank reduction using "{method}" method '
                 f"retaining > {rank:.2%} of variance."
@@ -156,12 +154,16 @@ class BaseEstimator:
             x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
         )
         new_rank = L.shape[1]
-        if not (
-            type(rank) is int
-            and rank == n_landmarks
-            or type(rank) is float
-            and rank == 1.0
-        ) and method != 'fixed' and new_rank > (rank * 0.8 * n_landmarks):
+        if (
+            not (
+                type(rank) is int
+                and rank == n_landmarks
+                or type(rank) is float
+                and rank == 1.0
+            )
+            and method != "fixed"
+            and new_rank > (rank * 0.8 * n_landmarks)
+        ):
             logger.warning(
                 f"Shallow rank reduction from {n_landmarks:,} to {new_rank:,} "
                 "indicates underrepresentation by landmarks. Consider "
@@ -338,6 +340,12 @@ class DensityEstimator(BaseEstimator):
         Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
         Defaults to 'auto'.
     :type method: str
+    :param d_method: Method to compute intrinsic dimensionality of the data.
+        Implemended options are
+            * 'embedding' use the embedding dimension `x.shape[1]`
+            * 'fractal' use the average fractal dimension (experimental)
+        Defaults to 'embedding'.
+    :type d_method: str
     :param jitter: A small amount to add to the diagonal of the covariance
         matrix to bind eigenvalues numerically away from 0 ensuring numerical
         stabilitity. Defaults to 1e-6.
@@ -429,6 +437,7 @@ class DensityEstimator(BaseEstimator):
         n_landmarks=DEFAULT_N_LANDMARKS,
         rank=DEFAULT_RANK,
         method=DEFAULT_METHOD,
+        d_method=DEFAULT_D_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -458,6 +467,7 @@ class DensityEstimator(BaseEstimator):
             L=L,
         )
         self.method = method
+        self.d_method = d_method
         self.optimizer = optimizer
         self.n_iter = n_iter
         self.init_learn_rate = init_learn_rate
@@ -509,7 +519,12 @@ class DensityEstimator(BaseEstimator):
 
     def _compute_d(self):
         x = self.x
-        d = compute_d(x)
+        if self.d_method == "fractal":
+            logger.warn("Using EXPERIMENTAL fractal dimensionality selection.")
+            d = compute_d_factal(x)
+            logger.info(f"Using d={d}.")
+        else:
+            d = compute_d(x)
         if d > 50:
             message = f"""The detected dimensionality of the data is over 50,
             which is likely to cause numerical instability issues.
