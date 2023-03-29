@@ -168,4 +168,8 @@ def test_FunctionEstimator():
     ), "The scalar state function estimations be consistent under approximation."
 
     Y = jnp.stack([y, y])
-    m_pred = est.multi_fit_predict(X, Y, X)
+    m_pred = est.multi_fit_predict(X, Y)
+    assert jnp.std(m_pred - pred[None, :]) < 1e-5, (
+        "The scalar multi function estimations should be consistent with the "
+        "single function estimation."
+    )
