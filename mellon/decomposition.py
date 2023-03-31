@@ -71,6 +71,12 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     """
 
     s, v = eigh(A)
+    if any(s <= 0):
+        message = (
+            "Singuarity detected in covariance matrix. "
+            "This can complicated prediction. Consider raising the jitter."
+        )
+        logger.warning(message)
     p = count_nonzero(s > 0)  # stability
     summed = cumsum(s[: -p - 1 : -1])
     if method == "percent":
@@ -150,13 +156,6 @@ def _full_decomposition_low_rank(
     """
     W = cov_func(x, x)
     s, v = _eigendecomposition(W, rank=rank, method=method)
-    if any(s <= 0):
-        message = (
-            f"Covariance not positively definite with jitter={jitter}. "
-            "Consider increasing the jitter for numerical stabilization."
-        )
-        logger.error(message)
-        raise ValueError(message)
     L = v * sqrt(s)
     return L
 
@@ -228,13 +227,6 @@ def _modified_low_rank(
     C = cov_func(x, xu)
     Q, R = qr(C, mode="reduced")
     s, v = _eigendecomposition(W, rank=xu.shape[0], method="fixed")
-    if any(s <= 0):
-        message = (
-            f"Covariance of landmarks not positively definite with jitter={jitter}. "
-            "Consider increasing the jitter for numerical stabilization."
-        )
-        logger.error(message)
-        raise ValueError(message)
     T = R @ v
     S, V = _eigendecomposition(T / s @ T.T, rank=rank, method=method)
     L = Q @ V * sqrt(S)
