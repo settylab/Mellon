@@ -1,4 +1,4 @@
-from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt
+from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt, isnan, any
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
@@ -109,6 +109,13 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
     """
     W = stabilize(cov_func(x, x), jitter)
     L = cholesky(W)
+    if any(isnan(L)):
+        message = (
+            f"Covariance not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     return L
 
 
@@ -143,6 +150,13 @@ def _full_decomposition_low_rank(
     """
     W = cov_func(x, x)
     s, v = _eigendecomposition(W, rank=rank, method=method)
+    if any(s <= 0):
+        message = (
+            f"Covariance not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     L = v * sqrt(s)
     return L
 
@@ -167,6 +181,14 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     W = stabilize(cov_func(xu, xu), jitter)
     C = cov_func(x, xu)
     U = cholesky(W)
+    if any(isnan(U)):
+        message = (
+            f"Covariance of landmarks not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
+    print(U)
     L = solve_triangular(U, C.T, lower=True).T
     return L
 
@@ -206,6 +228,13 @@ def _modified_low_rank(
     C = cov_func(x, xu)
     Q, R = qr(C, mode="reduced")
     s, v = _eigendecomposition(W, rank=xu.shape[0], method="fixed")
+    if any(s <= 0):
+        message = (
+            f"Covariance of landmarks not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     T = R @ v
     S, V = _eigendecomposition(T / s @ T.T, rank=rank, method=method)
     L = Q @ V * sqrt(S)
