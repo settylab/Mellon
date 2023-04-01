@@ -41,6 +41,26 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     return k_means(x, n_landmarks, n_init=1)[0]
 
 
+def compute_distances(x, k):
+    R"""
+    Computes the distance to the k nearest neighbor for each training instance.
+
+    :param x: The training instances.
+    :type x: array-like
+    :param k: The number of nearest neighbors to consider.
+    :return: distances - The k observed nearest neighbor distances.
+    :rtype: array-like
+    """
+    if len(x.shape) < 2:
+        x = x[:, None]
+    if x.shape[1] >= 20:
+        tree = BallTree(x, metric="euclidean")
+    else:
+        tree = KDTree(x, metric="euclidean")
+    distances = tree.query(x, k=k + 1)[0][:, 1:]
+    return distances
+
+
 def compute_nn_distances(x):
     R"""
     Computes the distance to the nearest neighbor for each training instance.
@@ -58,6 +78,16 @@ def compute_nn_distances(x):
         tree = KDTree(x, metric="euclidean")
     nn = tree.query(x, k=2)[0][:, 1]
     return nn
+
+
+def compute_sigma(k):
+    R"""
+    Computes the standard deviation for log-scaling rates.
+
+    :param k: The number of nearest neighbors.
+    :type k: int
+    """
+    return log(k)
 
 
 def compute_d(x):
@@ -229,4 +259,20 @@ def compute_initial_value(nn_distances, d, mu, L):
     :rtype: array-like
     """
     target = mle(nn_distances, d) - mu
+    return Ridge(fit_intercept=False).fit(L, target).coef_
+
+
+def compute_initial_dimensionalities(x, mu, L, neighbor_idx=None):
+    R"""
+    Computes an initial guess for the log dimensionality at every cell state
+    with Ridge regression, such that the initial value :math:`z` minimizes
+    :math:`||Lz + mu - \log(\text{local_dim}())|| + ||z||`.
+
+    :param x: The cell states.
+    :type x: array-like
+    :param neighbor_idx: Indices of k neighbors with
+        neighbor_idx.shape == (x.shape[0], k).
+    :type neighbor_idx: array-lik
+    """
+    target = log(local_dimensionality(x, neighbor_idx=None)) - mu
     return Ridge(fit_intercept=False).fit(L, target).coef_

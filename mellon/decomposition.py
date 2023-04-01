@@ -187,7 +187,6 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
         )
         logger.error(message)
         raise ValueError(message)
-    print(U)
     L = solve_triangular(U, C.T, lower=True).T
     return L
 

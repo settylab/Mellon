@@ -40,10 +40,15 @@ def stabilize(A, jitter=DEFAULT_JITTER):
     n = A.shape[0]
     return A + eye(n) * jitter
 
+
 def v_gammaln(x):
-    if isscalar(x):
+    """
+    Vectorize version of jax.scipy.special.gammaln.
+    """
+    if isscalar(x) or len(x.shape) == 0:
         return gammaln(x)
     return vmap(gammaln)(x)
+
 
 def mle(nn_distances, d):
     R"""
