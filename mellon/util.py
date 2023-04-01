@@ -15,6 +15,7 @@ from jax.numpy import (
     ones,
     arange,
     concatenate,
+    isscalar,
 )
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm, lstsq
@@ -39,6 +40,10 @@ def stabilize(A, jitter=DEFAULT_JITTER):
     n = A.shape[0]
     return A + eye(n) * jitter
 
+def v_gammaln(x):
+    if isscalar(x):
+        return gammaln(x)
+    return vmap(gammaln)(x)
 
 def mle(nn_distances, d):
     R"""
@@ -54,7 +59,7 @@ def mle(nn_distances, d):
     :return: :math:`mle` - The maximum likelihood estimate at each point.
     :rtype: array-like
     """
-    return gammaln(d / 2 + 1) - (d / 2) * log(pi) - d * log(nn_distances)
+    return v_gammaln(d / 2 + 1) - (d / 2) * log(pi) - d * log(nn_distances)
 
 
 def distance(x, y):
@@ -96,14 +101,17 @@ def vector_map(fun, X, in_axis=0):
     return vfun(X)
 
 
-def local_dimensionality(x, k=30, x_query=None):
-    if x_query is None:
-        x_query = x
-    if x.shape[1] >= 20:
-        tree = BallTree(x, metric="euclidean")
+def local_dimensionality(x, k=30, x_query=None, neighbor_idx=None):
+    if neighbor_idx is None:
+        if x_query is None:
+            x_query = x
+        if x.shape[1] >= 20:
+            tree = BallTree(x, metric="euclidean")
+        else:
+            tree = KDTree(x, metric="euclidean")
+        neighbors = x[tree.query(x_query, k=k)[1]]
     else:
-        tree = KDTree(x, metric="euclidean")
-    neighbors = x[tree.query(x_query, k=k)[1]]
+        neighbors = x[neighbor_idx]
     i, j = triu_indices(k, k=1)
     neighbor_distances = norm(neighbors[..., i, :] - neighbors[..., j, :], axis=-1)
     neighborhood_distances = sort(neighbor_distances, axis=-1)

@@ -1,7 +1,6 @@
 from collections import namedtuple
 from jax.numpy import log, pi, exp, stack
 from jax.numpy import sum as arraysum
-from jax.scipy.special import gammaln
 import jax
 from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
@@ -11,7 +10,7 @@ from .conditional import (
     _landmarks_conditional_mean,
     _landmarks_conditional_mean_y,
 )
-from .util import DEFAULT_JITTER
+from .util import DEFAULT_JITTER, v_gammaln
 
 
 DEFAULT_N_ITER = 100
@@ -68,7 +67,7 @@ def _nearest_neighbors(r, d):
     :return: The likelihood function.
     :rtype: function
     """
-    const = (d * log(pi) / 2) - gammaln(d / 2 + 1)
+    const = (d * log(pi) / 2) - v_gammaln(d / 2 + 1)
     V = log(r) * d + const
     Vdr = log(d) + ((d - 1) * log(r)) + const
 
