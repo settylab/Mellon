@@ -41,15 +41,6 @@ def stabilize(A, jitter=DEFAULT_JITTER):
     return A + eye(n) * jitter
 
 
-def v_gammaln(x):
-    """
-    Vectorize version of jax.scipy.special.gammaln.
-    """
-    if isscalar(x) or len(x.shape) == 0:
-        return gammaln(x)
-    return vmap(gammaln)(x)
-
-
 def mle(nn_distances, d):
     R"""
     Nearest Neighbor distribution maximum likelihood estimate for log density
@@ -64,7 +55,7 @@ def mle(nn_distances, d):
     :return: :math:`mle` - The maximum likelihood estimate at each point.
     :rtype: array-like
     """
-    return v_gammaln(d / 2 + 1) - (d / 2) * log(pi) - d * log(nn_distances)
+    return gammaln(d / 2 + 1) - (d / 2) * log(pi) - d * log(nn_distances)
 
 
 def distance(x, y):
