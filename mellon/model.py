@@ -1256,7 +1256,7 @@ class DimensionalityEstimator(BaseEstimator):
         x = self.x
         landmarks = self.landmarks
         local_dim_x = self.local_dim_x
-        mu = self.mu
+        mu = self.mu_dim
         cov_func = self.cov_func
         jitter = self.jitter
         logger.info("Computing predictive dimensionality function.")
@@ -1274,7 +1274,7 @@ class DimensionalityEstimator(BaseEstimator):
         x = self.x
         landmarks = self.landmarks
         log_density_x = self.log_density_x
-        mu = self.mu
+        mu = self.mu_dens
         cov_func = self.cov_func
         jitter = self.jitter
         logger.info("Computing predictive density function.")

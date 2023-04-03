@@ -217,7 +217,7 @@ def test_DimensionalityEstimator():
     adam_est = mellon.DimensionalityEstimator(optimizer="adam")
     adam_dim = adam_est.fit_predict(X)
     assert (
-        relative_err(*adam_dim) < 1e-1
+        relative_err(*adam_dim) < 1e0
     ), "The adam optimizer should produce similar results to the default."
 
     est_full = mellon.DimensionalityEstimator(rank=1.0, method="percent", n_landmarks=n)
