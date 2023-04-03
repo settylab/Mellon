@@ -982,7 +982,7 @@ class FunctionEstimator(BaseEstimator):
 
 class DimensionalityEstimator(BaseEstimator):
     R"""
-    A non-parametric estimator for local dimensionality.
+    A non-parametric estimator for local dimensionality and density.
     DimensionalityEstimator performs Bayesian inference with a Gaussian process prior and
     a normal distribution for local scaling rates.
     All intermediate computations are cached as instance variables, so
@@ -1094,7 +1094,9 @@ class DimensionalityEstimator(BaseEstimator):
     :ivar losses: The history of losses throughout training of adam or final
         loss of L-BFGS-B.
     :ivar local_dim_x: The local dimensionality at the training points.
+    :ivar log_density_x: The log density at the training points.
     :ivar local_dim_func: A function that computes the local dimensionality at arbitrary prediction points.
+    :ivar log_density_func: A function that computes the log density at arbitrary prediction points.
     """
 
     def __init__(
@@ -1146,7 +1148,9 @@ class DimensionalityEstimator(BaseEstimator):
         self.losses = None
         self.pre_transformation = None
         self.local_dim_x = None
+        self.log_density_x = None
         self.local_dim_func = None
+        self.log_density_func = None
         self.jit = jit
 
     def __repr__(self):
@@ -1186,9 +1190,10 @@ class DimensionalityEstimator(BaseEstimator):
 
     def _compute_initial_value(self):
         x = self.x
+        nn_distances = self.nn_distances
         mu = self.mu
         L = self.L
-        initial_value = compute_initial_dimensionalities(x, mu, L)
+        initial_value = compute_initial_dimensionalities(x, mu, L, nn_distances)
         return initial_value
 
     def _compute_transform(self):
@@ -1224,8 +1229,11 @@ class DimensionalityEstimator(BaseEstimator):
     def _set_local_dim_x(self):
         pre_transformation = self.pre_transformation
         transform = self.transform
-        local_dim_x = compute_log_density_x(pre_transformation, transform)
+        local_dim_x, log_density_x = compute_log_density_x(
+            pre_transformation, transform
+        )
         self.local_dim_x = local_dim_x
+        self.log_density_x = log_density_x
 
     def _set_local_dim_func(self):
         x = self.x
@@ -1234,7 +1242,7 @@ class DimensionalityEstimator(BaseEstimator):
         mu = self.mu
         cov_func = self.cov_func
         jitter = self.jitter
-        logger.info("Computing predictive function.")
+        logger.info("Computing predictive dimensionality function.")
         log_dim_func = compute_conditional_mean_explog(
             x,
             landmarks,
@@ -1244,6 +1252,24 @@ class DimensionalityEstimator(BaseEstimator):
             jitter=jitter,
         )
         self.local_dim_func = log_dim_func
+
+    def _set_log_density_func(self):
+        x = self.x
+        landmarks = self.landmarks
+        log_density_x = self.log_density_x
+        mu = self.mu
+        cov_func = self.cov_func
+        jitter = self.jitter
+        logger.info("Computing predictive density function.")
+        log_density_func = compute_conditional_mean(
+            x,
+            landmarks,
+            log_density_x,
+            mu,
+            cov_func,
+            jitter=jitter,
+        )
+        self.log_density_func = log_density_func
 
     def prepare_inference(self, x):
         R"""
@@ -1315,7 +1341,8 @@ class DimensionalityEstimator(BaseEstimator):
         self._set_local_dim_x()
         if build_predict:
             self._set_local_dim_func()
-        return self.local_dim_x
+            self._set_log_density_func()
+        return self.local_dim_x, self.log_density_x
 
     def fit(self, x=None, build_predict=True):
         R"""
@@ -1343,7 +1370,7 @@ class DimensionalityEstimator(BaseEstimator):
         self.process_inference(build_predict=build_predict)
         return self
 
-    def predict(self, x):
+    def predict_dimensionality(self, x):
         R"""
         Predict the log density at each point in x.
 
@@ -1355,6 +1382,34 @@ class DimensionalityEstimator(BaseEstimator):
         if self.local_dim_func is None:
             self._set_local_dim_func()
         return self.local_dim_func(x)
+
+    def predict_density(self, x):
+        R"""
+        Predict the log density at each point in x.
+
+        :param x: The new data to predict.
+        :type x: array-like
+        :return: log_density - The log density at each test point in x.
+        :rtype: array-like
+        """
+        if self.log_density_func is None:
+            self._set_log_density_func()
+        return self.log_density_func(x)
+
+    def predict(self, x):
+        R"""
+        Predict the dimensionality and log density at each point in x.
+
+        :param x: The new data to predict.
+        :type x: array-like
+        :return: local_dimensioanlity, log_density
+        :rtype: array-like
+        """
+        if self.log_density_func is None:
+            self._set_log_density_func()
+        if self.local_dim_func is None:
+            self._set_local_dim_func()
+        return self.local_dim_func(x), self.log_density_func(x)
 
     def fit_predict(self, x=None, build_predict=False):
         R"""
@@ -1378,4 +1433,4 @@ class DimensionalityEstimator(BaseEstimator):
             x = self.x
 
         self.fit(x, build_predict=build_predict)
-        return self.local_dim_x
+        return self.local_dim_x, self.log_density_x

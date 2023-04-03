@@ -1,4 +1,4 @@
-from jax.numpy import exp, log, quantile
+from jax.numpy import exp, log, quantile, stack
 from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
@@ -262,17 +262,31 @@ def compute_initial_value(nn_distances, d, mu, L):
     return Ridge(fit_intercept=False).fit(L, target).coef_
 
 
-def compute_initial_dimensionalities(x, mu, L, neighbor_idx=None):
+def compute_initial_dimensionalities(x, mu, L, nn_distances, neighbor_idx=None):
     R"""
-    Computes an initial guess for the log dimensionality at every cell state
-    with Ridge regression, such that the initial value :math:`z` minimizes
-    :math:`||Lz + mu - \log(\text{local_dim}())|| + ||z||`.
+    Computes an initial guess for the log dimensionality and log density at every cell state
+    with Ridge regression.
 
     :param x: The cell states.
     :type x: array-like
+    :param mu: The Gaussian Process mean.
+    :type mu: int
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K`
+        is the covariance matrix.
+    :type L: array-like
+    :param nn_distances: The observed nearest neighbor distances.
+    :type nn_distances: array-like
+    :param d: The local dimensionality of the data.
+    :type d: int
     :param neighbor_idx: Indices of k neighbors with
         neighbor_idx.shape == (x.shape[0], k).
     :type neighbor_idx: array-lik
+    :return: initial_value
+    :rtype: array-like
     """
-    target = log(local_dimensionality(x, neighbor_idx=None)) - mu
-    return Ridge(fit_intercept=False).fit(L, target).coef_
+    d = local_dimensionality(x, neighbor_idx=None)
+    target = log(d) - mu
+    initial_dims = Ridge(fit_intercept=False).fit(L, target).coef_
+    initial_dens = compute_initial_value(nn_distances, d, mu, L)
+    initial_value = stack([initial_dims, initial_dens])
+    return initial_value

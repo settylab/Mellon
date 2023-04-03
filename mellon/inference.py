@@ -95,18 +95,21 @@ def _scaling_deviations(distances, sigma):
     counts = arange(1, k + 1)
 
     counts = log(arange(1, k + 1))
-    counts -= median(counts)
 
     ldist = sort(distances, axis=-1)
-    ldist = log(ldist)
-    ldist -= median(ldist, axis=-1, keepdims=True)
+    ldist = log(ldist) + log(pi) / 2
 
-    normal = _normal(ldist.shape[0])
+    normal = _normal(ldist.size)
 
-    def logpdf(dims):
-        pred = ldist * dims[:, None]
+    def V(d):
+        """
+        Return the log-volume of the n-sphere for the raidus related values in ldist.
+        """
+        return d * ldist - gammaln(d / 2 + 1)
+
+    def logpdf(dims, log_dens):
+        pred = log_dens[:, None] + V(dims[:, None])
         diff = pred - counts[None, :]
-        diff = max(diff, axis=-1)
         logp = normal(diff / sigma)
         return arraysum(logp)
 
@@ -148,7 +151,8 @@ def compute_dimensionality_transform(mu, L):
     inner_transform = _multivariate(mu, L)
 
     def transform(z):
-        return exp(inner_transform(z))
+        dims, dens = z[0, :], z[1, :]
+        return exp(inner_transform(dims)), inner_transform(dens)
 
     return transform
 
@@ -202,7 +206,8 @@ def compute_dimensionality_loss_func(distances, transform, k, sigma):
     likelihood = _scaling_deviations(distances, sigma)
 
     def loss_func(z):
-        return -(prior(z) + likelihood(transform(z)))
+        dims, log_dens = transform(z)
+        return -(prior(z) + likelihood(dims, log_dens))
 
     return loss_func
 
