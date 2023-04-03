@@ -80,16 +80,6 @@ def compute_nn_distances(x):
     return nn
 
 
-def compute_sigma(k):
-    R"""
-    Computes the standard deviation for log-scaling rates.
-
-    :param k: The number of nearest neighbors.
-    :type k: int
-    """
-    return log(k)
-
-
 def compute_d(x):
     R"""
     Computes the dimensionality of the data equal to the size of axis 1.

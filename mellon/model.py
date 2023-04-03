@@ -22,7 +22,6 @@ from .parameters import (
     compute_distances,
     compute_d,
     compute_d_factal,
-    compute_sigma,
     compute_mu,
     compute_ls,
     compute_cov_func,
@@ -1043,10 +1042,6 @@ class DimensionalityEstimator(BaseEstimator):
         sets ls to the geometric mean of the nearest neighbor distances times a constant.
         If cov_func is supplied explictly, ls has no effect. Defaults to None.
     :type ls: float or None
-    :param sigma: The standard deviation for the log-n-neighbors deviation from
-        the prediction based on log-radius and local dimensionality.
-        If None is set to log(k).
-    :type sigma: float or None
     :param cov_func: The Gaussian process covariance function of the form
         k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
         function cov_func = cov_func_curry(ls). Defaults to None.
@@ -1076,7 +1071,6 @@ class DimensionalityEstimator(BaseEstimator):
     :ivar ls: The Gaussian process covariance function length scale.
     :ivar ls_factor: Factor to scale the automatically selected length scale.
         Defaults to 1.
-    :ivar sigma: Standard deviation for log-nneighbor deviations.
     :ivar cov_func: The Gaussian process covariance function.
     :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
     :ivar initial_value: The initial guess for Maximum A Posteriori optimization.
@@ -1115,7 +1109,6 @@ class DimensionalityEstimator(BaseEstimator):
         mu=0,
         ls=None,
         ls_factor=1,
-        sigma=None,
         cov_func=None,
         L=None,
         initial_value=None,
@@ -1134,7 +1127,6 @@ class DimensionalityEstimator(BaseEstimator):
             cov_func=cov_func,
             L=L,
         )
-        self.sigma = sigma
         self.k = k
         self.method = method
         self.distances = distances
@@ -1174,7 +1166,6 @@ class DimensionalityEstimator(BaseEstimator):
         string += (
             f"mu={self.mu}, "
             f"ls={self.mu}, "
-            f"sigma={self.sigma}, "
             f"cov_func={self.cov_func}, "
         )
         if self.L is None:
@@ -1209,11 +1200,6 @@ class DimensionalityEstimator(BaseEstimator):
         distances = compute_distances(x, k=k)
         return distances
 
-    def _compute_sigma(self):
-        k = self.k
-        sigma = compute_sigma(k)
-        return sigma
-
     def _compute_nn_distances(self):
         distances = self.distances
         return distances[:, 0]
@@ -1222,8 +1208,7 @@ class DimensionalityEstimator(BaseEstimator):
         distances = self.distances
         transform = self.transform
         k = self.initial_value.shape[0]
-        sigma = self.sigma
-        loss_func = compute_dimensionality_loss_func(distances, transform, k, sigma)
+        loss_func = compute_dimensionality_loss_func(distances, transform, k)
         return loss_func
 
     def _set_local_dim_x(self):
@@ -1286,7 +1271,6 @@ class DimensionalityEstimator(BaseEstimator):
         self._set_x(x)
         self._prepare_attribute("distances")
         self._prepare_attribute("nn_distances")
-        self._prepare_attribute("sigma")
         self._prepare_attribute("mu")
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")

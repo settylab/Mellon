@@ -79,15 +79,13 @@ def _nearest_neighbors(r, d):
 
     return logpdf
 
-def _poisson(distances, sigma):
+def _poisson(distances):
     """
     Returns the likelihood function of dimensionality and density given the
     observed k nearest-neighbor distances
     .
     :param distances: The observed nearest neighbor distances.
     :type distances: array-like
-    :param sigma: The standard deviation of the log-distances from the prediction.
-    :type signa: float
     :return: The likelihood function.
     :rtype: function
     """
@@ -181,7 +179,7 @@ def compute_loss_func(nn_distances, d, transform, k):
     return loss_func
 
 
-def compute_dimensionality_loss_func(distances, transform, k, sigma):
+def compute_dimensionality_loss_func(distances, transform, k):
     R"""
     Computes the Bayesian loss function -(prior(:math:`z`) +
     likelihood(transform(:math:`z`))) for dimensionality inference.
@@ -199,7 +197,7 @@ def compute_dimensionality_loss_func(distances, transform, k, sigma):
     :rtype: function, function
     """
     prior = _normal(k)
-    likelihood = _poisson(distances, sigma)
+    likelihood = _poisson(distances)
 
     def loss_func(z):
         dims, log_dens = transform(z)
