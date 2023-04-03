@@ -1030,7 +1030,7 @@ class DimensionalityEstimator(BaseEstimator):
         landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
         is greater than or equal to the number of training points. Defaults to None.
     :type landmarks: array-like or None
-    :param k: The number of nearest neighbors to consider. Defaults to 30.
+    :param k: The number of nearest neighbor distances to consider. Defaults to 5.
     :type k: int
     :param distances: The k nearest neighbor distances at each
         data point. If None, computes the nearest neighbor distances automatically, with
@@ -1110,7 +1110,7 @@ class DimensionalityEstimator(BaseEstimator):
         n_iter=DEFAULT_N_ITER,
         init_learn_rate=DEFAULT_INIT_LEARN_RATE,
         landmarks=None,
-        k=30,
+        k=5,
         distances=None,
         mu=0,
         ls=None,

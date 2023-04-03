@@ -79,13 +79,13 @@ def _nearest_neighbors(r, d):
 
     return logpdf
 
-
-def _scaling_deviations(distances, sigma):
+def _poisson(distances, sigma):
     """
-    Returns the likelihood function of dimensionality :math:`d` given the observed
-    distances :math:`d\log(n) - \log(distance) \sim \mathcal N(0, \sigma)`.
+    Returns the likelihood function of dimensionality and density given the
+    observed k nearest-neighbor distances
+    .
     :param distances: The observed nearest neighbor distances.
-    :type istances: array-like
+    :type distances: array-like
     :param sigma: The standard deviation of the log-distances from the prediction.
     :type signa: float
     :return: The likelihood function.
@@ -94,12 +94,8 @@ def _scaling_deviations(distances, sigma):
     k = distances.shape[1]
     counts = arange(1, k + 1)
 
-    counts = log(arange(1, k + 1))
-
     ldist = sort(distances, axis=-1)
     ldist = log(ldist) + log(pi) / 2
-
-    normal = _normal(ldist.size)
 
     def V(d):
         """
@@ -107,10 +103,10 @@ def _scaling_deviations(distances, sigma):
         """
         return d * ldist - gammaln(d / 2 + 1)
 
+
     def logpdf(dims, log_dens):
         pred = log_dens[:, None] + V(dims[:, None])
-        diff = pred - counts[None, :]
-        logp = normal(diff / sigma)
+        logp = pred*counts[None, :] - exp(pred) - gammaln(counts)[None, :]
         return arraysum(logp)
 
     return logpdf
@@ -203,7 +199,7 @@ def compute_dimensionality_loss_func(distances, transform, k, sigma):
     :rtype: function, function
     """
     prior = _normal(k)
-    likelihood = _scaling_deviations(distances, sigma)
+    likelihood = _poisson(distances, sigma)
 
     def loss_func(z):
         dims, log_dens = transform(z)
