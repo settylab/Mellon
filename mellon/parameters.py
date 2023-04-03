@@ -252,7 +252,7 @@ def compute_initial_value(nn_distances, d, mu, L):
     return Ridge(fit_intercept=False).fit(L, target).coef_
 
 
-def compute_initial_dimensionalities(x, mu, L, nn_distances, neighbor_idx=None):
+def compute_initial_dimensionalities(x, mu_dim, mu_dens, L, nn_distances, d):
     R"""
     Computes an initial guess for the log dimensionality and log density at every cell state
     with Ridge regression.
@@ -267,16 +267,12 @@ def compute_initial_dimensionalities(x, mu, L, nn_distances, neighbor_idx=None):
     :param nn_distances: The observed nearest neighbor distances.
     :type nn_distances: array-like
     :param d: The local dimensionality of the data.
-    :type d: int
-    :param neighbor_idx: Indices of k neighbors with
-        neighbor_idx.shape == (x.shape[0], k).
-    :type neighbor_idx: array-lik
+    :type d: array-like
     :return: initial_value
     :rtype: array-like
     """
-    d = local_dimensionality(x, neighbor_idx=None)
-    target = log(d) - mu
+    target = log(d) - mu_dim
     initial_dims = Ridge(fit_intercept=False).fit(L, target).coef_
-    initial_dens = compute_initial_value(nn_distances, d, mu, L)
+    initial_dens = compute_initial_value(nn_distances, d, mu_dens, L)
     initial_value = stack([initial_dims, initial_dens])
     return initial_value

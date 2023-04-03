@@ -79,6 +79,7 @@ def _nearest_neighbors(r, d):
 
     return logpdf
 
+
 def _poisson(distances):
     """
     Returns the likelihood function of dimensionality and density given the
@@ -101,10 +102,9 @@ def _poisson(distances):
         """
         return d * ldist - gammaln(d / 2 + 1)
 
-
     def logpdf(dims, log_dens):
         pred = log_dens[:, None] + V(dims[:, None])
-        logp = pred*counts[None, :] - exp(pred) - gammaln(counts)[None, :]
+        logp = pred * counts[None, :] - exp(pred) - gammaln(counts)[None, :]
         return arraysum(logp)
 
     return logpdf
@@ -127,7 +127,7 @@ def compute_transform(mu, L):
     return _multivariate(mu, L)
 
 
-def compute_dimensionality_transform(mu, L):
+def compute_dimensionality_transform(mu_dim, mu_dens, L):
     R"""
     Computes a function transform that maps :math:`z \sim
     \text{Normal}(0, I) \rightarrow \log(f) \sim \text{Normal}(mu, K')`,
@@ -142,11 +142,12 @@ def compute_dimensionality_transform(mu, L):
     :return: transform - The transform function :math:`z \rightarrow f`.
     """
 
-    inner_transform = _multivariate(mu, L)
+    dim_transform = _multivariate(mu_dim, L)
+    dens_transform = _multivariate(mu_dens, L)
 
     def transform(z):
         dims, dens = z[0, :], z[1, :]
-        return exp(inner_transform(dims)), inner_transform(dens)
+        return exp(dim_transform(dims)), dens_transform(dens)
 
     return transform
 

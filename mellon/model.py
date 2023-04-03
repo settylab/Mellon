@@ -39,6 +39,7 @@ from .util import (
     DEFAULT_JITTER,
     vector_map,
     Log,
+    local_dimensionality,
 )
 
 
@@ -1036,8 +1037,15 @@ class DimensionalityEstimator(BaseEstimator):
         a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
         Defaults to None.
     :type distances: array-like or None
-    :param mu: The mean of the Gaussian process. Default is 0.
-    :type mu: float or None
+    :param d: The estimated local dimensionality of the data.
+        If None, sets d to the emperical estimae.
+    :type d: array-like
+    :param mu_dim: The mean of the Gaussian process for log dimensionality. Default is 0.
+    :type mu_dim: float or None
+    :param mu_dens: The mean of the Gaussian process for log density. If None, sets mu to the 1th percentile
+        of :math:`mle(nn\text{_}distances, d) - 10`, where :math:`mle = \log(\text{gamma}(d/2 + 1))
+        - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`. Defaults to None.
+    :type mu_dens: float or None
     :param ls: The length scale of the Gaussian process covariance function. If None,
         sets ls to the geometric mean of the nearest neighbor distances times a constant.
         If cov_func is supplied explictly, ls has no effect. Defaults to None.
@@ -1067,7 +1075,8 @@ class DimensionalityEstimator(BaseEstimator):
     :ivar init_learn_rate: The initial learn rate when adam optimizer is used.
     :ivar landmarks: The points to quantize the data.
     :ivar nn_distances: The nearest neighbor distances for each data point.
-    :ivar mu: The Gaussian process mean.
+    :ivar mu_dim: The Gaussian process mean.
+    :ivar mu_dens: The Gaussian process mean.
     :ivar ls: The Gaussian process covariance function length scale.
     :ivar ls_factor: Factor to scale the automatically selected length scale.
         Defaults to 1.
@@ -1106,7 +1115,9 @@ class DimensionalityEstimator(BaseEstimator):
         landmarks=None,
         k=5,
         distances=None,
-        mu=0,
+        d=None,
+        mu_dim=0,
+        mu_dens=None,
         ls=None,
         ls_factor=1,
         cov_func=None,
@@ -1121,13 +1132,16 @@ class DimensionalityEstimator(BaseEstimator):
             jitter=jitter,
             landmarks=landmarks,
             nn_distances=None,
-            mu=mu,
+            mu=mu_dens,
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
             L=L,
         )
         self.k = k
+        self.d = d
+        self.mu_dim = mu_dim
+        self.mu_dens = mu_dens
         self.method = method
         self.distances = distances
         self.optimizer = optimizer
@@ -1164,7 +1178,9 @@ class DimensionalityEstimator(BaseEstimator):
         else:
             string += "distances=distances, "
         string += (
-            f"mu={self.mu}, "
+            f"d={self.d}, "
+            f"mu_dim={self.mu_dim}, "
+            f"mu_dens={self.mu_dens}, "
             f"ls={self.mu}, "
             f"cov_func={self.cov_func}, "
         )
@@ -1179,18 +1195,34 @@ class DimensionalityEstimator(BaseEstimator):
         string += f"jit={self.jit}" ")"
         return string
 
+    def _compute_mu_dens(self):
+        nn_distances = self.nn_distances
+        d = self.d
+        mu = compute_mu(nn_distances, d)
+        return mu
+
+    def _compute_d(self):
+        x = self.x
+        d = local_dimensionality(x, neighbor_idx=None)
+        return d
+
     def _compute_initial_value(self):
         x = self.x
+        d = self.d
         nn_distances = self.nn_distances
-        mu = self.mu
+        mu_dim = self.mu_dim
+        mu_dens = self.mu_dens
         L = self.L
-        initial_value = compute_initial_dimensionalities(x, mu, L, nn_distances)
+        initial_value = compute_initial_dimensionalities(
+            x, mu_dim, mu_dens, L, nn_distances, d
+        )
         return initial_value
 
     def _compute_transform(self):
-        mu = self.mu
+        mu_dim = self.mu_dim
+        mu_dens = self.mu_dens
         L = self.L
-        transform = compute_dimensionality_transform(mu, L)
+        transform = compute_dimensionality_transform(mu_dim, mu_dens, L)
         return transform
 
     def _compute_distances(self):
@@ -1271,7 +1303,8 @@ class DimensionalityEstimator(BaseEstimator):
         self._set_x(x)
         self._prepare_attribute("distances")
         self._prepare_attribute("nn_distances")
-        self._prepare_attribute("mu")
+        self._prepare_attribute("d")
+        self._prepare_attribute("mu_dens")
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
