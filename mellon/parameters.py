@@ -1,8 +1,9 @@
-from jax.numpy import exp, log, quantile
+from jax.numpy import exp, log, quantile, stack
+from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle, DEFAULT_JITTER
+from .util import mle, local_dimensionality, DEFAULT_JITTER
 from .decomposition import (
     _check_method,
     _full_rank,
@@ -40,6 +41,26 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     return k_means(x, n_landmarks, n_init=1)[0]
 
 
+def compute_distances(x, k):
+    R"""
+    Computes the distance to the k nearest neighbor for each training instance.
+
+    :param x: The training instances.
+    :type x: array-like
+    :param k: The number of nearest neighbors to consider.
+    :return: distances - The k observed nearest neighbor distances.
+    :rtype: array-like
+    """
+    if len(x.shape) < 2:
+        x = x[:, None]
+    if x.shape[1] >= 20:
+        tree = BallTree(x, metric="euclidean")
+    else:
+        tree = KDTree(x, metric="euclidean")
+    distances = tree.query(x, k=k + 1)[0][:, 1:]
+    return distances
+
+
 def compute_nn_distances(x):
     R"""
     Computes the distance to the nearest neighbor for each training instance.
@@ -69,6 +90,30 @@ def compute_d(x):
     if len(x.shape) < 2:
         return 1
     return x.shape[1]
+
+
+def compute_d_factal(x, k=30, n=1000, seed=432):
+    R"""
+    Computes the dimensionality of the data based on the average fractal
+    dimension around n randomly selected cells.
+
+    :param x: The training instances.
+    :type x: array-like
+    :param n: Number of samples.
+    :type n: int
+    :param seed: Random seed for sampling.
+    :type seed: int
+    """
+    if len(x.shape) < 2:
+        return 1
+    if n < x.shape[0]:
+        key = random.PRNGKey(seed)
+        idx = random.choice(key, x.shape[0], shape=(n,), replace=False)
+        x_query = x[idx, ...]
+    else:
+        x_query = x
+    local_dims = local_dimensionality(x, k=k, x_query=x_query)
+    return local_dims.mean()
 
 
 def compute_mu(nn_distances, d):
@@ -205,3 +250,29 @@ def compute_initial_value(nn_distances, d, mu, L):
     """
     target = mle(nn_distances, d) - mu
     return Ridge(fit_intercept=False).fit(L, target).coef_
+
+
+def compute_initial_dimensionalities(x, mu_dim, mu_dens, L, nn_distances, d):
+    R"""
+    Computes an initial guess for the log dimensionality and log density at every cell state
+    with Ridge regression.
+
+    :param x: The cell states.
+    :type x: array-like
+    :param mu: The Gaussian Process mean.
+    :type mu: int
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K`
+        is the covariance matrix.
+    :type L: array-like
+    :param nn_distances: The observed nearest neighbor distances.
+    :type nn_distances: array-like
+    :param d: The local dimensionality of the data.
+    :type d: array-like
+    :return: initial_value
+    :rtype: array-like
+    """
+    target = log(d) - mu_dim
+    initial_dims = Ridge(fit_intercept=False).fit(L, target).coef_
+    initial_dens = compute_initial_value(nn_distances, d, mu_dens, L)
+    initial_value = stack([initial_dims, initial_dens])
+    return initial_value

@@ -1,4 +1,4 @@
-from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt
+from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt, isnan, any
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
@@ -71,23 +71,29 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     """
 
     s, v = eigh(A)
+    if any(s <= 0):
+        message = (
+            "Singuarity detected in covariance matrix. "
+            "This can complicated prediction. Consider raising the jitter."
+        )
+        logger.warning(message)
     p = count_nonzero(s > 0)  # stability
-    summed = cumsum(s[:-p-1:-1])
+    summed = cumsum(s[: -p - 1 : -1])
     if method == "percent":
         # automatically choose rank to capture some percent of the eigenvalues
         target = summed[-1] * rank
         p = searchsorted(summed, target)
         if p == 0:
             logger.warning(
-                f'Low variance percentage {rank:%} indicated rank=0. '
-                'Bumping rank to 1.'
+                f"Low variance percentage {rank:%} indicated rank=0. "
+                "Bumping rank to 1."
             )
             p = 1
     else:
         p = min(rank, p)
     if (method == "percent" and rank < 1) or rank < len(summed):
-        frac = summed[p]/summed[-1]
-        logger.info(f'Recovering {frac:%} variance in eigendecomposition.')
+        frac = summed[p] / summed[-1]
+        logger.info(f"Recovering {frac:%} variance in eigendecomposition.")
     s_ = s[-p:]
     v_ = v[:, -p:]
     return s_, v_
@@ -109,6 +115,13 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
     """
     W = stabilize(cov_func(x, x), jitter)
     L = cholesky(W)
+    if any(isnan(L)):
+        message = (
+            f"Covariance not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     return L
 
 
@@ -167,6 +180,13 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     W = stabilize(cov_func(xu, xu), jitter)
     C = cov_func(x, xu)
     U = cholesky(W)
+    if any(isnan(U)):
+        message = (
+            f"Covariance of landmarks not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     L = solve_triangular(U, C.T, lower=True).T
     return L
 

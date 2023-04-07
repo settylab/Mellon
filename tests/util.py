@@ -28,6 +28,13 @@ def test_distances():
     assert dist.shape == (n, n), "Distances should be computed for each pair of points."
 
 
+def test_local_dimensionality():
+    n = 10
+    x = jnp.ones((n, 3))
+    dist = mellon.local_dimensionality(x, k=3)
+    assert dist.shape == (n,), "Local dim should be computed for each point."
+
+
 def test_Log():
     logger = mellon.Log()
     assert logger is mellon.Log(), "Log should be a singelton class."

@@ -1,5 +1,5 @@
 from collections import namedtuple
-from jax.numpy import log, pi, exp, stack
+from jax.numpy import log, pi, exp, stack, arange, median, sort, max
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
 import jax
@@ -80,6 +80,36 @@ def _nearest_neighbors(r, d):
     return logpdf
 
 
+def _poisson(distances):
+    """
+    Returns the likelihood function of dimensionality and density given the
+    observed k nearest-neighbor distances
+    .
+    :param distances: The observed nearest neighbor distances.
+    :type distances: array-like
+    :return: The likelihood function.
+    :rtype: function
+    """
+    k = distances.shape[1]
+    counts = arange(1, k + 1)
+
+    ldist = sort(distances, axis=-1)
+    ldist = log(ldist) + log(pi) / 2
+
+    def V(d):
+        """
+        Return the log-volume of the n-sphere for the raidus related values in ldist.
+        """
+        return d * ldist - gammaln(d / 2 + 1)
+
+    def logpdf(dims, log_dens):
+        pred = log_dens[:, None] + V(dims[:, None])
+        logp = pred * counts[None, :] - exp(pred) - gammaln(counts)[None, :]
+        return arraysum(logp)
+
+    return logpdf
+
+
 def compute_transform(mu, L):
     R"""
     Computes a function transform that maps :math:`z \sim
@@ -95,6 +125,31 @@ def compute_transform(mu, L):
     :return: transform - The transform function :math:`z \rightarrow f`.
     """
     return _multivariate(mu, L)
+
+
+def compute_dimensionality_transform(mu_dim, mu_dens, L):
+    R"""
+    Computes a function transform that maps :math:`z \sim
+    \text{Normal}(0, I) \rightarrow \log(f) \sim \text{Normal}(mu, K')`,
+    where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
+    where :math:`K` is the covariance matrix.
+
+    :param mu: The Gaussian process mean.
+    :type mu: float
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
+        covariance matrix.
+    :type L: array-like
+    :return: transform - The transform function :math:`z \rightarrow f`.
+    """
+
+    dim_transform = _multivariate(mu_dim, L)
+    dens_transform = _multivariate(mu_dens, L)
+
+    def transform(z):
+        dims, dens = z[0, :], z[1, :]
+        return exp(dim_transform(dims)), dens_transform(dens)
+
+    return transform
 
 
 def compute_loss_func(nn_distances, d, transform, k):
@@ -121,6 +176,33 @@ def compute_loss_func(nn_distances, d, transform, k):
 
     def loss_func(z):
         return -(prior(z) + likelihood(transform(z)))
+
+    return loss_func
+
+
+def compute_dimensionality_loss_func(distances, transform, k):
+    R"""
+    Computes the Bayesian loss function -(prior(:math:`z`) +
+    likelihood(transform(:math:`z`))) for dimensionality inference.
+
+    :param distances: The observed k nearest neighbor distances.
+    :type distances: array-like
+    :param transform:
+        Maps :math:`z \sim \text{Normal}(0, I) \rightarrow \log(f) \sim \text{Normal}(mu, K')`,
+        where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
+        where :math:`K` is the covariance matrix.
+    :type transform: function
+    :param k: dimension of transform input
+    :type k: int
+    :return: loss_func - The Bayesian loss function
+    :rtype: function, function
+    """
+    prior = _normal(k)
+    likelihood = _poisson(distances)
+
+    def loss_func(z):
+        dims, log_dens = transform(z)
+        return -(prior(z) + likelihood(dims, log_dens))
 
     return loss_func
 
@@ -264,6 +346,64 @@ def compute_conditional_mean(
         )
 
 
+def compute_conditional_mean_explog(
+    x,
+    landmarks,
+    y,
+    mu,
+    cov_func,
+    sigma=0,
+    jitter=DEFAULT_JITTER,
+):
+    R"""
+    Builds the mean function of the Gaussian process, conditioned on the
+    function exponential values (e.g., dimensionality) on x.
+    Returns a function that is defined on the whole domain of x.
+
+    :param x: The training instances.
+    :type x: array-like
+    :param landmarks: The landmark points for fast sparse computation.
+        Landmarks can be None if not using landmark points.
+    :type landmarks: array-like
+    :param y: The function values at each point in x.
+    :type y: array-like
+    :param mu: The original Gaussian process mean.
+    :type mu: float
+    :param cov_func: The Gaussian process covariance function.
+    :type cov_func: function
+    :param sigma: White moise veriance. Defaults to 0.
+    :type sigma: float
+    :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
+    :type jitter: float
+    :return: conditional_mean - The conditioned Gaussian process mean function.
+    :rtype: function
+    """
+    if landmarks is None:
+        return Exp(
+            _full_conditional_mean(
+                x,
+                log(y),
+                mu,
+                cov_func,
+                jitter=jitter,
+            )
+        )
+    else:
+        if len(landmarks.shape) < 2:
+            landmarks = landmarks[:, None]
+        return Exp(
+            _landmarks_conditional_mean(
+                x,
+                landmarks,
+                log(y),
+                mu,
+                cov_func,
+                sigma=sigma,
+                jitter=jitter,
+            )
+        )
+
+
 def compute_conditional_mean_y(
     x,
     landmarks,
@@ -316,3 +456,14 @@ def compute_conditional_mean_y(
             sigma=sigma,
             jitter=jitter,
         )
+
+
+def Exp(func):
+    """
+    Function wrapper, making a function that returns the exponent of the wrapped function.
+    """
+
+    def new_func(x):
+        return exp(func(x))
+
+    return new_func

@@ -1,7 +1,10 @@
-from jax.numpy import dot, square
+from jax.numpy import dot, square, isnan, any
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-from .util import stabilize, DEFAULT_JITTER
+from .util import stabilize, DEFAULT_JITTER, Log
+
+
+logger = Log()
 
 
 def _full_conditional_mean(
@@ -36,6 +39,13 @@ def _full_conditional_mean(
     K = cov_func(x, x)
     sigma2 = max(sigma2, jitter)
     L = cholesky(stabilize(K, jitter=sigma2))
+    if any(isnan(L)):
+        message = (
+            f"Covariance not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     r = y - mu
     weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
 
@@ -89,6 +99,13 @@ def _full_conditional_mean_y(
     K = cov_func(x, x)
     sigma2 = max(sigma2, jitter)
     L = cholesky(stabilize(K, jitter=sigma2))
+    if any(isnan(L)):
+        message = (
+            f"Covariance not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     Kus = cov_func(Xnew, x)
 
     def mean(y):
@@ -136,6 +153,13 @@ def _landmarks_conditional_mean(
     Kuu = cov_func(xu, xu)
     Kuf = cov_func(xu, x)
     Luu = cholesky(stabilize(Kuu, jitter))
+    if any(isnan(Luu)):
+        message = (
+            f"Covariance of landmarks not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     A = solve_triangular(Luu, Kuf, lower=True)
     sigma2 = max(sigma2, jitter)
     L_B = cholesky(stabilize(dot(A, A.T), sigma2))
@@ -200,6 +224,13 @@ def _landmarks_conditional_mean_y(
     Kuu = cov_func(xu, xu)
     Kuf = cov_func(xu, x)
     Luu = cholesky(stabilize(Kuu, jitter))
+    if any(isnan(Luu)):
+        message = (
+            f"Covariance of landmarks not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
     A = solve_triangular(Luu, Kuf, lower=True)
     sigma2 = max(sigma2, jitter)
     L_B = cholesky(stabilize(dot(A, A.T), sigma2))
