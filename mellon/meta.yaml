@@ -6,8 +6,8 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mellon-{{ version }}.tar.gz
-  sha256: 96eb6228a050d996120bf829fda60617ccc768d9ad2a86419d017118fee7ade4
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: b36b45ec9034c868c15210d9e497b3b6b55bdda4ee418dd1bfea0301b5fe0ef8
 
 build:
   noarch: python
@@ -35,9 +35,10 @@ test:
 about:
   home: https://github.com/settylab/mellon
   summary: Non-parametric density estimator.
-  license: GPL-3.0
+  license: GPL-3.0-or-later
   license_file: LICENSE
 
 extra:
   recipe-maintainers:
-    - dominik
+    - katosh
+    - ManuSetty
