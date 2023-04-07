@@ -1097,9 +1097,13 @@ class DimensionalityEstimator(BaseEstimator):
     :ivar losses: The history of losses throughout training of adam or final
         loss of L-BFGS-B.
     :ivar local_dim_x: The local dimensionality at the training points.
-    :ivar log_density_x: The log density at the training points.
+    :ivar log_density_x: The log density with variing units at the training
+        points. Density indicates the number of cells per volume in state
+        space. Since the dimensionality of the volume changes, the resulting
+        density unit varies.
     :ivar local_dim_func: A function that computes the local dimensionality at arbitrary prediction points.
-    :ivar log_density_func: A function that computes the log density at arbitrary prediction points.
+    :ivar log_density_func: A function that computes the log density with
+        variing units at arbitrary prediction points.
     """
 
     def __init__(
@@ -1387,22 +1391,11 @@ class DimensionalityEstimator(BaseEstimator):
         self.process_inference(build_predict=build_predict)
         return self
 
-    def predict_dimensionality(self, x):
-        R"""
-        Predict the log density at each point in x.
-
-        :param x: The new data to predict.
-        :type x: array-like
-        :return: log_density - The log density at each test point in x.
-        :rtype: array-like
-        """
-        if self.local_dim_func is None:
-            self._set_local_dim_func()
-        return self.local_dim_func(x)
-
     def predict_density(self, x):
         R"""
-        Predict the log density at each point in x.
+        Predict the log density with adaptive unit at each point in x.
+        Note that the unit of denity depends on the dimensionality of the
+        volume.
 
         :param x: The new data to predict.
         :type x: array-like
@@ -1415,18 +1408,17 @@ class DimensionalityEstimator(BaseEstimator):
 
     def predict(self, x):
         R"""
-        Predict the dimensionality and log density at each point in x.
+        Predict the dimensionality at each point in x.
+        Alias for predict_dimensionality().
 
         :param x: The new data to predict.
         :type x: array-like
-        :return: local_dimensioanlity, log_density
+        :return: dimensionality - The dimensionality at each test point in x.
         :rtype: array-like
         """
-        if self.log_density_func is None:
-            self._set_log_density_func()
         if self.local_dim_func is None:
             self._set_local_dim_func()
-        return self.local_dim_func(x), self.log_density_func(x)
+        return self.local_dim_func(x)
 
     def fit_predict(self, x=None, build_predict=False):
         R"""
@@ -1450,4 +1442,48 @@ class DimensionalityEstimator(BaseEstimator):
             x = self.x
 
         self.fit(x, build_predict=build_predict)
-        return self.local_dim_x, self.log_density_x
+        return self.local_dim_x
+
+    def gradient_density(self, x, jit=True):
+        R"""
+        Conputes the gradient of the predictive log-density function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: gradiants - The gradient of function at each point in x.
+            gradients.shape == x.shape
+        :rtype: array-like
+        """
+        return gradient(self.predict_density, x, jit=jit)
+
+    def hessian_density(self, x, jit=True):
+        R"""
+        Conputes the hessian of the predictive log-density function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: hessians - The hessian matrix of function at each point in x.
+            hessians.shape == X.shape + X.shape[1:]
+        :rtype: array-like
+        """
+        return hessian(self.predict_density, x, jit=jit)
+
+    def hessian_log_determinant_density(self, x, jit=True):
+        R"""
+        Conputes the logarirhm of the determinat of the predictive density function for
+        each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: signs, log_determinants - The sign of the determinant
+            at each point x and the logarithm of its absolute value.
+            signs.shape == log_determinants.shape == x.shape[0]
+        :rtype: array-like, array-like
+        """
+        return hessian_log_determinant(self.predict_density, x, jit=jit)

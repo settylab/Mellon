@@ -60,7 +60,7 @@ def test_DensityEstimator():
         relative_err(adam_dens) < 1e-3
     ), "The adam optimizer should produce similar results to the default."
 
-    est_full = mellon.DensityEstimator(rank=1.0, method="percent", n_landmarks=n)
+    est_full = mellon.DensityEstimator(rank=1.0, method="percent", n_landmarks=0)
     est_full.fit(X)
     full_log_dens = est_full.predict(X)
     assert (
@@ -194,22 +194,19 @@ def test_DimensionalityEstimator():
     X = jax.random.multivariate_normal(key, jnp.ones(d), cov, (n,))
 
     est = mellon.DimensionalityEstimator()
-    local_dim, log_dens = est.fit_predict(X)
+    local_dim = est.fit_predict(X)
     assert local_dim.shape == (
         n,
     ), "There should be one dimensionality value for each sample."
-    assert log_dens.shape == (n,), "There should be one density value for each sample."
     dim_std = jnp.std(local_dim)
-    dens_std = jnp.std(log_dens)
 
-    def relative_err(dim, dens):
+    def relative_err(dim):
         diff_dim = jnp.std(local_dim - dim) / dim_std
-        diff_dens = jnp.std(log_dens - dens) / dens_std
-        return max(diff_dim, diff_dens)
+        return diff_dim
 
     pred = est.predict(X)
     assert (
-        relative_err(*pred) < 1e-5
+        relative_err(pred) < 1e-5
     ), "The predicive function should be consistent with the training samples."
 
     assert len(str(est)) > 0, "The model should have a string representation."
@@ -217,33 +214,50 @@ def test_DimensionalityEstimator():
     adam_est = mellon.DimensionalityEstimator(optimizer="adam")
     adam_dim = adam_est.fit_predict(X)
     assert (
-        relative_err(*adam_dim) < 1e0
+        relative_err(adam_dim) < 1e0
     ), "The adam optimizer should produce similar results to the default."
 
     est_full = mellon.DimensionalityEstimator(rank=1.0, method="percent", n_landmarks=n)
     est_full.fit(X)
     full_local_dim = est_full.predict(X)
     assert (
-        relative_err(*full_local_dim) < 1e0
+        relative_err(full_local_dim) < 1e0
     ), "The default approximation should be close to the full rank result."
 
     est = mellon.DimensionalityEstimator(rank=1.0, method="percent", n_landmarks=10)
     est.fit(X)
     dim_appr = est.predict(X)
     assert (
-        relative_err(*dim_appr) < 1e0
+        relative_err(dim_appr) < 1e0
     ), "The low landmarks approximation should be close to the default."
 
     est = mellon.DimensionalityEstimator(rank=0.99, method="percent", n_landmarks=80)
     est.fit(X)
     dim_appr = est.predict(X)
     assert (
-        relative_err(*dim_appr) < 1e0
+        relative_err(dim_appr) < 1e0
     ), "The low landmarks + Nystrom approximation should be close to the default."
 
     est = mellon.DimensionalityEstimator(rank=50, n_landmarks=80)
     est.fit(X)
     dim_appr = est.predict(X)
     assert (
-        relative_err(*dim_appr) < 1e0
+        relative_err(dim_appr) < 1e0
     ), "The low landmarks + Nystrom approximation should be close to the default."
+
+    grads = est.gradient_density(X)
+    assert (
+        grads.shape == X.shape
+    ), "The gradient should have the same shape as the input."
+
+    log_dens = est.predict_density(X)
+    hess = est.hessian_density(X)
+    assert hess.shape == (n, d, d), "The hessian should have the correct shape."
+
+    result = est.hessian_log_determinant_density(X)
+    assert (
+        len(result) == 2
+    ), "hessian_log_determinan should return signes and lg-values."
+    sng, ld = result
+    assert sng.shape == (n,), "There should be one sign for each hessian determinan."
+    assert ld.shape == (n,), "There should be one value for each hessian determinan."
