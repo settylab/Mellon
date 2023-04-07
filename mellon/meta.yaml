@@ -1,0 +1,43 @@
+{% set name = "mellon" %}
+{% set version = "1.2.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/mellon-{{ version }}.tar.gz
+  sha256: 96eb6228a050d996120bf829fda60617ccc768d9ad2a86419d017118fee7ade4
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+
+requirements:
+  host:
+    - python >=3.6
+    - pip
+  run:
+    - python >=3.6
+    - jax
+    - jaxopt
+    - scikit-learn
+
+test:
+  imports:
+    - mellon
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/settylab/mellon
+  summary: Non-parametric density estimator.
+  license: GPL-3.0
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - dominik
