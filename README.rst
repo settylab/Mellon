@@ -1,6 +1,9 @@
 Mellon
 ======
 
+.. image:: https://github.com/settylab/mellon/raw/dev/landscape.png?raw=true
+   :target: https://github.com/settylab/Mellon
+
 .. image:: https://zenodo.org/badge/558998366.svg
    :target: https://zenodo.org/badge/latestdoi/558998366
 .. image:: https://codecov.io/github/settylab/Mellon/branch/main/graph/badge.svg?token=TKIKXK4MPG 
