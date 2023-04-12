@@ -12,7 +12,7 @@ Mellon
 .. image:: https://static.pepy.tech/personalized-badge/mellon?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=Downloads
     :target: https://pepy.tech/project/mellon
 
-.. image:: https://github.com/settylab/mellon/raw/dev/landscape.png?raw=true
+.. image:: https://github.com/settylab/mellon/raw/main/landscape.png?raw=true
    :target: https://github.com/settylab/Mellon
 
 Mellon is a non-parametric cell-state density estimator based on a
