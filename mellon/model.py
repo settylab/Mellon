@@ -348,8 +348,8 @@ class DensityEstimator(BaseEstimator):
     :type method: str
     :param d_method: Method to compute intrinsic dimensionality of the data.
         Implemended options are
-            * 'embedding' use the embedding dimension `x.shape[1]`
-            * 'fractal' use the average fractal dimension (experimental)
+        * 'embedding' use the embedding dimension `x.shape[1]`
+        * 'fractal' use the average fractal dimension (experimental)
         Defaults to 'embedding'.
     :type d_method: str
     :param jitter: A small amount to add to the diagonal of the covariance
@@ -406,6 +406,7 @@ class DensityEstimator(BaseEstimator):
         eigenvalues included in approximate covariance matrix.
     :ivar method: The method to interpret the rank as a fixed number of eigenvectors
         or a percentage of eigenvalues.
+    :ivar d_method: The method to determin intrinsic dimensionality.
     :ivar jitter: A small amount added to the diagonal of the covariance matrix
         for numerical stability.
     :ivar n_iter: The number of optimization iterations if adam optimizer is used.
