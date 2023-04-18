@@ -4,3 +4,4 @@ m2r2
 nbsphinx
 furo
 typing-extensions
+IPython
