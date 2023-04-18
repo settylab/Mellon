@@ -77,6 +77,8 @@ html_theme_options = {
     ],
 }
 
+html_favicon = "favicon.ico"
+
 highlight_language = 'none'
 
 # Add any paths that contain custom static files (such as style sheets) here,
