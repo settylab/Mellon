@@ -3,7 +3,7 @@ from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle, local_dimensionality, DEFAULT_JITTER
+from .util import mle, local_dimensionality, Log, DEFAULT_JITTER
 from .decomposition import (
     _check_method,
     _full_rank,
@@ -16,6 +16,8 @@ from .decomposition import (
 
 
 DEFAULT_N_LANDMARKS = 5000
+
+logger = Log()
 
 
 def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
@@ -205,8 +207,10 @@ def compute_L(
         method = _check_method(rank, n, method)
 
         if type(rank) is int and rank == n or type(rank) is float and rank == 1.0:
+            logger.info("Doing full-rank Cholesky decomposition.")
             return _full_rank(x, cov_func, jitter=jitter)
         else:
+            logger.info("Doing full-rank singular value decomposition.")
             return _full_decomposition_low_rank(
                 x, cov_func, rank=rank, method=method, jitter=jitter
             )
@@ -223,8 +227,10 @@ def compute_L(
             or type(rank) is float
             and rank == 1.0
         ):
+            logger.info("Doing low-rank Cholesky decomposition.")
             return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
         else:
+            logger.info("Doing low-rank improved Nyström decomposition.")
             return _modified_low_rank(
                 x, cov_func, landmarks, rank=rank, method=method, jitter=jitter
             )
