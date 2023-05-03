@@ -751,9 +751,12 @@ class DimensionalityEstimator(BaseEstimator):
         This is only used to initialize the density estimation.
         If None, sets d to the emperical estimae.
     :type d: array-like
-    :param mu_dim: The mean of the Gaussian process for log intrinsic dimensionality. Default is 0.
+    :param mu_dim: The mean of the Gaussian process for log intrinsic
+        dimensionality :math:`\mu_D. Default is 0.
     :type mu_dim: float or None
-    :param mu_dens: The mean of the Gaussian process for log density. If None, sets mu to the 1th percentile
+    :param mu_dens: The mean of the Gaussian process for log density
+        :math:`\mu_\rho`. If None,
+        sets mu_dens to the 1th percentile
         of :math:`\text{mle}(\text{nn_distances}, d) - 10`, where
         :math:`\text{mle} = \log(\text{gamma}(d/2 + 1))
         - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})`. Defaults to None.
@@ -770,7 +773,7 @@ class DimensionalityEstimator(BaseEstimator):
         If None, automatically computes L. Defaults to None.
     :type L: array-like or None
     :param initial_value: The initial guess for optimization. If None, finds
-        :math:`z` that minimizes :math:`||Lz + \mu - mle|| + ||z||`, where
+        :math:`z` that minimizes :math:`||Lz + \mu_\cdot - mle|| + ||z||`, where
         :math:`\text{mle}` is the maximum likelyhood estimate for the denisty
         initialization and the neighborhood based local intrinstic dimensionality
         for the dimensionality initializatuion.
@@ -790,8 +793,8 @@ class DimensionalityEstimator(BaseEstimator):
     :ivar init_learn_rate: The initial learn rate when adam optimizer is used.
     :ivar landmarks: The points to quantize the data.
     :ivar nn_distances: The nearest neighbor distances for each data point.
-    :ivar mu_dim: The Gaussian process mean.
-    :ivar mu_dens: The Gaussian process mean.
+    :ivar mu_dim: The Gaussian process mean :math:`\mu_D`.
+    :ivar mu_dens: The Gaussian process mean :math:`\mu_\rho`.
     :ivar ls: The Gaussian process covariance function length scale.
     :ivar ls_factor: Factor to scale the automatically selected length scale.
         Defaults to 1.
@@ -801,12 +804,12 @@ class DimensionalityEstimator(BaseEstimator):
     :ivar optimizer: Optimizer for the maximum a posteriori density estimation.
     :ivar x: The training data.
     :ivar transform: A function
-        :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')`.
+        :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(\mu_\cdot, K')`.
         Used to map the latent representation to the log-density on the
         training data.
     :ivar loss_func: The Bayesian loss function.
     :ivar pre_transformation: The optimized parameters :math:`z \sim \text{Normal}(0, I)` before
-        transformation to :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
+        transformation to :math:`\text{Normal}(\mu_\cdot, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
     :ivar opt_state: The final state the optimizer.
     :ivar losses: The history of losses throughout training of adam or final
