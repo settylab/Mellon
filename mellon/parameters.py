@@ -40,6 +40,7 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     assert n_landmarks > 1, "n_landmarks musst be larger 1 or euqual to 0"
     if n_landmarks >= n:
         return None
+    logger.info(f"Computing {n_landmarks:,} landmarks with k-means clustering.")
     return k_means(x, n_landmarks, n_init=1)[0]
 
 

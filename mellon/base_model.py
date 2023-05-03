@@ -98,7 +98,6 @@ class BaseEstimator:
     def _compute_landmarks(self):
         x = self.x
         n_landmarks = self.n_landmarks
-        logger.info(f"Computing {n_landmarks:,} landmarks with k-means clustering.")
         landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
         return landmarks
 
