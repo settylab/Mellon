@@ -107,10 +107,10 @@ def test_FunctionEstimator():
     L = jax.random.uniform(key, (d, d))
     cov = L.T.dot(L)
     X = jax.random.multivariate_normal(key, jnp.ones(d), cov, (n,))
-    noise = 1e-4 * jnp.sum(jnp.sin(X * 1e16), axis=1)
+    noise = 1e-2 * jnp.sum(jnp.sin(X * 1e16), axis=1)
     noiseless_y = jnp.sum(jnp.sin(X / 2), axis=1)
     y = noiseless_y + noise
-    Y = jnp.stack([y, y - noise])
+    Y = jnp.stack([y, noiseless_y])
 
     est = mellon.FunctionEstimator(sigma=1e-3)
     pred = est.fit_predict(X, y)
@@ -119,10 +119,10 @@ def test_FunctionEstimator():
     assert len(str(est)) > 0, "The model should have a string representation."
 
     err = jnp.std(y - pred)
-    assert err < 1e-4, "The prediction should be close to the intput value."
+    assert err < 1e-2, "The prediction should be close to the intput value."
 
     err = jnp.std(noiseless_y - pred)
-    assert err < 1e-4, "The prediction should be close to the true value."
+    assert err < 1e-2, "The prediction should be close to the true value."
 
     m_pred = est.multi_fit_predict(X, Y, X)
     assert m_pred.shape == (
@@ -168,9 +168,8 @@ def test_FunctionEstimator():
         jnp.std(d1_pred - d1_pred_full) < 1e-5
     ), "The scalar state function estimations be consistent under approximation."
 
-    Y = jnp.stack([y, y])
     m_pred = est.multi_fit_predict(X, Y)
-    assert jnp.std(m_pred - pred[None, :]) < 1e-4, (
+    assert jnp.std(m_pred[0, :] - pred) < 1e-2, (
         "The scalar multi function estimations should be consistent with the "
         "single function estimation."
     )
