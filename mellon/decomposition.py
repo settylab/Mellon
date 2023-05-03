@@ -4,7 +4,7 @@ from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
 
 
-DEFAULT_RANK = 0.99
+DEFAULT_RANK = 1.0
 DEFAULT_METHOD = "auto"
 
 logger = Log()
