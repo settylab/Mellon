@@ -101,14 +101,16 @@ class DensityEstimator(BaseEstimator):
         a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
         Defaults to None.
     :type nn_distances: array-like or None
-    :param d: The local dimensionality of the data, i.e., the dimansionality of
+    :param d: The intrinsic dimensionality of the data, i.e., the dimansionality of
         the embedded manifold.
         If None, sets d to the size of axis 1
         of the training data points. Defaults to None.
-    :type d: int or None
-    :param mu: The mean of the Gaussian process. If None, sets mu to the 1th percentile
-        of :math:`mle(nn\text{_}distances, d) - 10`, where :math:`mle = \log(\text{gamma}(d/2 + 1))
-        - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`. Defaults to None.
+    :type d: int, array-like or None
+    :param mu: The mean :math:`\mu` of the Gaussian process. If None, sets
+        :math:`\mu` to the 1th percentile
+        of :math:`\text{mle}(\text{nn_distances}, d) - 10`, where
+        :math:`\text{mle} = \log(\text{gamma}(d/2 + 1))
+        - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})`. Defaults to None.
     :type mu: float or None
     :param ls: The length scale of the Gaussian process covariance function. If None,
         sets ls to the geometric mean of the nearest neighbor distances times a constant.
@@ -122,9 +124,10 @@ class DensityEstimator(BaseEstimator):
         If None, automatically computes L. Defaults to None.
     :type L: array-like or None
     :param initial_value: The initial guess for optimization. If None, finds
-        :math:`z` that minimizes :math:`||Lz + mu - mle|| + ||z||`, where :math:`mle =
-        \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`,
-        where :math:`d` is the dimensionality of the data. Defaults to None.
+        :math:`z` that minimizes :math:`||Lz + \mu - mle|| + ||z||`, where
+        :math:`\text{mle} = \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi)
+        - d \cdot \log(\text{nn_distances})`,
+        where :math:`d` is the intrinsic dimensionality of the data. Defaults to None.
     :type initial_value: array-like or None
     :param jit: Use jax just in time compilation for loss and its gradient
         during optimization. Defaults to False.
@@ -143,7 +146,7 @@ class DensityEstimator(BaseEstimator):
     :ivar landmarks: The points to quantize the data.
     :ivar nn_distances: The nearest neighbor distances for each data point.
     :ivar d: The local dimensionality of the data.
-    :ivar mu: The Gaussian process mean.
+    :ivar mu: The Gaussian process mean :math:`\mu`.
     :ivar ls: The Gaussian process covariance function length scale.
     :ivar ls_factor: Factor to scale the automatically selected length scale.
         Defaults to 1.
@@ -153,12 +156,12 @@ class DensityEstimator(BaseEstimator):
     :ivar optimizer: Optimizer for the maximum a posteriori density estimation.
     :ivar x: The training data.
     :ivar transform: A function
-        :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(mu, K')`.
+        :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(\mu, K')`.
         Used to map the latent representation to the log-density on the
         training data.
     :ivar loss_func: The Bayesian loss function.
     :ivar pre_transformation: The optimized parameters :math:`z \sim \text{Normal}(0, I)` before
-        transformation to :math:`\text{Normal}(mu, K')`, where :math:`I` is the identity matrix
+        transformation to :math:`\text{Normal}(\mu, K')`, where :math:`I` is the identity matrix
         and :math:`K'` is the approximate covariance matrix.
     :ivar opt_state: The final state the optimizer.
     :ivar losses: The history of losses throughout training of adam or final
@@ -471,22 +474,6 @@ class FunctionEstimator(BaseEstimator):
         equal to the number of training points, does not compute or use inducing points.
         Defaults to 5000.
     :type n_landmarks: int
-    :param rank: The rank of the approximate covariance matrix.
-        If rank is an int, an :math:`n \times` rank matrix
-        :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
-        :math:`n \times n` covariance matrix.
-        If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
-        of :math:`L` is selected such that the included eigenvalues of the covariance
-        between landmark points account for the specified percentage of the
-        sum of eigenvalues. Defaults to 0.99.
-    :type rank: int or float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
-        Defaults to 'auto'.
     :type method: str
     :param jitter: A small amount to add to the diagonal of the covariance
         matrix to bind eigenvalues numerically away from 0 ensuring numerical
@@ -501,7 +488,7 @@ class FunctionEstimator(BaseEstimator):
         a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
         Defaults to None.
     :type nn_distances: array-like or None
-    :param mu: The mean of the Gaussian process. Defaults to 0.
+    :param mu: The mean of the Gaussian process :math:`\mu`. Defaults to 0.
     :type mu: float or None
     :param ls: The length scale of the Gaussian process covariance function. If None,
         sets ls to the geometric mean of the nearest neighbor distances times a constant.
@@ -514,21 +501,15 @@ class FunctionEstimator(BaseEstimator):
     :param sigma: The white moise standard deviation. Defaults to 0.
     :type sigma: float
     :ivar n_landmarks: The number of landmark points.
-    :ivar rank: The rank of approximate covariance matrix or percentage of
-        eigenvalues included in approximate covariance matrix.
-    :ivar method: The method to interpret the rank as a fixed number of eigenvectors
-        or a percentage of eigenvalues.
     :ivar jitter: A small amount added to the diagonal of the covariance matrix
         for numerical stability.
     :ivar landmarks: The points to quantize the data.
     :ivar nn_distances: The nearest neighbor distances for each data point.
-    :ivar d: The local dimensionality of the data.
-    :ivar mu: The Gaussian process mean.
+    :ivar mu: The Gaussian process mean :math:`\mu`.
     :ivar ls: The Gaussian process covariance function length scale.
     :ivar ls_factor: Factor to scale the automatically selected length scale.
         Defaults to 1.
     :ivar cov_func: The Gaussian process covariance function.
-    :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
     :ivar sigma: White noise standard deviation.
     :ivar x: The cell states.
     :ivar y: Function values on cell states.
@@ -538,7 +519,6 @@ class FunctionEstimator(BaseEstimator):
         self,
         cov_func_curry=DEFAULT_COV_FUNC,
         n_landmarks=DEFAULT_N_LANDMARKS,
-        rank=DEFAULT_RANK,
         method=DEFAULT_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
@@ -555,7 +535,7 @@ class FunctionEstimator(BaseEstimator):
         super().__init__(
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
-            rank=rank,
+            rank=1.0,
             jitter=jitter,
             landmarks=landmarks,
             nn_distances=nn_distances,
@@ -767,14 +747,16 @@ class DimensionalityEstimator(BaseEstimator):
         a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
         Defaults to None.
     :type distances: array-like or None
-    :param d: The estimated local dimensionality of the data.
+    :param d: The estimated local intrinsic dimensionality of the data.
+        This is only used to initialize the density estimation.
         If None, sets d to the emperical estimae.
     :type d: array-like
-    :param mu_dim: The mean of the Gaussian process for log dimensionality. Default is 0.
+    :param mu_dim: The mean of the Gaussian process for log intrinsic dimensionality. Default is 0.
     :type mu_dim: float or None
     :param mu_dens: The mean of the Gaussian process for log density. If None, sets mu to the 1th percentile
-        of :math:`mle(nn\text{_}distances, d) - 10`, where :math:`mle = \log(\text{gamma}(d/2 + 1))
-        - (d/2) \cdot \log(\pi) - d \cdot \log(nn\text{_}distances)`. Defaults to None.
+        of :math:`\text{mle}(\text{nn_distances}, d) - 10`, where
+        :math:`\text{mle} = \log(\text{gamma}(d/2 + 1))
+        - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})`. Defaults to None.
     :type mu_dens: float or None
     :param ls: The length scale of the Gaussian process covariance function. If None,
         sets ls to the geometric mean of the nearest neighbor distances times a constant.
@@ -787,8 +769,11 @@ class DimensionalityEstimator(BaseEstimator):
     :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
         If None, automatically computes L. Defaults to None.
     :type L: array-like or None
-    :param initial_value: The initial guess for optimization. If None, uses
-        the neighborhood based local dimensionality estimate.
+    :param initial_value: The initial guess for optimization. If None, finds
+        :math:`z` that minimizes :math:`||Lz + \mu - mle|| + ||z||`, where
+        :math:`\text{mle}` is the maximum likelyhood estimate for the denisty
+        initialization and the neighborhood based local intrinstic dimensionality
+        for the dimensionality initializatuion.
     :type initial_value: array-like or None
     :param jit: Use jax just in time compilation for loss and its gradient
         during optimization. Defaults to False.
@@ -826,12 +811,13 @@ class DimensionalityEstimator(BaseEstimator):
     :ivar opt_state: The final state the optimizer.
     :ivar losses: The history of losses throughout training of adam or final
         loss of L-BFGS-B.
-    :ivar local_dim_x: The local dimensionality at the training points.
+    :ivar local_dim_x: The local intrinsic dimensionality at the training points.
     :ivar log_density_x: The log density with variing units at the training
         points. Density indicates the number of cells per volume in state
-        space. Since the dimensionality of the volume changes, the resulting
+        space. Since the intrinsic dimensionality of the volume changes, the resulting
         density unit varies.
-    :ivar local_dim_func: A function that computes the local dimensionality at arbitrary prediction points.
+    :ivar local_dim_func: A function that computes the local intrinsic dimensionality
+        at arbitrary prediction points.
     :ivar log_density_func: A function that computes the log density with
         variing units at arbitrary prediction points.
     """
