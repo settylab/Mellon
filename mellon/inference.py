@@ -39,10 +39,10 @@ def _normal(k):
 def _multivariate(mu, L):
     R"""
     Builds the transformation function from :math:`z \sim \text{Normal}(0, I)
-    \rightarrow f \sim \text{Normal}(mu, K')`, where :math:`I` is the identity matrix
+    \rightarrow f \sim \text{Normal}(\mu, K')`, where :math:`I` is the identity matrix
     and :math:`K \approx K' = L L^\top`.
 
-    :param mu: The Gaussian process mean.
+    :param mu: The Gaussian process mean :math:`\mu`.
     :type mu: float
     :param L: A matrix such that :math:`L L^\top
     \approx K`.
@@ -113,11 +113,11 @@ def _poisson(distances):
 def compute_transform(mu, L):
     R"""
     Computes a function transform that maps :math:`z \sim
-    \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
+    \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(\mu, K')`,
     where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
     where :math:`K` is the covariance matrix.
 
-    :param mu: The Gaussian process mean.
+    :param mu: The Gaussian process mean:math:`\mu`.
     :type mu: float
     :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
         covariance matrix.
@@ -130,11 +130,11 @@ def compute_transform(mu, L):
 def compute_dimensionality_transform(mu_dim, mu_dens, L):
     R"""
     Computes a function transform that maps :math:`z \sim
-    \text{Normal}(0, I) \rightarrow \log(f) \sim \text{Normal}(mu, K')`,
+    \text{Normal}(0, I) \rightarrow \log(f) \sim \text{Normal}(\mu, K')`,
     where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
     where :math:`K` is the covariance matrix.
 
-    :param mu: The Gaussian process mean.
+    :param mu: The Gaussian process mean :math:`\mu`.
     :type mu: float
     :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
         covariance matrix.
@@ -162,7 +162,7 @@ def compute_loss_func(nn_distances, d, transform, k):
     :param d: The dimensionality of the data.
     :type d: int
     :param transform:
-        Maps :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
+        Maps :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(\mu, K')`,
         where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
         where :math:`K` is the covariance matrix.
     :type transform: function
@@ -188,7 +188,7 @@ def compute_dimensionality_loss_func(distances, transform, k):
     :param distances: The observed k nearest neighbor distances.
     :type distances: array-like
     :param transform:
-        Maps :math:`z \sim \text{Normal}(0, I) \rightarrow \log(f) \sim \text{Normal}(mu, K')`,
+        Maps :math:`z \sim \text{Normal}(0, I) \rightarrow \log(f) \sim \text{Normal}(\mu, K')`,
         where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
         where :math:`K` is the covariance matrix.
     :type transform: function
@@ -283,7 +283,7 @@ def compute_log_density_x(pre_transformation, transform):
     :param pre_transformation: :math:`z \sim \text{Normal}(0, I)`
     :type pre_transformation: array-like
     :param transform: A function
-        :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(mu, K')`,
+        :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(\mu, K')`,
         where :math:`I` is the identity matrix and :math:`K \approx K' = L L^\top`,
         where :math:`K` is the covariance matrix.
     :type transform: function
@@ -313,7 +313,7 @@ def compute_conditional_mean(
     :type landmarks: array-like
     :param y: The function values at each point in x.
     :type y: array-like
-    :param mu: The original Gaussian process mean.
+    :param mu: The original Gaussian process mean :math:`\mu`.
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
@@ -367,7 +367,7 @@ def compute_conditional_mean_explog(
     :type landmarks: array-like
     :param y: The function values at each point in x.
     :type y: array-like
-    :param mu: The original Gaussian process mean.
+    :param mu: The original Gaussian process mean :math:`\mu`.
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
@@ -425,7 +425,7 @@ def compute_conditional_mean_y(
     :type landmarks: array-like
     :param Xnew: The output locations.
     :type Xnew: array-like
-    :param mu: The original Gaussian process mean.
+    :param mu: The original Gaussian process mean :math:`\mu`.
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
