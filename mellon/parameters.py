@@ -94,7 +94,7 @@ def compute_d(x):
     return x.shape[1]
 
 
-def compute_d_factal(x, k=30, n=1000, seed=432):
+def compute_d_factal(x, k=10, n=500, seed=432):
     R"""
     Computes the dimensionality of the data based on the average fractal
     dimension around n randomly selected cells.
