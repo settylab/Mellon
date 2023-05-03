@@ -99,7 +99,7 @@ def test_DensityEstimator():
     ), "The scalar state function estimations be consistent under approximation."
 
 
-def test_FunctionEstimator(sigma=1e-6, ):
+def test_FunctionEstimator():
     n = 100
     d = 2
     seed = 535
@@ -107,17 +107,22 @@ def test_FunctionEstimator(sigma=1e-6, ):
     L = jax.random.uniform(key, (d, d))
     cov = L.T.dot(L)
     X = jax.random.multivariate_normal(key, jnp.ones(d), cov, (n,))
-    y = jnp.sum(jnp.sin(X / 2), axis=1)
-    Y = jnp.stack([y, y])
+    noise = 1e-4 * jnp.sum(jnp.sin(X * 1e16), axis=1)
+    noiseless_y = jnp.sum(jnp.sin(X / 2), axis=1)
+    y = noiseless_y + noise
+    Y = jnp.stack([y, y - noise])
 
-    est = mellon.FunctionEstimator(sigma=1e-6, )
+    est = mellon.FunctionEstimator(sigma=1e-3)
     pred = est.fit_predict(X, y)
     assert pred.shape == (n,), "There should be a predicted value for each sample."
 
     assert len(str(est)) > 0, "The model should have a string representation."
 
     err = jnp.std(y - pred)
-    assert err < 1e-5, "The prediction should be close to the intput value."
+    assert err < 1e-4, "The prediction should be close to the intput value."
+
+    err = jnp.std(noiseless_y - pred)
+    assert err < 1e-4, "The prediction should be close to the true value."
 
     m_pred = est.multi_fit_predict(X, Y, X)
     assert m_pred.shape == (
@@ -125,7 +130,7 @@ def test_FunctionEstimator(sigma=1e-6, ):
         n,
     ), "There should be a value for each sample and location."
 
-    est_full = mellon.FunctionEstimator(sigma=1e-6, n_landmarks=0)
+    est_full = mellon.FunctionEstimator(sigma=1e-3, n_landmarks=0)
     full_pred = est_full.fit_predict(X, y)
     err = jnp.max(jnp.abs(full_pred - pred))
     assert (
@@ -137,7 +142,7 @@ def test_FunctionEstimator(sigma=1e-6, ):
         jnp.mean(jnp.std(m_pred - m_pred_full)) < 1e-50
     ), "The approximated multipredict should be consistent with the full one."
 
-    est = mellon.FunctionEstimator(sigma=1e-6, n_landmarks=10)
+    est = mellon.FunctionEstimator(sigma=1e-3, n_landmarks=10)
     pred_appr = est.fit_predict(X, y)
     err = jnp.std(pred_appr - pred)
     assert err < 1e-1, "The low landmarks approximation should be close to the default."
@@ -150,14 +155,14 @@ def test_FunctionEstimator(sigma=1e-6, ):
         est.landmarks.shape[0],
     ), "There should be a value for each sample and location."
     assert (
-        jnp.mean(jnp.std(m_pred_xu - m_pred_app)) < 1e-2
+        jnp.mean(jnp.std(m_pred_xu - m_pred_app)) < 1e-1
     ), "The approximated multipredict should be consistent with the default one."
 
-    est = mellon.FunctionEstimator(sigma=1e-6, )
+    est = mellon.FunctionEstimator(sigma=1e-3)
     d1_pred = est.fit_predict(X[:, 0], y)
     assert d1_pred.shape == (n,), "There should be one result per sample."
 
-    est = mellon.FunctionEstimator(sigma=1e-6, n_landmarks=0)
+    est = mellon.FunctionEstimator(sigma=1e-3, n_landmarks=0)
     d1_pred_full = est.fit_predict(X[:, 0], y)
     assert (
         jnp.std(d1_pred - d1_pred_full) < 1e-5
