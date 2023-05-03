@@ -26,7 +26,7 @@ setup(
     packages=["mellon"],
     install_requires=[
         "jax",
-        "jaxopt",
+        "jaxopt>=0.3",
         "scikit-learn",
     ],
     classifiers=[

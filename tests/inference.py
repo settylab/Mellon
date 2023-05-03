@@ -40,7 +40,7 @@ def test_minimize_adam():
     assert jnp.max(diff) < 1e0, "Optimization result shoud be close to known minimum."
 
 
-def test_minimize_lbfgsb():
+def test_minimize_lbfgs():
     din = 2
 
     def loss_f(x):
@@ -48,7 +48,7 @@ def test_minimize_lbfgsb():
 
     known_optimum = jnp.zeros(din)
     init = jnp.ones(din)
-    result = mellon.minimize_lbfgsb(loss_f, init)
+    result = mellon.minimize_lbfgs(loss_f, init)
     assert hasattr(result, "pre_transformation")
     assert hasattr(result, "opt_state")
     assert hasattr(result, "loss")

@@ -85,8 +85,8 @@ class DensityEstimator(BaseEstimator):
         matrix to bind eigenvalues numerically away from 0 ensuring numerical
         stabilitity. Defaults to 1e-6.
     :type jitter: float
-    :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
-        for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
+    :param optimizer: Select optimizer 'LBFGS' or stochastic optimizer 'adam'
+        for the maximum a posteriori density estimation. Defaults to 'LBFGS'.
     :type optimizer: str
     :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: int
@@ -165,7 +165,7 @@ class DensityEstimator(BaseEstimator):
         and :math:`K'` is the approximate covariance matrix.
     :ivar opt_state: The final state the optimizer.
     :ivar losses: The history of losses throughout training of adam or final
-        loss of L-BFGS-B.
+        loss of LBFGS.
     :ivar log_density_x: The log density at the training points.
     :ivar log_density_func: A function that computes the log density at arbitrary prediction points.
     """
@@ -729,8 +729,8 @@ class DimensionalityEstimator(BaseEstimator):
         matrix to bind eigenvalues numerically away from 0 ensuring numerical
         stabilitity. Defaults to 1e-6.
     :type jitter: float
-    :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
-        for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
+    :param optimizer: Select optimizer 'LBFGS' or stochastic optimizer 'adam'
+        for the maximum a posteriori density estimation. Defaults to 'LBFGS'.
     :type optimizer: str
     :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: int
@@ -813,7 +813,7 @@ class DimensionalityEstimator(BaseEstimator):
         and :math:`K'` is the approximate covariance matrix.
     :ivar opt_state: The final state the optimizer.
     :ivar losses: The history of losses throughout training of adam or final
-        loss of L-BFGS-B.
+        loss of LBFGS.
     :ivar local_dim_x: The local intrinsic dimensionality at the training points.
     :ivar log_density_x: The log density with variing units at the training
         points. Density indicates the number of cells per volume in state

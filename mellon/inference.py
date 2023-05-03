@@ -4,7 +4,7 @@ from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
 import jax
 from jax.example_libraries.optimizers import adam
-from jaxopt import ScipyMinimize
+from jaxopt import LBFGS
 from .conditional import (
     _full_conditional_mean,
     _full_conditional_mean_y,
@@ -16,7 +16,7 @@ from .util import DEFAULT_JITTER
 
 DEFAULT_N_ITER = 100
 DEFAULT_INIT_LEARN_RATE = 1
-DEFAULT_OPTIMIZER = "L-BFGS-B"
+DEFAULT_OPTIMIZER = "LBFGS"
 DEFAULT_JIT = False
 
 
@@ -257,7 +257,7 @@ def minimize_adam(
     return results
 
 
-def minimize_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
+def minimize_lbfgs(loss_func, initial_value, jit=DEFAULT_JIT):
     R"""
     Minimizes function with a starting guess of initial_value.
 
@@ -270,9 +270,9 @@ def minimize_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
         final loss value,
     :rtype: array-like, array-like, Object
     """
-    opt = ScipyMinimize(fun=loss_func, method="L-BFGS-B", jit=jit).run(initial_value)
+    opt = LBFGS(fun=loss_func, jit=jit).run(initial_value)
     Results = namedtuple("Results", "pre_transformation opt_state loss")
-    results = Results(opt.params, opt.state, opt.state.fun_val.item())
+    results = Results(opt.params, opt.state, opt.state.value.item())
     return results
 
 

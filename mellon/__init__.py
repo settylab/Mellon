@@ -14,7 +14,7 @@ from .inference import (
     compute_loss_func,
     compute_dimensionality_loss_func,
     minimize_adam,
-    minimize_lbfgsb,
+    minimize_lbfgs,
     compute_log_density_x,
     compute_conditional_mean,
     compute_conditional_mean_explog,

@@ -2,7 +2,7 @@ from .cov import Matern52
 from .decomposition import DEFAULT_RANK
 from .inference import (
     minimize_adam,
-    minimize_lbfgsb,
+    minimize_lbfgs,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_OPTIMIZER,
@@ -177,8 +177,8 @@ class BaseEstimator:
             self.pre_transformation = results.pre_transformation
             self.opt_state = results.opt_state
             self.losses = results.losses
-        elif optimizer == "L-BFGS-B":
-            results = minimize_lbfgsb(
+        elif optimizer == "LBFGS":
+            results = minimize_lbfgs(
                 function,
                 initial_value,
                 jit=self.jit,
