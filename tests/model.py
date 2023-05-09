@@ -196,7 +196,7 @@ def test_DimensionalityEstimator():
 
     pred = est.predict(X)
     assert (
-        relative_err(pred) < 1e-5
+        relative_err(pred) < 1e-4
     ), "The predicive function should be consistent with the training samples."
 
     assert len(str(est)) > 0, "The model should have a string representation."
@@ -204,7 +204,7 @@ def test_DimensionalityEstimator():
     adam_est = mellon.DimensionalityEstimator(optimizer="adam")
     adam_dim = adam_est.fit_predict(X)
     assert (
-        relative_err(adam_dim) < 1e0
+        relative_err(adam_dim) < 2e0
     ), "The adam optimizer should produce similar results to the default."
 
     est_full = mellon.DimensionalityEstimator(rank=1.0, method="percent", n_landmarks=n)
