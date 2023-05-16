@@ -1,6 +1,8 @@
+from jax import device_put
 from jax.numpy import exp, log, quantile, stack
 from jax import random
-from sklearn.cluster import k_means
+import cupy as cp
+from cuml.cluster import KMeans
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
 from .util import mle, local_dimensionality, Log, DEFAULT_JITTER
@@ -18,6 +20,47 @@ from .decomposition import (
 DEFAULT_N_LANDMARKS = 5000
 
 logger = Log()
+
+
+def cu_kmeans(x, n_landmarks):
+    """
+    Perform KMeans clustering on the input data x using cuML and RAPIDS.
+
+    :param x: The input data to cluster.
+    :type x: array-like
+    :param n_landmarks: The number of clusters to form.
+    :type n_landmarks: int
+
+    :return: The coordinates of the cluster centers.
+    :rtype: jaxlib.xla_extension.DeviceArray
+    """
+
+    # Check if the number of landmarks is a positive integer
+    if not isinstance(n_landmarks, int) or n_landmarks <= 0:
+        raise ValueError("Number of landmarks must be a positive integer.")
+
+    # Convert the JAX DeviceArray to a CuPy array
+    x_cp = cp.asarray(x)
+
+    # Create a KMeans model
+    kmeans_cuml = KMeans(
+        n_clusters=n_landmarks,
+        init="k-means||",
+        oversampling_factor=40,
+        max_iter=300,
+        tol=1e-4,
+        n_init=10,
+        random_state=7,
+    )
+
+    # Fit the model
+    kmeans_cuml.fit(x_cp)
+
+    # Convert the cluster centers (CuPy array) to a JAX DeviceArray
+    cluster_centers_jax = device_put(kmeans_cuml.cluster_centers_)
+
+    # Return the cluster centers
+    return cluster_centers_jax
 
 
 def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
@@ -41,7 +84,7 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     if n_landmarks >= n:
         return None
     logger.info(f"Computing {n_landmarks:,} landmarks with k-means clustering.")
-    return k_means(x, n_landmarks, n_init=1)[0]
+    return cu_kmeans(x, n_landmarks)
 
 
 def compute_distances(x, k):

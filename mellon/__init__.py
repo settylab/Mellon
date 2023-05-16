@@ -21,7 +21,7 @@ from .inference import (
 )
 from .parameters import (
     compute_landmarks,
-    k_means,
+    cu_kmeans,
     compute_nn_distances,
     compute_distances,
     compute_d,

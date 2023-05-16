@@ -1,7 +1,10 @@
+from jax import device_put
 from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt, isnan, any
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
+import cupy as cp
+from cupy.cuda import cusolver
 
 
 DEFAULT_RANK = 1.0
@@ -160,6 +163,48 @@ def _full_decomposition_low_rank(
     return L
 
 
+def cu_cholesky(A):
+    R"""
+    This function computes the Cholesky Decomposition of a matrix A using cuSOLVER.
+    The resulting lower triangular matrix L is returned as a JAX device array, such that :math:`L L^\top ~= A`.
+
+    :param A: The input matrix, should be symmetric and positive-definite.
+    :type A: array-like
+
+    :return: :math:`L` - Lower triangular matrix from the Cholesky Decomposition of A.
+    :rtype: jaxlib.xla_extension.DeviceArray
+    """
+    # Ensure A is a CuPy array
+    A_d = cp.asarray(A)
+
+    # Create a cuSOLVER handle
+    handle = cusolver.create()
+
+    # Allocate memory for the output data
+    L_d = cp.empty_like(A_d)
+
+    # Compute Cholesky decomposition
+    # Note: The input matrix A_d is overwritten with the output data to save memory
+    # This is why we're passing A_d.data.ptr instead of L_d.data.ptr
+    cusolver.potrfBuf(
+        handle,
+        cusolver.CUBLAS_FILL_MODE_LOWER,
+        L_d.shape[0],
+        A_d.data.ptr,
+        L_d.shape[0],
+        A_d.data.ptr,
+        A_d.size,
+    )
+
+    # Destroy the handle
+    cusolver.destroy(handle)
+
+    # Convert the CuPy array to a JAX array
+    L_jax = device_put(A_d)
+
+    return L_jax
+
+
 def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^\top \approx K`, where :math:`K`
@@ -179,7 +224,7 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     """
     W = stabilize(cov_func(xu, xu), jitter)
     C = cov_func(x, xu)
-    U = cholesky(W)
+    U = cu_cholesky(W)
     if any(isnan(U)):
         message = (
             f"Covariance of landmarks not positively definite with jitter={jitter}. "
