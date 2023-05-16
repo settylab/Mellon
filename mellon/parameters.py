@@ -43,21 +43,13 @@ def cu_kmeans(x, n_landmarks):
     x_cp = cp.asarray(x)
 
     # Create a KMeans model
-    kmeans_cuml = KMeans(
-        n_clusters=n_landmarks,
-        init="k-means||",
-        oversampling_factor=40,
-        max_iter=300,
-        tol=1e-4,
-        n_init=10,
-        random_state=7,
-    )
+    kmeans_cuml = KMeans(n_clusters=n_landmarks)
 
     # Fit the model
     kmeans_cuml.fit(x_cp)
 
     # Convert the cluster centers (CuPy array) to a JAX DeviceArray
-    cluster_centers_jax = device_put(kmeans_cuml.cluster_centers_)
+    cluster_centers_jax = device_put(kmeans_cuml.cluster_centers_.get())
 
     # Return the cluster centers
     return cluster_centers_jax

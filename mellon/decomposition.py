@@ -4,7 +4,7 @@ from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
 import cupy as cp
-from cupy.cuda import cusolver
+import cupy
 
 
 DEFAULT_RANK = 1.0
@@ -177,30 +177,10 @@ def cu_cholesky(A):
     # Ensure A is a CuPy array
     A_d = cp.asarray(A)
 
-    # Create a cuSOLVER handle
-    handle = cusolver.create()
-
-    # Allocate memory for the output data
-    L_d = cp.empty_like(A_d)
-
-    # Compute Cholesky decomposition
-    # Note: The input matrix A_d is overwritten with the output data to save memory
-    # This is why we're passing A_d.data.ptr instead of L_d.data.ptr
-    cusolver.potrfBuf(
-        handle,
-        cusolver.CUBLAS_FILL_MODE_LOWER,
-        L_d.shape[0],
-        A_d.data.ptr,
-        L_d.shape[0],
-        A_d.data.ptr,
-        A_d.size,
-    )
-
-    # Destroy the handle
-    cusolver.destroy(handle)
+    L_d = cupy.linalg.cholesky(A_d)
 
     # Convert the CuPy array to a JAX array
-    L_jax = device_put(A_d)
+    L_jax = device_put(L_d.get())
 
     return L_jax
 
