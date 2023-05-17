@@ -21,12 +21,15 @@ from .derivatives import (
     hessian_log_determinant,
 )
 from .util import (
+    get_rank,
     DEFAULT_JITTER,
     Log,
 )
 
 
 DEFAULT_COV_FUNC = Matern52
+RANK_FRACTION_THRESHOLD = 0.8
+SAMPLE_LANDMARK_RATIO = 10
 
 logger = Log()
 
@@ -121,41 +124,90 @@ class BaseEstimator:
         return cov_func
 
     def _compute_L(self):
+        """
+        This function calculates the lower triangular matrix L that is needed for
+        computations involving the covariance matrix of the Gaussian Process model.
+        """
+
+        # Extract instance attributes
         x = self.x
         cov_func = self.cov_func
         landmarks = self.landmarks
-        n_landmarks = x.shape[0] if landmarks is None else landmarks.shape[0]
+        n_samples = x.shape[0]
+        n_landmarks = n_samples if landmarks is None else landmarks.shape[0]
         rank = self.rank
         method = self.method
         jitter = self.jitter
-        if isinstance(rank, float) and method != "fixed":
+
+        is_rank_full = (
+            isinstance(rank, int) and rank == n_landmarks
+            or isinstance(rank, float) and rank == 1.0
+        )
+
+        # Log the method and rank used for computation
+        if not is_rank_full and method != "fixed":
             logger.info(
                 f'Computing rank reduction using "{method}" method '
                 f"retaining > {rank:.2%} of variance."
             )
-        else:
+        elif not is_rank_full:
             logger.info(
                 f'Computing rank reduction to rank {rank} using "{method}" method.'
             )
-        L = compute_L(
-            x, cov_func, landmarks=landmarks, rank=rank, method=method, jitter=jitter
-        )
-        new_rank = L.shape[1]
-        if (
-            not (
-                type(rank) is int
-                and rank == n_landmarks
-                or type(rank) is float
-                and rank == 1.0
+
+        try:
+            # Compute the lower triangular matrix L
+            L = compute_L(
+                x,
+                cov_func,
+                landmarks=landmarks,
+                rank=rank,
+                method=method,
+                jitter=jitter,
             )
+        except Exception as e:
+            logger.error(f"Error during computation of L: {e}")
+            raise
+
+        new_rank = L.shape[1]
+
+        # Check if the new rank is too high in comparison to the number of landmarks
+        if (
+            not is_rank_full
             and method != "fixed"
-            and new_rank > (rank * 0.8 * n_landmarks)
+            and new_rank > (rank * RANK_FRACTION_THRESHOLD * n_landmarks)
         ):
             logger.warning(
                 f"Shallow rank reduction from {n_landmarks:,} to {new_rank:,} "
                 "indicates underrepresentation by landmarks. Consider "
                 "increasing n_landmarks!"
             )
+
+        # Check if the number of landmarks is sufficient for the number of samples
+        if (
+            is_rank_full
+            and n_landmarks is not None
+            and SAMPLE_LANDMARK_RATIO * n_landmarks < n_samples
+        ):
+            logger.info(
+                "Estimating approximation accuracy "
+                f"since {n_samples:,} samples are more than {SAMPLE_LANDMARK_RATIO} x "
+                f"{n_landmarks:,} landmarks."
+            )
+            approx_rank = get_rank(L)
+            rank_fraction = approx_rank / n_landmarks
+            if rank_fraction > RANK_FRACTION_THRESHOLD:
+                logger.warning(
+                    f"High approx. rank fraction ({rank_fraction:.1%}). "
+                    "Potential model inaccuracy. "
+                    "Consider increasing 'n_landmarks'."
+                )
+            else:
+                logger.info(
+                    f"Rank fraction ({rank_fraction:.1%}) is within acceptable range. "
+                    "Current settings should provide satisfactory model performance."
+                )
+
         logger.info(f"Using rank {new_rank:,} covariance representation.")
         return L
 

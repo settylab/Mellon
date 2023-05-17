@@ -18,7 +18,7 @@ from jax.numpy import (
     isscalar,
 )
 from jax.numpy import sum as arraysum
-from jax.numpy.linalg import norm, lstsq
+from jax.numpy.linalg import norm, lstsq, matrix_rank
 from jax.scipy.special import gammaln
 from jax import jit, vmap
 from sklearn.neighbors import BallTree, KDTree
@@ -76,6 +76,9 @@ def distance(x, y):
     xy = tensordot(x, y, (1, 1))
     sq = xx - 2 * xy + yy + 1e-12
     return sqrt(maximum(sq, 0))
+
+def get_rank(A, tol=.5):
+    return matrix_rank(A, tol=tol)
 
 
 def vector_map(fun, X, in_axis=0):
@@ -145,7 +148,7 @@ class Log(object):
     def off(cls):
         """Turn off all logging."""
         cls.__new__(cls)
-        cls.logger.setLevel(logging.CRITICAL + 1)
+        cls.logger.setLevel(logging.WARNING + 1)
 
     @classmethod
     def on(cls):
