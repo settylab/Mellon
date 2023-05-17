@@ -73,14 +73,7 @@ def compute_nn_distances(x):
     :return: nn_distances - The observed nearest neighbor distances.
     :rtype: array-like
     """
-    if len(x.shape) < 2:
-        x = x[:, None]
-    if x.shape[1] >= 20:
-        tree = BallTree(x, metric="euclidean")
-    else:
-        tree = KDTree(x, metric="euclidean")
-    nn = tree.query(x, k=2)[0][:, 1]
-    return nn
+    return compute_distances(x, 1)[:, 0]
 
 
 def compute_d(x):
