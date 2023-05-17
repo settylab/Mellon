@@ -35,13 +35,13 @@ or to install using **conda** you can run:
 
 .. code-block:: bash
 
-   conda -c conda-forge install mellon
+   conda install -c conda-forge mellon
 
 or to install using **mamba** you can run:
 
 .. code-block:: bash
 
-   mamba -c conda-forge install mellon
+   mamba install -c conda-forge mellon
 
 Documentation
 =============
