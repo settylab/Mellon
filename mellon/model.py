@@ -310,6 +310,7 @@ class DensityEstimator(BaseEstimator):
     def _set_log_density_func(self):
         x = self.x
         landmarks = self.landmarks
+        pre_transform = self.pre_transform
         log_density_x = self.log_density_x
         mu = self.mu
         cov_func = self.cov_func
@@ -318,6 +319,7 @@ class DensityEstimator(BaseEstimator):
         log_density_func = compute_conditional_mean(
             x,
             landmarks,
+            pre_transform,
             log_density_x,
             mu,
             cov_func,
@@ -589,6 +591,7 @@ class FunctionEstimator(BaseEstimator):
             message = "Required argument y is missing."
             raise ValueError(message)
         landmarks = self.landmarks
+        pre_transform = self.pre_transform
         mu = self.mu
         cov_func = self.cov_func
         sigma = self.sigma
@@ -596,6 +599,7 @@ class FunctionEstimator(BaseEstimator):
         conditional = compute_conditional_mean(
             x,
             landmarks,
+            pre_transform,
             y,
             mu,
             cov_func,
@@ -996,6 +1000,7 @@ class DimensionalityEstimator(BaseEstimator):
     def _set_log_density_func(self):
         x = self.x
         landmarks = self.landmarks
+        pre_transform = self.pre_transform
         log_density_x = self.log_density_x
         mu = self.mu_dens
         cov_func = self.cov_func
@@ -1004,6 +1009,7 @@ class DimensionalityEstimator(BaseEstimator):
         log_density_func = compute_conditional_mean(
             x,
             landmarks,
+            pre_transform,
             log_density_x,
             mu,
             cov_func,

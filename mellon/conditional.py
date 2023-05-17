@@ -183,6 +183,63 @@ def _landmarks_conditional_mean(
     return mean
 
 
+def _landmarks_conditional_mean_cholesky(
+    xu,
+    pre_transform,
+    mu,
+    cov_func,
+    sigma=0,
+    jitter=DEFAULT_JITTER,
+):
+    """
+    Builds the mean function of the conditioned low rank gp, where rank
+    is the number of landmark points.
+
+    :param xu: The landmark points.
+    :type xu: array-like
+    :param pre_transform: The pre transform latent function representation.
+    :type pre_transform: array-like
+    :param mu: The original Gaussian process mean.
+    :type mu: float
+    :param cov_func: The Gaussian process covariance function.
+    :type cov_func: function
+    :param sigma: White moise standard deviation. Defaults to 0.
+    :type sigma: float
+    :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
+    :type jitter: float
+    :return: conditional_mean - The conditioned Gaussian process mean function.
+    :rtype: function
+    """
+    if d1 := len(xu.shape) < 2:
+        xu = xu[:, None]
+    sigma2 = square(sigma)
+    K = cov_func(xu, xu)
+    sigma2 = max(sigma2, jitter)
+    L = cholesky(stabilize(K, jitter=sigma2))
+    if any(isnan(L)):
+        message = (
+            f"Covariance not positively definite with jitter={jitter}. "
+            "Consider increasing the jitter for numerical stabilization."
+        )
+        logger.error(message)
+        raise ValueError(message)
+    weights = solve_triangular(L.T, pre_transform)
+
+    if d1:
+
+        def mean(Xnew):
+            Kus = cov_func(Xnew[:, None], xu)
+            return mu + dot(Kus, weights)
+
+    else:
+
+        def mean(Xnew):
+            Kus = cov_func(Xnew, xu)
+            return mu + dot(Kus, weights)
+
+    return mean
+
+
 def _landmarks_conditional_mean_y(
     x,
     xu,
