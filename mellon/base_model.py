@@ -70,7 +70,7 @@ class BaseEstimator:
         self.cov_func = cov_func
         self.L = L
         self.x = None
-        self.pre_transform = None
+        self.pre_transformation = None
 
     def __str__(self):
         return self.__repr__()

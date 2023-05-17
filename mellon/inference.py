@@ -296,7 +296,7 @@ def compute_log_density_x(pre_transformation, transform):
 def compute_conditional_mean(
     x,
     landmarks,
-    pre_transform,
+    pre_transformation,
     y,
     mu,
     cov_func,
@@ -313,8 +313,8 @@ def compute_conditional_mean(
     :param landmarks: The landmark points for fast sparse computation.
         Landmarks can be None if not using landmark points.
     :type landmarks: array-like
-    :param pre_transform: The pre transform latent function representation.
-    :type pre_transform: array-like or None
+    :param pre_transformation: The pre transform latent function representation.
+    :type pre_transformation: array-like or None
     :param y: The function values at each point in x.
     :type y: array-like
     :param mu: The original Gaussian process mean :math:`\mu`.
@@ -336,12 +336,12 @@ def compute_conditional_mean(
             cov_func,
             jitter=jitter,
         )
-    elif pre_transform is not None and pre_transform.shape[0] == landmarks.shape[0]:
+    elif pre_transformation is not None and pre_transformation.shape[0] == landmarks.shape[0]:
         if len(landmarks.shape) < 2:
             landmarks = landmarks[:, None]
         return _landmarks_conditional_mean_cholesky(
             landmarks,
-            pre_transform,
+            pre_transformation,
             mu,
             cov_func,
             sigma=sigma,

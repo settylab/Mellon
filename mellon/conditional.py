@@ -185,7 +185,7 @@ def _landmarks_conditional_mean(
 
 def _landmarks_conditional_mean_cholesky(
     xu,
-    pre_transform,
+    pre_transformation,
     mu,
     cov_func,
     sigma=0,
@@ -197,8 +197,8 @@ def _landmarks_conditional_mean_cholesky(
 
     :param xu: The landmark points.
     :type xu: array-like
-    :param pre_transform: The pre transform latent function representation.
-    :type pre_transform: array-like
+    :param pre_transformation: The pre transform latent function representation.
+    :type pre_transformation: array-like
     :param mu: The original Gaussian process mean.
     :type mu: float
     :param cov_func: The Gaussian process covariance function.
@@ -223,7 +223,7 @@ def _landmarks_conditional_mean_cholesky(
         )
         logger.error(message)
         raise ValueError(message)
-    weights = solve_triangular(L.T, pre_transform)
+    weights = solve_triangular(L.T, pre_transformation)
 
     if d1:
 
