@@ -1,7 +1,6 @@
 from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt, isnan, any
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
-from jax import vmap
 from .util import stabilize, DEFAULT_JITTER, Log
 
 
@@ -179,6 +178,7 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     :rtype: array-like
     """
     W = stabilize(cov_func(xu, xu), jitter)
+    C = cov_func(x, xu)
     U = cholesky(W)
     if any(isnan(U)):
         message = (
@@ -187,13 +187,7 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
         )
         logger.error(message)
         raise ValueError(message)
-
-    def L_slice(X):
-        C = cov_func(X[None, :], xu)
-        return solve_triangular(U, C.T, lower=True)[:, 0]
-
-    L = vmap(L_slice)(x)
-
+    L = solve_triangular(U, C.T, lower=True).T
     return L
 
 
