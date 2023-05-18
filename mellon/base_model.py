@@ -105,8 +105,8 @@ class BaseEstimator:
         n_samples = x.shape[0]
         if n_samples > 100 * n_landmarks and n_samples > 1e6:
             logger.info(
-                f"Given the large number of {n_samples:,} cells and "
-                f"small number of {n_landmarks:,} landmarks, consider "
+                f"Large number of {n_samples:,} cells and "
+                f"small number of {n_landmarks:,} landmarks. Consider "
                 "computing k-means on a subset of cells and passing "
                 "the results as 'landmarks' to speed up the process."
             )
