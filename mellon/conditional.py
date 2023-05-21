@@ -1,10 +1,13 @@
-from jax.numpy import dot, square, isnan, any
+from jax.numpy import dot, square, isnan, any, atleast_2d
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
 
 
 logger = Log()
+
+def make_2d(X):
+    return atleast_2d(X.T).T
 
 
 def _full_conditional_mean(
@@ -33,8 +36,7 @@ def _full_conditional_mean(
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
-    if d1 := len(x.shape) < 2:
-        x = x[:, None]
+    x = make_2d(x)
     sigma2 = square(sigma)
     K = cov_func(x, x)
     sigma2 = max(sigma2, jitter)
@@ -49,17 +51,10 @@ def _full_conditional_mean(
     r = y - mu
     weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
 
-    if d1:
-
-        def mean(Xnew):
-            Kus = cov_func(Xnew[:, None], x)
-            return mu + dot(Kus, weights)
-
-    else:
-
-        def mean(Xnew):
-            Kus = cov_func(Xnew, x)
-            return mu + dot(Kus, weights)
+    def mean(Xnew):
+        Xnew = make_2d(Xnew)
+        Kus = cov_func(Xnew, x)
+        return mu + dot(Kus, weights)
 
     return mean
 
@@ -145,8 +140,7 @@ def _landmarks_conditional_mean(
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
-    if d1 := len(x.shape) < 2:
-        x = x[:, None]
+    x = make_2d(x)
     if len(xu.shape) < 2:
         xu = xu[:, None]
     sigma2 = square(sigma)
@@ -168,17 +162,10 @@ def _landmarks_conditional_mean(
     z = solve_triangular(L_B.T, c)
     weights = solve_triangular(Luu.T, z)
 
-    if d1:
-
-        def mean(Xnew):
-            Kus = cov_func(Xnew[:, None], xu)
-            return mu + dot(Kus, weights)
-
-    else:
-
-        def mean(Xnew):
-            Kus = cov_func(Xnew, xu)
-            return mu + dot(Kus, weights)
+    def mean(Xnew):
+        Xnew = make_2d(Xnew)
+        Kus = cov_func(Xnew, xu)
+        return mu + dot(Kus, weights)
 
     return mean
 
@@ -210,8 +197,7 @@ def _landmarks_conditional_mean_cholesky(
     :return: conditional_mean - The conditioned Gaussian process mean function.
     :rtype: function
     """
-    if d1 := len(xu.shape) < 2:
-        xu = xu[:, None]
+    xu = make_2d(xu)
     sigma2 = square(sigma)
     K = cov_func(xu, xu)
     sigma2 = max(sigma2, jitter)
@@ -225,17 +211,10 @@ def _landmarks_conditional_mean_cholesky(
         raise ValueError(message)
     weights = solve_triangular(L.T, pre_transformation)
 
-    if d1:
-
-        def mean(Xnew):
-            Kus = cov_func(Xnew[:, None], xu)
-            return mu + dot(Kus, weights)
-
-    else:
-
-        def mean(Xnew):
-            Kus = cov_func(Xnew, xu)
-            return mu + dot(Kus, weights)
+    def mean(Xnew):
+        Xnew = make_2d(Xnew)
+        Kus = cov_func(Xnew, xu)
+        return mu + dot(Kus, weights)
 
     return mean
 
