@@ -25,6 +25,7 @@ from sklearn.neighbors import BallTree, KDTree
 
 
 DEFAULT_JITTER = 1e-6
+DEFAULT_RANK_TOL = 5e-1
 
 
 def stabilize(A, jitter=DEFAULT_JITTER):
@@ -77,8 +78,61 @@ def distance(x, y):
     sq = xx - 2 * xy + yy + 1e-12
     return sqrt(maximum(sq, 0))
 
-def get_rank(A, tol=.5):
-    return matrix_rank(A, tol=tol)
+
+def test_rank(input, tol=DEFAULT_RANK_TOL, threshold=None):
+    """
+    Inspects the approximate rank of the transformation matrix L. The input can be the matrix itself or an object
+    containing L as an attribute. A high rank indicates a potentially insufficient latent representation,
+    suggesting a need for a more complex transformation matrix. Also allows logging based on a rank fraction threshold.
+
+    :param input: The matrix L or an object containing it as an attribute.
+    :type input: array-like or mellon estimator object
+    :param tol: The rank calculation tolerance, defaults to {DEFAULT_RANK_TOL}.
+    :type tol: float, optional
+    :param threshold: If provided, logs a message based on the rank fraction.
+    :type threshold: float, optional
+    :return: The approximate rank of the matrix.
+    :rtype: int
+    :raises ValueError: If the input matrix is not 2D.
+    """
+    if hasattr(input, "shape"):
+        L = input
+    elif hasattr(input, "L"):
+        L = input.L
+        if L is None:
+            raise AttributeError(
+                "Matrix L is not found in the estimator object. Consider running `.prepare_inference()`."
+            )
+    else:
+        raise TypeError(
+            "Input must be either a matrix or a mellon enstimator with a transformation L."
+        )
+
+    if len(L.shape) != 2:
+        raise ValueError("Matrix L must be 2D.")
+
+    approx_rank = matrix_rank(L, tol=tol)
+    max_rank = min(L.shape)
+    rank_fraction = approx_rank / max_rank
+
+    if threshold is not None:
+        if rank_fraction > threshold:
+            logger.warning(
+                f"High approx. rank fraction ({rank_fraction:.1%}). "
+                "Consider increasing 'n_landmarks'."
+            )
+        else:
+            logger.info(
+                f"Rank fraction ({rank_fraction:.1%}) is within acceptable range. "
+                "Current settings should provide satisfactory model performance."
+            )
+    else:
+        print(
+            f"The approx. rank fraction is {rank_fraction:.1%} "
+            f"({approx_rank:,} of {max_rank:,})."
+        )
+
+    return approx_rank.item()
 
 
 def vector_map(fun, X, in_axis=0):

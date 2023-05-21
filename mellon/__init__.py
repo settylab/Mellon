@@ -6,7 +6,7 @@ jaxconfig.update("jax_platform_name", "cpu")
 __version__ = "1.2.0"
 
 from .base_cov import Covariance
-from .util import stabilize, mle, distance, Log, local_dimensionality
+from .util import stabilize, mle, distance, Log, local_dimensionality, test_rank
 from .cov import Matern32, Matern52, ExpQuad, Exponential, RatQuad
 from .inference import (
     compute_transform,

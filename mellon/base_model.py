@@ -21,7 +21,7 @@ from .derivatives import (
     hessian_log_determinant,
 )
 from .util import (
-    get_rank,
+    test_rank,
     DEFAULT_JITTER,
     Log,
 )
@@ -203,20 +203,7 @@ class BaseEstimator:
                 f"since {n_samples:,} samples are more than {SAMPLE_LANDMARK_RATIO} x "
                 f"{n_landmarks:,} landmarks."
             )
-            approx_rank = get_rank(L)
-            rank_fraction = approx_rank / n_landmarks
-            if rank_fraction > RANK_FRACTION_THRESHOLD:
-                logger.warning(
-                    f"High approx. rank fraction ({rank_fraction:.1%}). "
-                    "Potential model inaccuracy. "
-                    "Consider increasing 'n_landmarks'."
-                )
-            else:
-                logger.info(
-                    f"Rank fraction ({rank_fraction:.1%}) is within acceptable range. "
-                    "Current settings should provide satisfactory model performance."
-                )
-
+            approx_rank = test_rank(L, threshold=RANK_FRACTION_THRESHOLD)
         logger.info(f"Using rank {new_rank:,} covariance representation.")
         return L
 
