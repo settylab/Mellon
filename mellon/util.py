@@ -116,6 +116,7 @@ def test_rank(input, tol=DEFAULT_RANK_TOL, threshold=None):
     rank_fraction = approx_rank / max_rank
 
     if threshold is not None:
+        logger = Log()
         if rank_fraction > threshold:
             logger.warning(
                 f"High approx. rank fraction ({rank_fraction:.1%}). "
