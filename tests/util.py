@@ -40,6 +40,10 @@ def test_test_rank():
     mellon.test_rank(L, threshold=.5)
     mellon.test_rank(L, tol=1, threshold=.5)
 
+    est = mellon.DensityEstimator().fit(L)
+    rank = mellon.test_rank(est)
+    assert rank == 1, "The approx. rank of the test data should be 1."
+
 def test_local_dimensionality():
     n = 10
     x = jnp.ones((n, 3))
