@@ -1,15 +1,11 @@
 Covariance Functions
 ====================
 
-This section shows different ways to use a supplied covariance function
-or define your own.
+In this section, we'll explore the various ways you can use the provided covariance functions or even create your own.
 
-The `cov_func_curry` argument of the model class supports a one argument function
-or class type that returns a function k(x, y)
-:math:`\rightarrow` float. In this case, the length scale of the covariance
-function will be computed automatically if not passed as an argument.
-Alternatively, one can set the `cov_func` argument with a function taking
-two arrays of cell states returning the similatity between each pair.
+The `cov_func_curry` argument in the model class accepts a covariance class with a single argument (the length scale) for its `__init__` method, which should implement a function k(x,y) :math:`\rightarrow` float. If the length scale of the covariance function is not supplied as an argument, it will be calculated automatically. Alternatively, you can use the `cov_func` argument to pass an instance of a `Covariance` class.
+
+Here is how you can pass a pre-existing covariance function class (which is the default behavior):
 
 .. code-block:: python
    :caption: Pass a predefined covariance function class (Default behavior)
@@ -18,20 +14,10 @@ two arrays of cell states returning the similatity between each pair.
    cov_func_cury = Matern52
    cov_func = Matern52(length_scale)
 
-.. code-block:: python
-   :caption: Write a function of one variable that returns a function k(x, y) :math:`\rightarrow` float
-
-   from mellon import distance    # distance computes the distance between each point in x
-                                    # and each point in y.
-   def Matern52(ls=1.0):
-       def k(x, y):
-           r = distance(x, y) / ls
-           similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
-           return similarity
-       return k
+If you want to write a custom covariance function k(x, y) :math:`\rightarrow` float, you can do so by inheriting from the `Covariance` base class. The `Covariance` base class's `__call__` method will call the function `k`.
 
 .. code-block:: python
-   :caption: Write a function of one variable that returns a function
+   :caption: Write a custom covariance function
     :math:`k(x, y) \rightarrow` float and inherit from the Covariance base class
 
    from mellon import distance
@@ -47,8 +33,7 @@ two arrays of cell states returning the similatity between each pair.
            similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
            return simiAlarity
 
-The Covariance class upports adding, multiplying, and taking the covariance
-to a power with the +, \*, and \*\* operators:
+The `Covariance` class also supports arithmetic operations such as addition, multiplication, and exponentiation with the +, *, and ** operators, respectively:
 
 .. code-block:: python
    :caption: Combining two covariance functions.
