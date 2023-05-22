@@ -112,6 +112,9 @@ class Predictor(ABC):
 
         This method serializes the predictor to a JSON file. It can optionally
         compress the JSON file using gzip or bz2 compression.
+        It automatically detects the compression method based on the file extension
+        or use the compress keyword to determine the compression method.
+        It also makes sure the file is saved with the appropriate file extension.
 
         :param filename: The name of the JSON file to which to serialize the predictor.
             If filname is None then the JSON string is returned instead.
@@ -147,7 +150,11 @@ class Predictor(ABC):
         logger.info(f"Written predictor to {filename}.")
 
     def to_dict(self):
-        """Serialize the predictor to a python dictionary."""
+        """Serialize the predictor to a python dictionary.
+
+        :return: A python dictionary with the predictor data.
+        :rtype: dict
+        """
         return self.__getstate__()
 
     @classmethod
@@ -156,7 +163,7 @@ class Predictor(ABC):
 
         This method deserializes the predictor from a JSON file. It automatically
         detects the compression method based on the file extension or uses
-        the compress keyword to determine the compression.
+        the compress keyword to determine the compression method.
 
         :param filename: The path of the JSON file from which to deserialize the predictor.
         :type filename: str, pathlib.Path, or os.path
@@ -184,8 +191,7 @@ class Predictor(ABC):
     def from_dict(cls, data_dict):
         """Deserialize the predictor from a python dictionay.
 
-        This method deserializes the predictor from a JSON file. It automatically
-        detects the compression method based on the file extension.
+        This method deserializes the predictor from a python dictionary.
 
         :param data_dict: The dictionary from which to deserialize the predictor.
         :type data_dict: dict
@@ -198,8 +204,7 @@ class Predictor(ABC):
     def from_json_str(cls, json_str):
         """Deserialize the predictor from a JSON string.
 
-        This method deserializes the predictor from a JSON file. It automatically
-        detects the compression method based on the file extension.
+        This method deserializes the predictor from the content of a JSON file.
 
         :param json_str: The JSON string from which to deserialize the predictor.
         :type json_str: str
