@@ -5,7 +5,8 @@ The Mellon module provides a comprehensive suite of tools for serializing and de
 
 When an estimator is serialized, it includes a variety of metadata, including the serialization date, Python version, the class name of the estimator, and the Mellon version. This metadata serves as a record of the state of your environment at the time of serialization, which can be useful for reproducibility and debugging purposes.
 
-All estimators in Mellon that inherit from the :class:`mellon.BaseEstimator` class, including :class:`mellon.DensityEstimator`, :class:`mellon.FunctionEstimator`, and :class:`mellon.DimensionalityEstimator`, have these serialization capabilities.
+All estimators in Mellon that inherit from the :class:`BaseEstimator` class, including :class:`mellon.model.DensityEstimator`, :class:`mellon.model.FunctionEstimator`, and :class:`mellon.model.DimensionalityEstimator`, have serialization capabilities.
+
 
 Predictor Class
 ---------------
@@ -20,7 +21,9 @@ The `Predictor` class, accessible through the `predict` property of an estimator
 Serialization to AnnData
 ------------------------
 
-Estimators can be serialized to an `AnnData`_ object. Here is an example:
+Estimators can be serialized to an `AnnData`_ object. The `log_density` computation for the AnnData object shown below is a simplified example. For a more comprehensive guide on how to properly preprocess data to compute the log density, refer to our
+`basic tutorial notebook <https://github.com/settylab/Mellon/blob/main/notebooks/basic_tutorial.ipynb>`_.
+
 
 .. code-block:: python
 
@@ -81,9 +84,5 @@ Mellon supports deserialization from JSON and compressed file formats. The compr
     # Deserialization from compressed JSON
     pred = mellon.Predictor.from_json("test_predictor.json.gz")
 
-Model Classes
--------------
-
-The documentation for the `DensityEstimator`, `FunctionEstimator`, and `DimensionalityEstimator` classes are available in the :doc:`mellon.model` documentation page.
 
 .. _AnnData: https://anndata.readthedocs.io/en/latest/
