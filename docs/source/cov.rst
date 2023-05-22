@@ -22,6 +22,7 @@ If you want to write a custom covariance function k(x, y) :math:`\rightarrow` fl
 
    from mellon import distance
    from mellon import Covariance  # The Covariance base class __call__ method calls k.
+   import jax.numpy as jnp
 
    class Matern52(Covariance):
        def __init__(self, ls=1.0):
@@ -29,9 +30,12 @@ If you want to write a custom covariance function k(x, y) :math:`\rightarrow` fl
            self.ls = ls
 
        def k(self, x, y):
-           r = distance(x, y) / self.ls
-           similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
-           return simiAlarity
+           r = mellon.distance(x, y) / self.ls
+           similarity = (
+               jnp.sqrt(5.0) * r + jnp.square(jnp.sqrt(5.0) * r) / 3 + 1
+           ) * jnp.exp(-jnp.sqrt(5.0) * r)
+           return similarity
+
 
 The `Covariance` class also supports arithmetic operations such as addition, multiplication, and exponentiation with the +, \*, and \*\* operators, respectively:
 
