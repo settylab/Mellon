@@ -145,7 +145,7 @@ class Predictor(ABC):
     def to_dict(self):
         """Serialize the predictor to a python dictionary.
         """
-        return json.loads(self.to_json())
+        return self.__getstate__()
 
     @classmethod
     def from_json(cls, filepath, compress=None):
