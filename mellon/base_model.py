@@ -15,11 +15,6 @@ from .parameters import (
     compute_L,
     DEFAULT_N_LANDMARKS,
 )
-from .derivatives import (
-    gradient,
-    hessian,
-    hessian_log_determinant,
-)
 from .util import (
     test_rank,
     DEFAULT_JITTER,
@@ -298,47 +293,3 @@ class BaseEstimator:
         :rtype: array-like
         """
         ...
-
-    def gradient(self, x, jit=True):
-        R"""
-        Conputes the gradient of the predict function for each line in x.
-
-        :param x: Data points.
-        :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: gradiants - The gradient of function at each point in x.
-            gradients.shape == x.shape
-        :rtype: array-like
-        """
-        return gradient(self.predict, x, jit=jit)
-
-    def hessian(self, x, jit=True):
-        R"""
-        Conputes the hessian of the predict function for each line in x.
-
-        :param x: Data points.
-        :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: hessians - The hessian matrix of function at each point in x.
-            hessians.shape == X.shape + X.shape[1:]
-        :rtype: array-like
-        """
-        return hessian(self.predict, x, jit=jit)
-
-    def hessian_log_determinant(self, x, jit=True):
-        R"""
-        Conputes the logarirhm of the determinat of the predict function for
-        each line in x.
-
-        :param x: Data points.
-        :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: signs, log_determinants - The sign of the determinant
-            at each point x and the logarithm of its absolute value.
-            signs.shape == log_determinants.shape == x.shape[0]
-        :rtype: array-like, array-like
-        """
-        return hessian_log_determinant(self.predict, x, jit=jit)

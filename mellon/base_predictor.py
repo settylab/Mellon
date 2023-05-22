@@ -11,6 +11,11 @@ import json
 
 from .base_cov import Covariance
 from .util import Log
+from .derivatives import (
+    gradient,
+    hessian,
+    hessian_log_determinant,
+)
 
 
 logger = Log()
@@ -63,6 +68,50 @@ class Predictor(ABC):
         :rtype: dict
         """
         pass
+
+    def gradient(self, x, jit=True):
+        R"""
+        Conputes the gradient of the predict function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: gradiants - The gradient of function at each point in x.
+            gradients.shape == x.shape
+        :rtype: array-like
+        """
+        return gradient(self.__call__, x, jit=jit)
+
+    def hessian(self, x, jit=True):
+        R"""
+        Conputes the hessian of the predict function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: hessians - The hessian matrix of function at each point in x.
+            hessians.shape == X.shape + X.shape[1:]
+        :rtype: array-like
+        """
+        return hessian(self.__call__, x, jit=jit)
+
+    def hessian_log_determinant(self, x, jit=True):
+        R"""
+        Conputes the logarirhm of the determinat of the predict function for
+        each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: signs, log_determinants - The sign of the determinant
+            at each point x and the logarithm of its absolute value.
+            signs.shape == log_determinants.shape == x.shape[0]
+        :rtype: array-like, array-like
+        """
+        return hessian_log_determinant(self.__call__, x, jit=jit)
 
     def __getstate__(self):
         """Get the current state of the predictor for serialization.
