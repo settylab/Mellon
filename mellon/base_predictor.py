@@ -29,6 +29,7 @@ class BasePredictor(ABC):
     @abstractmethod
     def _data_dict(self):
         """Return a dictionary containing the predictor's state data.
+        All arrays nee to be numpy arrays for serialization.
 
         This method must be implemented by subclasses. It should return a
         dictionary where each key-value pair corresponds to an attribute of

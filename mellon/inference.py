@@ -6,11 +6,11 @@ import jax
 from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
 from .conditional import (
-    _full_conditional_mean,
-    _full_conditional_mean_y,
-    _landmarks_conditional_mean,
-    _landmarks_conditional_mean_cholesky,
-    _landmarks_conditional_mean_y,
+    FullConditionalMean,
+    FullConditionalMeanY,
+    LandmarksConditionalMean,
+    LandmarksConditionalMeanCholesky,
+    LandmarksConditionalMeanY,
 )
 from .util import DEFAULT_JITTER
 
@@ -329,7 +329,7 @@ def compute_conditional_mean(
     :rtype: function
     """
     if landmarks is None:
-        return _full_conditional_mean(
+        return FullConditionalMean(
             x,
             y,
             mu,
@@ -339,7 +339,7 @@ def compute_conditional_mean(
     elif pre_transformation is not None and pre_transformation.shape[0] == landmarks.shape[0]:
         if len(landmarks.shape) < 2:
             landmarks = landmarks[:, None]
-        return _landmarks_conditional_mean_cholesky(
+        return LandmarksConditionalMeanCholesky(
             landmarks,
             pre_transformation,
             mu,
@@ -350,7 +350,7 @@ def compute_conditional_mean(
     else:
         if len(landmarks.shape) < 2:
             landmarks = landmarks[:, None]
-        return _landmarks_conditional_mean(
+        return LandmarksConditionalMean(
             x,
             landmarks,
             y,
@@ -395,7 +395,7 @@ def compute_conditional_mean_explog(
     """
     if landmarks is None:
         return Exp(
-            _full_conditional_mean(
+            FullConditionalMean(
                 x,
                 log(y),
                 mu,
@@ -407,7 +407,7 @@ def compute_conditional_mean_explog(
         if len(landmarks.shape) < 2:
             landmarks = landmarks[:, None]
         return Exp(
-            _landmarks_conditional_mean(
+            LandmarksConditionalMean(
                 x,
                 landmarks,
                 log(y),
@@ -452,7 +452,7 @@ def compute_conditional_mean_y(
     :rtype: function
     """
     if landmarks is None:
-        return _full_conditional_mean_y(
+        return FullConditionalMeanY(
             x,
             Xnew,
             mu,
@@ -462,7 +462,7 @@ def compute_conditional_mean_y(
     else:
         if len(landmarks.shape) < 2:
             landmarks = landmarks[:, None]
-        return _landmarks_conditional_mean_y(
+        return LandmarksConditionalMeanY(
             x,
             landmarks,
             Xnew,
