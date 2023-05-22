@@ -3,10 +3,12 @@ import jax
 import jax.numpy as jnp
 
 
-def test_DensityEstimator():
+def test_DensityEstimator(tmp_path):
     n = 100
     d = 2
     seed = 535
+    test_file = tmp_path / "predictor.json"
+    logger = mellon.Log()
     key = jax.random.PRNGKey(seed)
     L = jax.random.uniform(key, (d, d))
     cov = L.T.dot(L)
@@ -67,6 +69,18 @@ def test_DensityEstimator():
         relative_err(full_log_dens) < 1e-1
     ), "The default approximation should be close to the full rank result."
 
+    # Test serialization
+    est_full.predict.to_json(test_file)
+    logger.info(f"Serialized the predictor and saved it to {test_file}.")
+    predictor = mellon.Predictor.from_json(test_file)
+    logger.info("Deserialized the predictor from the JSON file.")
+    reprod = predictor(X)
+    logger.info("Made a prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(full_log_dens, reprod))
+    assert_msg = "Serialized + deserialized predictor should produce the same results."
+    assert is_close, assert_msg
+    logger.info("Assertion passed: the deserialized predictor produced the expected results.")
+
     est = mellon.DensityEstimator(rank=1.0, method="percent", n_landmarks=10)
     est.fit(X)
     dens_appr = est.predict(X)
@@ -74,12 +88,60 @@ def test_DensityEstimator():
         relative_err(dens_appr) < 2e-1
     ), "The low landmarks approximation should be close to the default."
 
+    # Test serialization
+    est.predict.to_json(test_file)
+    logger.info(f"Serialized the predictor and saved it to {test_file}.")
+    predictor = mellon.Predictor.from_json(test_file)
+    logger.info("Deserialized the predictor from the JSON file.")
+    reprod = predictor(X)
+    logger.info("Made a prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(dens_appr, reprod))
+    assert_msg = "Serialized + deserialized predictor should produce the same results."
+    assert is_close, assert_msg
+    logger.info("Assertion passed: the deserialized predictor produced the expected results.")
+
     est = mellon.DensityEstimator(rank=0.99, method="percent", n_landmarks=80)
     est.fit(X)
     dens_appr = est.predict(X)
     assert (
         relative_err(dens_appr) < 2e-1
     ), "The low landmarks + Nystrom approximation should be close to the default."
+
+    # Test serialization
+    est.predict.to_json(test_file)
+    logger.info(f"Serialized the predictor and saved it to {test_file}.")
+    predictor = mellon.Predictor.from_json(test_file)
+    logger.info("Deserialized the predictor from the JSON file.")
+    reprod = predictor(X)
+    logger.info("Made a prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(dens_appr, reprod))
+    assert_msg = "Serialized + deserialized predictor should produce the same results."
+    assert is_close, assert_msg
+    logger.info("Assertion passed: the deserialized predictor produced the expected results.")
+
+    # Test compressed serialization
+    est.predict.to_json(test_file, compress="gzip")
+    logger.info(f"Serialized the predictor and saved it to {test_file}.")
+    predictor = mellon.Predictor.from_json(test_file, compress="gzip")
+    logger.info("Deserialized the predictor from the JSON file.")
+    reprod = predictor(X)
+    logger.info("Made a prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(dens_appr, reprod))
+    assert_msg = "Serialized + deserialized predictor with gzip compression should produce the same results."
+    assert is_close, assert_msg
+    logger.info("Assertion passed: the deserialized predictor produced the expected results.")
+
+    # Test compressed serialization
+    est.predict.to_json(test_file, compress="bz2")
+    logger.info(f"Serialized the predictor and saved it to {test_file}.")
+    predictor = mellon.Predictor.from_json(test_file, compress="bz2")
+    logger.info("Deserialized the predictor from the JSON file.")
+    reprod = predictor(X)
+    logger.info("Made a prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(dens_appr, reprod))
+    assert_msg = "Serialized + deserialized with bz2 compression predictor should produce the same results."
+    assert is_close, assert_msg
+    logger.info("Assertion passed: the deserialized predictor produced the expected results.")
 
     est = mellon.DensityEstimator(rank=50, n_landmarks=80)
     est.fit(X)
