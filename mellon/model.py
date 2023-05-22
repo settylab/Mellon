@@ -629,7 +629,8 @@ class FunctionEstimator(BaseEstimator):
         self.compute_conditional(x, y)
         return self
 
-    def predict(self, x):
+    @property
+    def predict(self):
         R"""
         Predict the function at each point in x.
 
@@ -638,7 +639,7 @@ class FunctionEstimator(BaseEstimator):
         :return: condition_mean - The conditional mean function value at each test point in x.
         :rtype: array-like
         """
-        return self.conditional(x)
+        return self.conditional
 
     def fit_predict(self, x=None, y=None):
         R"""
@@ -1117,7 +1118,8 @@ class DimensionalityEstimator(BaseEstimator):
         self.process_inference(build_predict=build_predict)
         return self
 
-    def predict_density(self, x):
+    @property
+    def predict_density(self):
         R"""
         Predict the log density with adaptive unit at each point in x.
         Note that the unit of denity depends on the dimensionality of the
@@ -1130,9 +1132,10 @@ class DimensionalityEstimator(BaseEstimator):
         """
         if self.log_density_func is None:
             self._set_log_density_func()
-        return self.log_density_func(x)
+        return self.log_density_func
 
-    def predict(self, x):
+    @property
+    def predict(self):
         R"""
         Predict the dimensionality at each point in x.
         Alias for predict_dimensionality().
@@ -1144,7 +1147,7 @@ class DimensionalityEstimator(BaseEstimator):
         """
         if self.local_dim_func is None:
             self._set_local_dim_func()
-        return self.local_dim_func(x)
+        return self.local_dim_func
 
     def fit_predict(self, x=None, build_predict=False):
         R"""

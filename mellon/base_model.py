@@ -276,7 +276,8 @@ class BaseEstimator:
         """
         ...
 
-    def predict(self, x):
+    @property
+    def predict(self):
         R"""
         Make prediction for new data x.
 
