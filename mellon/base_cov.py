@@ -103,8 +103,7 @@ class Covariance(ABC):
         return json.dumps(self.to_dict())
 
     def to_dict(self):
-        """Serialize the predictor to a python dictionary.
-        """
+        """Serialize the predictor to a python dictionary."""
         return self.__getstate__()
 
     @classmethod

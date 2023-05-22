@@ -7,7 +7,6 @@ import gzip
 import bz2
 
 from jax.numpy import asarray as asjnparray
-import numpy as np
 import json
 
 from .base_cov import Covariance
@@ -28,12 +27,17 @@ class Predictor(ABC):
 
     def __repr__(self):
         string = (
-            "A predictor of class \""
+            'A predictor of class "'
             + self.__class__.__name__
-            + "\" with covariance function \""
+            + '" with covariance function "'
             + repr(self.cov_func)
-            + "\" and data:\n"
-            + "\n".join([str(key) + ": " + repr(getattr(self, key)) for key in self._data_dict().keys()])
+            + '" and data:\n'
+            + "\n".join(
+                [
+                    str(key) + ": " + repr(getattr(self, key))
+                    for key in self._data_dict().keys()
+                ]
+            )
         )
         return string
 
@@ -70,7 +74,7 @@ class Predictor(ABC):
         :return: A dictionary representing the state of the predictor.
         :rtype: dict
         """
-        module_name = self.__class__.__module__.split('.')[0]
+        module_name = self.__class__.__module__.split(".")[0]
         module = import_module(module_name)
         version = getattr(module, "__version__", "NA")
 
@@ -136,15 +140,14 @@ class Predictor(ABC):
         else:
             msg = (
                 f"Unknown compression format {compress}.\n"
-                "Availabe formats are \"gzip\", \"bz2\" and None."
+                'Availabe formats are "gzip", "bz2" and None.'
             )
             logger.error(msg)
             raise ValueError(msg)
         logger.info(f"Written predictor to {filename}.")
 
     def to_dict(self):
-        """Serialize the predictor to a python dictionary.
-        """
+        """Serialize the predictor to a python dictionary."""
         return self.__getstate__()
 
     @classmethod

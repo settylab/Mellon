@@ -15,7 +15,6 @@ from jax.numpy import (
     ones,
     arange,
     concatenate,
-    isscalar,
 )
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm, lstsq, matrix_rank

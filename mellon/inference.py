@@ -1,5 +1,5 @@
 from collections import namedtuple
-from jax.numpy import log, pi, exp, stack, arange, median, sort, max
+from jax.numpy import log, pi, exp, stack, arange, sort
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
 import jax
@@ -336,7 +336,10 @@ def compute_conditional_mean(
             cov_func,
             jitter=jitter,
         )
-    elif pre_transformation is not None and pre_transformation.shape[0] == landmarks.shape[0]:
+    elif (
+        pre_transformation is not None
+        and pre_transformation.shape[0] == landmarks.shape[0]
+    ):
         if len(landmarks.shape) < 2:
             landmarks = landmarks[:, None]
         return LandmarksConditionalMeanCholesky(

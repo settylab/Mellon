@@ -149,8 +149,10 @@ class BaseEstimator:
         jitter = self.jitter
 
         is_rank_full = (
-            isinstance(rank, int) and rank == n_landmarks
-            or isinstance(rank, float) and rank == 1.0
+            isinstance(rank, int)
+            and rank == n_landmarks
+            or isinstance(rank, float)
+            and rank == 1.0
         )
 
         # Log the method and rank used for computation
@@ -203,7 +205,7 @@ class BaseEstimator:
                 f"since {n_samples:,} samples are more than {SAMPLE_LANDMARK_RATIO} x "
                 f"{n_landmarks:,} landmarks."
             )
-            approx_rank = test_rank(L, threshold=RANK_FRACTION_THRESHOLD)
+            test_rank(L, threshold=RANK_FRACTION_THRESHOLD)
         logger.info(f"Using rank {new_rank:,} covariance representation.")
         return L
 
