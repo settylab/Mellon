@@ -39,7 +39,7 @@ Estimators can be serialized to an `AnnData`_ object. The `log_density` computat
     ad.obs["log_density"] = est.fit_predict(X)
 
     # Serialization
-    ad.uns["log_density_funcyion"] = est.predict.to_dict()
+    ad.uns["log_density_function"] = est.predict.to_dict()
 
     # Save the AnnData object
     ad.write('adata.h5ad')
@@ -53,10 +53,10 @@ Deserialization from AnnData
     ad = anndata.read('adata.h5ad')
 
     # Deserialization
-    preddict = mellon.Predictor.from_dict(ad.uns["log_density_funcyion"])
+    predictor = mellon.Predictor.from_dict(ad.uns["log_density_function"])
 
     # Use predictor on new data
-    ad.obs["log_density"] = predict(X)
+    ad.obs["log_density"] = predictor(X)
 
 Serialization to File
 ---------------------
@@ -82,10 +82,10 @@ Mellon supports deserialization from JSON and compressed file formats. The compr
 .. code-block:: python
 
     # Deserialization from JSON
-    pred = mellon.Predictor.from_json("test_predictor.json")
+    predictor = mellon.Predictor.from_json("test_predictor.json")
 
     # Deserialization from compressed JSON
-    pred = mellon.Predictor.from_json("test_predictor.json.gz")
+    predictor = mellon.Predictor.from_json("test_predictor.json.gz")
 
 
 .. _AnnData: https://anndata.readthedocs.io/en/latest/
