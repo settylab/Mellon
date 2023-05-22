@@ -19,6 +19,13 @@ from .inference import (
     compute_conditional_mean,
     compute_conditional_mean_explog,
 )
+from .conditional import (
+    FullConditionalMean,
+    FullConditionalMeanY,
+    LandmarksConditionalMean,
+    LandmarksConditionalMeanCholesky,
+    LandmarksConditionalMeanY,
+)
 from .parameters import (
     compute_landmarks,
     k_means,
@@ -42,3 +49,4 @@ from .model import (
     FunctionEstimator,
     DimensionalityEstimator,
 )
+from .base_predictor import Predictor

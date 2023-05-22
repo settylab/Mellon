@@ -1,9 +1,8 @@
 from jax.numpy import dot, square, isnan, any, atleast_2d
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-from numpy import asarray as asnumpy
-from .util import stabilize, DEFAULT_JITTER, Log
-from .base_predictor import BasePredictor
+from .util import stabilize, DEFAULT_JITTER, Log, make_serializable
+from .base_predictor import Predictor
 
 
 logger = Log()
@@ -13,7 +12,7 @@ def make_2d(X):
     return atleast_2d(X.T).T
 
 
-class FullConditionalMean(BasePredictor):
+class FullConditionalMean(Predictor):
     def __init__(
         self,
         x,
@@ -56,18 +55,20 @@ class FullConditionalMean(BasePredictor):
         r = y - mu
         weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
 
+        self.cov_func = cov_func
         self.x = x
         self.weights = weights
         self.mu = mu
 
     def _data_dict(self):
         return {
-            "x": asnumpy(self.x),
-            "weights": asnumpy(self.weights),
-            "mu": asnumpy(self.mu),
+            "x": make_serializable(self.x),
+            "weights": make_serializable(self.weights),
+            "mu": make_serializable(self.mu),
         }
 
     def __call__(self, Xnew):
+        cov_func = self.cov_func
         x = self.x
         weights = self.weights
         mu = self.mu
@@ -77,7 +78,7 @@ class FullConditionalMean(BasePredictor):
         return mu + dot(Kus, weights)
 
 
-class FullConditionalMeanY(BasePredictor):
+class FullConditionalMeanY(Predictor):
     def __init__(
         self,
         x,
@@ -121,15 +122,16 @@ class FullConditionalMeanY(BasePredictor):
             raise ValueError(message)
         Kus = cov_func(Xnew, x)
 
+        self.cov_func = cov_func
         self.L = L
         self.Kus = Kus
         self.mu = mu
 
     def _data_dict(self):
         return {
-            "L": asnumpy(self.L),
-            "Kuus": asnumpy(self.Kuus),
-            "mu": asnumpy(self.mu),
+            "L": make_serializable(self.L),
+            "Kuus": make_serializable(self.Kuus),
+            "mu": make_serializable(self.mu),
         }
 
     def __call__(self, y):
@@ -141,7 +143,7 @@ class FullConditionalMeanY(BasePredictor):
         return mu + dot(Kus, weights)
 
 
-class LandmarksConditionalMean(BasePredictor):
+class LandmarksConditionalMean(Predictor):
     def __init__(
         self,
         x,
@@ -194,18 +196,20 @@ class LandmarksConditionalMean(BasePredictor):
         z = solve_triangular(L_B.T, c)
         weights = solve_triangular(Luu.T, z)
 
+        self.cov_func = cov_func
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
 
     def _data_dict(self):
         return {
-            "landmarks": asnumpy(self.landmarks),
-            "weights": asnumpy(self.weights),
-            "mu": asnumpy(self.mu),
+            "landmarks": make_serializable(self.landmarks),
+            "weights": make_serializable(self.weights),
+            "mu": make_serializable(self.mu),
         }
 
     def __call__(self, Xnew):
+        cov_func = self.cov_func
         xu = self.landmarks
         weights = self.weights
         mu = self.mu
@@ -215,7 +219,7 @@ class LandmarksConditionalMean(BasePredictor):
         return mu + dot(Kus, weights)
 
 
-class LandmarksConditionalMeanCholesky(BasePredictor):
+class LandmarksConditionalMeanCholesky(Predictor):
     def __init__(
         self,
         xu,
@@ -258,18 +262,20 @@ class LandmarksConditionalMeanCholesky(BasePredictor):
             raise ValueError(message)
         weights = solve_triangular(L.T, pre_transformation)
 
+        self.cov_func = cov_func
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
 
     def _data_dict(self):
         return {
-            "landmarks": asnumpy(self.landmarks),
-            "weights": asnumpy(self.weights),
-            "mu": asnumpy(self.mu),
+            "landmarks": make_serializable(self.landmarks),
+            "weights": make_serializable(self.weights),
+            "mu": make_serializable(self.mu),
         }
 
     def __call__(self, Xnew):
+        cov_func = self.cov_func
         xu = self.landmarks
         weights = self.weights
         mu = self.mu
@@ -279,7 +285,7 @@ class LandmarksConditionalMeanCholesky(BasePredictor):
         return mu + dot(Kus, weights)
 
 
-class LandmarksConditionalMeanY(BasePredictor):
+class LandmarksConditionalMeanY(Predictor):
     def __init__(
         self,
         x,
@@ -331,17 +337,20 @@ class LandmarksConditionalMeanY(BasePredictor):
         L_B = cholesky(stabilize(dot(A, A.T), sigma2))
         Kus = cov_func(Xnew, xu)
 
+        self.cov_func = cov_func
         self.L_B = L_B
+        self.A = A
         self.Luu = Luu
         self.Kus = Kus
         self.mu = mu
 
     def _data_dict(self):
         return {
-            "L_B": asnumpy(self.L_B),
-            "Luu": asnumpy(self.Luu),
-            "Kus": asnumpy(self.Kus),
-            "mu": asnumpy(self.mu),
+            "L_B": make_serializable(self.L_B),
+            "A": make_serializable(self.A),
+            "Luu": make_serializable(self.Luu),
+            "Kus": make_serializable(self.Kus),
+            "mu": make_serializable(self.mu),
         }
 
     def __call__(self, y):

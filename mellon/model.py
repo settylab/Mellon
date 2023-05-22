@@ -424,7 +424,8 @@ class DensityEstimator(BaseEstimator):
         self.process_inference(build_predict=build_predict)
         return self
 
-    def predict(self, x):
+    @property
+    def predict(self):
         R"""
         Predict the log density at each point in x.
 
@@ -435,7 +436,7 @@ class DensityEstimator(BaseEstimator):
         """
         if self.log_density_func is None:
             self._set_log_density_func()
-        return self.log_density_func(x)
+        return self.log_density_func
 
     def fit_predict(self, x=None, build_predict=False):
         R"""

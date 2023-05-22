@@ -6,12 +6,14 @@ from datetime import datetime
 import gzip
 import bz2
 
-import jax.numpy as jnp
+from jax.numpy import asarray as asjnparray
 import numpy as np
 import json
 
+from .base_cov import Covariance
 
-class BasePredictor(ABC):
+
+class Predictor(ABC):
     @abstractmethod
     def __init__(self):
         """Initialize the predictor. Must be overridden by subclasses."""
@@ -50,11 +52,12 @@ class BasePredictor(ABC):
         :return: A dictionary representing the state of the predictor.
         :rtype: dict
         """
-        module_name = self.__class__.__module__
+        module_name = self.__class__.__module__.split('.')[0]
         module = import_module(module_name)
-        version = module.get("__version__", "NA")
+        version = getattr(module, "__version__", "NA")
         state = {
             "data": self._data_dict(),
+            "cov_func": self.cov_func.to_json(),
             "metadata": {
                 "classname": self.__class__.__name__,
                 "mellon_name": module_name,
@@ -77,21 +80,26 @@ class BasePredictor(ABC):
         """
         data = state["data"]
         for name, value in data.items():
-            val = jnp.array(value)
+            val = asjnparray(value)
             setattr(self, name, val)
+        self.cov_func = Covariance.from_json(state["cov_func"])
 
-    def to_json(self, filename, compress=None):
+    def to_json(self, filename=None, compress=None):
         """Serialize the predictor to a JSON file.
 
         This method serializes the predictor to a JSON file. It can optionally
         compress the JSON file using gzip or bz2 compression.
 
         :param filename: The name of the JSON file to which to serialize the predictor.
-        :type filename: str
+            If filname is None then the JSON string is returned instead.
+        :type filename: str or None
         :param compress: The compression method to use ('gzip' or 'bz2'). If None, no compression is used.
         :type compress: str, optional
         """
         json_str = json.dumps(self.__getstate__())
+
+        if filename is None:
+            return json_str
 
         if compress == "gzip":
             filename += ".gz"
@@ -115,7 +123,7 @@ class BasePredictor(ABC):
         :param filename: The name of the JSON file from which to deserialize the predictor.
         :type filename: str
         :return: An instance of the predictor.
-        :rtype: BasePredictor subclass instance
+        :rtype: Predictor subclass instance
         """
         if filename.endswith(".gz"):
             open_func = gzip.open
@@ -127,9 +135,23 @@ class BasePredictor(ABC):
         with open_func(filename, "rt") as f:
             json_str = f.read()
 
+        return cls.from_json_str(json_str)
+
+    @classmethod
+    def from_json_str(cls, json_str):
+        """Deserialize the predictor from a JSON string.
+
+        This method deserializes the predictor from a JSON file. It automatically
+        detects the compression method based on the file extension.
+
+        :param json_str: The JSON string from which to deserialize the predictor.
+        :type json_str: str
+        :return: An instance of the predictor.
+        :rtype: Predictor subclass instance
+        """
         state = json.loads(json_str)
         clsname = state["metadata"]["classname"]
-        module_name = state["metadata"]["module"]
+        module_name = state["metadata"]["mellon_name"]
 
         module = import_module(module_name)
         Subclass = getattr(module, clsname)

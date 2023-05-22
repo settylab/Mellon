@@ -210,3 +210,29 @@ class Log(object):
         """Turn on logging."""
         cls.__new__(cls)
         cls.logger.setLevel(logging.INFO)
+
+
+def make_serializable(x):
+    """
+    Converts a given object to a serializable format.
+
+    :param x: The object to be made serializable.
+    :type x: An array or a number.
+    :return: The object in a serializable format if possible, otherwise the original object.
+    :rtype: Depends on the input object.
+
+    This function attempts to convert objects (e.g. numpy arrays or jax arrays)
+    to lists which can be serialized to formats like JSON.
+    If conversion is not possible, the original object is returned.
+    """
+    try:
+        return x.tolist()
+    except AttributeError:
+        # If `tolist` method does not exist, return the original object.
+        return x
+    except Exception as e:
+        logger = Log()
+        logger.error(
+            f"An error occurred while attempting to make object serializable: {e}"
+        )
+        return x
