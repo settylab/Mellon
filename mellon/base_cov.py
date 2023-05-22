@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 
 from jax.numpy import asarray as asjnparray
+from jax.numpy import isscalar
 
 from .util import make_serializable, Log
 
@@ -221,7 +222,10 @@ class CovariancePair(Covariance):
         if isinstance(state["right_data"], dict):
             self.right = Covariance.from_dict(state["right_data"])
         else:
-            self.right = asjnparray(state["right_data"])
+            if isscalar(state["right_data"]):
+                self.right = state["right_data"]
+            else:
+                self.right = asjnparray(state["right_data"])
 
 
 class Add(CovariancePair):
