@@ -19,6 +19,20 @@ class Predictor(ABC):
         """Initialize the predictor. Must be overridden by subclasses."""
         pass
 
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        string = (
+            "A predictor of class \""
+            + self.__class__.__name__
+            + "\" with covariance function \""
+            + repr(self.cov_func)
+            + "\" and data:\n"
+            + "\n".join([str(key) + ": " + repr(getattr(self, key)) for key in self._data_dict().keys()])
+        )
+        return string
+
     @abstractmethod
     def __call__(self, x):
         """Call the predictor on input x. Must be overridden by subclasses.

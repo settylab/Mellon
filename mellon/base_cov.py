@@ -18,6 +18,14 @@ class Covariance(ABC):
     def __init__(self):
         pass
 
+    def __str__(self):
+        return self.__repr__()
+
+    @abstractmethod
+    def __repr__(self):
+        """Return a string representation"""
+        pass
+
     @abstractmethod
     def k(x, y):
         pass
@@ -130,14 +138,6 @@ class CovariancePair(Covariance):
     def __init__(self, left, right):
         self.left = left
         self.right = right
-
-    def __str__(self):
-        return self.__repr__()
-
-    @classmethod
-    def __repr__(self):
-        """Return a string representation"""
-        pass
 
     @classmethod
     def k(self, x, y):
