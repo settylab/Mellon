@@ -129,7 +129,7 @@ class Predictor(ABC):
 
         state = {
             "data": self._data_dict(),
-            "cov_func": self.cov_func.to_json(),
+            "cov_func": self.cov_func.to_dict(),
             "metadata": {
                 "classname": self.__class__.__name__,
                 "module_name": module_name,
@@ -154,7 +154,7 @@ class Predictor(ABC):
         for name, value in data.items():
             val = asjnparray(value)
             setattr(self, name, val)
-        self.cov_func = Covariance.from_json(state["cov_func"])
+        self.cov_func = Covariance.from_dict(state["cov_func"])
 
     def to_json(self, filename=None, compress=None):
         """Serialize the predictor to a JSON file.
