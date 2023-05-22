@@ -132,8 +132,8 @@ class Predictor(ABC):
             "cov_func": self.cov_func.to_json(),
             "metadata": {
                 "classname": self.__class__.__name__,
-                "mellon_name": module_name,
-                "mellon_version": version,
+                "module_name": module_name,
+                "module_version": version,
                 "serialization_date": datetime.now().isoformat(),
                 "python_version": sys.version,
             },
@@ -262,7 +262,7 @@ class Predictor(ABC):
         """
         state = json.loads(json_str)
         clsname = state["metadata"]["classname"]
-        module_name = state["metadata"]["mellon_name"]
+        module_name = state["metadata"]["module_name"]
 
         module = import_module(module_name)
         Subclass = getattr(module, clsname)

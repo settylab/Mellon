@@ -6,8 +6,11 @@ import json
 
 from jax.numpy import asarray as asjnparray
 
-from .util import make_serializable
+from .util import make_serializable, Log
 
+MELLON_NAME = __name__.split(".")[0]
+
+logger = Log()
 
 class Covariance(ABC):
     R"""
@@ -64,14 +67,27 @@ class Covariance(ABC):
         :rtype: dict
         """
         module_name = self.__class__.__module__.split(".")[0]
+        clsname = self.__class__.__name__
+        if module_name == "__main__":
+            logger.warning(
+                f'The covariance function "{clsname}" is not part of {MELLON_NAME} '
+                f'and seems to be user defined. Make sure the implementation '
+                'is available for deserialization.'
+            )
+        elif module_name != MELLON_NAME:
+            logger.warning(
+                f'The covariance function "{clsname}" is not part of {MELLON_NAME} '
+                f'but of the module "{module_name}". Make sure the module '
+                'is available for deserialization.'
+            )
         module = import_module(module_name)
         version = getattr(module, "__version__", "NA")
         state = {
             "data": self._data_dict(),
             "metadata": {
-                "classname": self.__class__.__name__,
-                "mellon_name": module_name,
-                "mellon_version": version,
+                "classname": clsname,
+                "module_name": module_name,
+                "module_version": version,
                 "serialization_date": datetime.now().isoformat(),
                 "python_version": sys.version,
             },
@@ -133,7 +149,7 @@ class Covariance(ABC):
         :rtype: Covariance subclass instance
         """
         clsname = state["metadata"]["classname"]
-        module_name = state["metadata"]["mellon_name"]
+        module_name = state["metadata"]["module_name"]
 
         if clsname in globals():
             Subclass = globals()[clsname]
@@ -183,8 +199,8 @@ class CovariancePair(Covariance):
             "right_data": right_data,
             "metadata": {
                 "classname": self.__class__.__name__,
-                "mellon_name": module_name,
-                "mellon_version": version,
+                "module_name": module_name,
+                "module_version": version,
                 "serialization_date": datetime.now().isoformat(),
                 "python_version": sys.version,
             },
