@@ -28,12 +28,6 @@ class Matern52(Covariance):
         super().__init__()
         self.ls = ls
 
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        return f"Matern52(ls={self.ls})"
-
     def k(self, x, y):
         R"""
         :math:`(1 + \frac{\sqrt{5}||x-y||}{l} + \frac{5||x-y||^2}{3l^2})
@@ -49,12 +43,6 @@ class ExpQuad(Covariance):
         super().__init__()
         self.ls = ls
 
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        return f"ExpQuad(ls={self.ls})"
-
     def k(self, x, y):
         R"""
         :math:`e^{-\frac{||x-y||^2}{2 l^2}}`
@@ -68,12 +56,6 @@ class Exponential(Covariance):
     def __init__(self, ls=1.0):
         super().__init__()
         self.ls = ls
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        return f"Exponential(ls={self.ls})"
 
     def k(self, x, y):
         R"""
@@ -89,12 +71,6 @@ class RatQuad(Covariance):
         super().__init__()
         self.ls = ls
         self.alpha = alpha
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        return f"RatQuad({self.alpha}, s={self.ls})"
 
     def k(self, x, y):
         R"""

@@ -21,10 +21,11 @@ class Covariance(ABC):
     def __str__(self):
         return self.__repr__()
 
-    @abstractmethod
     def __repr__(self):
         """Return a string representation"""
-        pass
+        clsname = self.__class__.__name__
+        arguments = [f"{key}={val}" for key, val in self._data_dict().items()]
+        return clsname + "(" + ", ".join(arguments) + ")"
 
     @abstractmethod
     def k(x, y):
