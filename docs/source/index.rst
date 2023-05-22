@@ -7,6 +7,7 @@
    :caption: Modules:
 
    Model <model>
+   Serialization <serialization>
    Utilities <util>
    Covariance Functions <cov>
    Parameter Selection <parameters>
