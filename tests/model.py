@@ -29,15 +29,15 @@ def test_DensityEstimator(tmp_path):
         "the training samples."
     )
 
-    grads = est.gradient(X)
+    grads = est.predict.gradient(X)
     assert (
         grads.shape == X.shape
     ), "The gradient should have the same shape as the input."
 
-    hess = est.hessian(X)
+    hess = est.predict.hessian(X)
     assert hess.shape == (n, d, d), "The hessian should have the correct shape."
 
-    result = est.hessian_log_determinant(X)
+    result = est.predict.hessian_log_determinant(X)
     assert (
         len(result) == 2
     ), "hessian_log_determinan should return signes and lg-values."
@@ -310,16 +310,16 @@ def test_DimensionalityEstimator():
         relative_err(dim_appr) < 1e0
     ), "The low landmarks + Nystrom approximation should be close to the default."
 
-    grads = est.gradient_density(X)
+    grads = est.predict_density.gradient(X)
     assert (
         grads.shape == X.shape
     ), "The gradient should have the same shape as the input."
 
     log_dens = est.predict_density(X)
-    hess = est.hessian_density(X)
+    hess = est.predict_density.hessian(X)
     assert hess.shape == (n, d, d), "The hessian should have the correct shape."
 
-    result = est.hessian_log_determinant_density(X)
+    result = est.predict_density.hessian_log_determinant(X)
     assert (
         len(result) == 2
     ), "hessian_log_determinan should return signes and lg-values."
