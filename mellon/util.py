@@ -155,6 +155,25 @@ def vector_map(fun, X, in_axis=0):
 
 
 def local_dimensionality(x, k=30, x_query=None, neighbor_idx=None):
+    """
+    Compute an estimate of the local fractal dimension of a data set using nearest neighbors.
+
+    :param x: The input samples.
+    :type x: array-like of shape (n_samples, n_features)
+    :param k: The number of neighbors to consider, defaults to 30.
+    :type k: int, optional
+    :param x_query: The points at which to compute the local fractal dimension.
+        If None, use x itself, defaults to None.
+    :type x_query: array-like of shape (n_queries, n_features), optional
+    :param neighbor_idx: The indices of the neighbors for each query point.
+        If None, these are computed using a nearest neighbor search, defaults to None.
+    :type neighbor_idx: array-like of shape (n_queries, k), optional
+    :return: The estimated local fractal dimension at each query point.
+    :rtype: array-like of shape (n_queries,)
+
+    This function computes the local fractal dimension of a dataset at query points.
+    It uses nearest neighbors and fits a line in log-log space to estimate the fractal dimension.
+    """
     if neighbor_idx is None:
         if x_query is None:
             x_query = x
@@ -177,8 +196,8 @@ def local_dimensionality(x, k=30, x_query=None, neighbor_idx=None):
     y = log(arange(1, kc2 + 1))[:, None]
 
     vreg = vmap(lstsq, in_axes=(0, None))
-    w = vreg(A, y)
-    return w[0][:, 0, 0]
+    w, _, _, _ = vreg(A, y)
+    return w[:, 0, 0]
 
 
 class Log(object):
