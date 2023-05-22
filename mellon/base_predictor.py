@@ -11,6 +11,10 @@ import numpy as np
 import json
 
 from .base_cov import Covariance
+from .util import Log
+
+
+logger = Log()
 
 
 class Predictor(ABC):
@@ -69,6 +73,7 @@ class Predictor(ABC):
         module_name = self.__class__.__module__.split('.')[0]
         module = import_module(module_name)
         version = getattr(module, "__version__", "NA")
+
         state = {
             "data": self._data_dict(),
             "cov_func": self.cov_func.to_json(),
@@ -116,37 +121,53 @@ class Predictor(ABC):
             return json_str
 
         if compress == "gzip":
-            filename += ".gz"
+            if isinstance(filename, str):
+                filename += ".gz"
             with gzip.open(filename, "wt") as f:
                 f.write(json_str)
         elif compress == "bz2":
-            filename += ".bz2"
+            if isinstance(filename, str):
+                filename += ".bz2"
             with bz2.open(filename, "wt") as f:
                 f.write(json_str)
-        else:
+        elif compress is None:
             with open(filename, "w") as f:
                 f.write(json_str)
+        else:
+            msg = (
+                f"Unknown compression format {compress}.\n"
+                "Availabe formats are \"gzip\", \"bz2\" and None."
+            )
+            logger.error(msg)
+            raise ValueError(msg)
+        logger.info(f"Written predictor to {filename}.")
 
     @classmethod
-    def from_json(cls, filename):
+    def from_json(cls, filepath, compress=None):
         """Deserialize the predictor from a JSON file.
 
         This method deserializes the predictor from a JSON file. It automatically
-        detects the compression method based on the file extension.
+        detects the compression method based on the file extension or uses
+        the compress keyword to determine the compression.
 
-        :param filename: The name of the JSON file from which to deserialize the predictor.
-        :type filename: str
+        :param filename: The path of the JSON file from which to deserialize the predictor.
+        :type filename: str, pathlib.Path, or os.path
+        :param compress: The compression method to use ('gzip' or 'bz2'). If None, no compression is used.
+        :type compress: str, optional
         :return: An instance of the predictor.
         :rtype: Predictor subclass instance
         """
-        if filename.endswith(".gz"):
+        filename = str(filepath)
+        if compress is None:
+            compress = "none"
+        if compress == "gzip" or filename.endswith(".gz"):
             open_func = gzip.open
-        elif filename.endswith(".bz2"):
+        elif compress == "bz2" or filename.endswith(".bz2"):
             open_func = bz2.open
         else:
             open_func = open
 
-        with open_func(filename, "rt") as f:
+        with open_func(filepath, "rt") as f:
             json_str = f.read()
 
         return cls.from_json_str(json_str)
