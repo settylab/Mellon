@@ -74,3 +74,29 @@ def test_Pow():
     assert jnp.all(jnp.isclose(values, revalues)), (
         "Serialization + deserialization of added covariance functions must return the same result."
     )
+
+
+def test_Hirachical():
+    n = 2
+    d = 2
+    cov1 = mellon.Matern32(1.4)
+    cov2 = mellon.Exponential(3.4)
+    cov3 = mellon.RatQuad(1.1, 3.4)
+
+    cov = 0.2 + 1.1 * cov1 + 2.1 * cov2 * cov3
+    assert (
+        len(str(cov)) > 0
+    ), "The covariance function should have a string representation."
+    x = jnp.ones((n, d))
+    values = cov(x, 2 * x)
+    assert values.shape == (
+        d,
+        d,
+    ), "Covariance should be computed for each pair of samples."
+
+    json = cov.to_json()
+    recov = mellon.Covariance.from_json(json)
+    revalues = recov(x, 2 * x)
+    assert jnp.all(jnp.isclose(values, revalues)), (
+        "Serialization + deserialization of added covariance functions must return the same result."
+    )
