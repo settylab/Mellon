@@ -121,12 +121,12 @@ class Predictor(ABC):
             return json_str
 
         if compress == "gzip":
-            if isinstance(filename, str):
+            if isinstance(filename, str) and not filename.endswith(".gz"):
                 filename += ".gz"
             with gzip.open(filename, "wt") as f:
                 f.write(json_str)
         elif compress == "bz2":
-            if isinstance(filename, str):
+            if isinstance(filename, str) and not filename.endswith(".bz2"):
                 filename += ".bz2"
             with bz2.open(filename, "wt") as f:
                 f.write(json_str)
