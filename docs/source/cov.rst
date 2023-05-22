@@ -33,7 +33,7 @@ If you want to write a custom covariance function k(x, y) :math:`\rightarrow` fl
            similarity = (sqrt(5.0) * r + square(sqrt(5.0) * r)/3 + 1) * exp(-sqrt(5.0) * r)
            return simiAlarity
 
-The `Covariance` class also supports arithmetic operations such as addition, multiplication, and exponentiation with the +, *, and ** operators, respectively:
+The `Covariance` class also supports arithmetic operations such as addition, multiplication, and exponentiation with the +, \*, and \*\* operators, respectively:
 
 .. code-block:: python
    :caption: Combining two covariance functions.
