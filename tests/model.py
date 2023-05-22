@@ -119,6 +119,19 @@ def test_DensityEstimator(tmp_path):
     assert is_close, assert_msg
     logger.info("Assertion passed: the deserialized predictor produced the expected results.")
 
+    # Test dictionay serialization
+    data_dict = est.predict.to_dict()
+    assert isinstance(data_dict, dict), "Predictor.to_dict() must return a dictionary."
+    logger.info(f"Serialized the predictor to dictionary.")
+    predictor = mellon.Predictor.from_dict(data_dict)
+    logger.info("Deserialized the predictor from the dictionary.")
+    reprod = predictor(X)
+    logger.info("Made a prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(dens_appr, reprod))
+    assert_msg = "Serialized + deserialized predictor should produce the same results."
+    assert is_close, assert_msg
+    logger.info("Assertion passed: the deserialized predictor produced the expected results.")
+
     # Test compressed serialization
     est.predict.to_json(test_file, compress="gzip")
     logger.info(f"Serialized the predictor and saved it to {test_file}.")

@@ -142,6 +142,11 @@ class Predictor(ABC):
             raise ValueError(msg)
         logger.info(f"Written predictor to {filename}.")
 
+    def to_dict(self):
+        """Serialize the predictor to a python dictionary.
+        """
+        return json.loads(self.to_json())
+
     @classmethod
     def from_json(cls, filepath, compress=None):
         """Deserialize the predictor from a JSON file.
@@ -171,6 +176,20 @@ class Predictor(ABC):
             json_str = f.read()
 
         return cls.from_json_str(json_str)
+
+    @classmethod
+    def from_dict(cls, data_dict):
+        """Deserialize the predictor from a python dictionay.
+
+        This method deserializes the predictor from a JSON file. It automatically
+        detects the compression method based on the file extension.
+
+        :param data_dict: The dictionary from which to deserialize the predictor.
+        :type data_dict: dict
+        :return: An instance of the predictor.
+        :rtype: Predictor subclass instance
+        """
+        return cls.from_json_str(json.dumps(data_dict))
 
     @classmethod
     def from_json_str(cls, json_str):
