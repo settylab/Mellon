@@ -60,6 +60,7 @@ Implemented Covariance Functions
 --------------------------------
 
 .. automodule:: mellon.cov
+   :inherited-members:
    :members:
    :undoc-members:
    :show-inheritance:
