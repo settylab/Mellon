@@ -20,7 +20,7 @@ def test_Add():
     ), "Covariance should be computed for each pair of samples."
 
     json = cov.to_json()
-    recov = mellon.Covariance(json)
+    recov = mellon.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
     assert jnp.all(jnp.isclose(values, revalues)), (
         "Serialization + deserialization of added covariance functions must return the same result."
@@ -45,7 +45,7 @@ def test_Mul():
     ), "Covariance should be computed for each pair of samples."
 
     json = cov.to_json()
-    recov = mellon.Covariance(json)
+    recov = mellon.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
     assert jnp.all(jnp.isclose(values, revalues)), (
         "Serialization + deserialization of added covariance functions must return the same result."
@@ -69,7 +69,7 @@ def test_Pow():
     ), "Covariance should be computed for each pair of samples."
 
     json = cov.to_json()
-    recov = mellon.Covariance(json)
+    recov = mellon.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
     assert jnp.all(jnp.isclose(values, revalues)), (
         "Serialization + deserialization of added covariance functions must return the same result."

@@ -109,13 +109,24 @@ class Covariance(ABC):
         This method deserializes the predictor from a JSON file. It automatically
         detects the compression method based on the file extension.
 
-        :param json_str: The name of the JSON string from which to deserialize the covariance function.
+        :param json_str: The JSON string from which to deserialize the covariance function.
         :type json_str: str
         :return: An instance of the covariance function.
         :rtype: Covariance subclass instance
         """
 
         state = json.loads(json_str)
+        return cls.from_dict(state)
+
+    @classmethod
+    def from_dict(cls, state):
+        """Deserialize the covariance function from a python dictionary.
+
+        :param state: The python dictionary from which to deserialize the covariance function.
+        :type state: dict
+        :return: An instance of the covariance function.
+        :rtype: Covariance subclass instance
+        """
         clsname = state["metadata"]["classname"]
         module_name = state["metadata"]["mellon_name"]
 
@@ -185,12 +196,11 @@ class CovariancePair(Covariance):
         :param state: A dictionary representing the state of the covariance function.
         :type state: dict
         """
-        data = state["data"]
-        self.left = Covariance.from_json(data["left"])
-        if isinstance(data["right"], dict):
-            self.right = Covariance.from_json(data["right"])
+        self.left = Covariance.from_dict(state["left_data"])
+        if isinstance(state["right_data"], dict):
+            self.right = Covariance.from_dict(state["right_data"])
         else:
-            self.right = asjnparray(data["right"])
+            self.right = asjnparray(state["right_data"])
 
 
 class Add(CovariancePair):
