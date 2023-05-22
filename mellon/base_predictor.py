@@ -115,7 +115,7 @@ class Predictor(ABC):
         :param compress: The compression method to use ('gzip' or 'bz2'). If None, no compression is used.
         :type compress: str, optional
         """
-        json_str = json.dumps(self.__getstate__())
+        json_str = json.dumps(self.to_dict())
 
         if filename is None:
             return json_str

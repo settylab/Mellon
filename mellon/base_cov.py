@@ -100,7 +100,12 @@ class Covariance(ABC):
         :return: An JASON string.
         :rtype: string
         """
-        return json.dumps(self.__getstate__())
+        return json.dumps(self.to_dict())
+
+    def to_dict(self):
+        """Serialize the predictor to a python dictionary.
+        """
+        return self.__getstate__()
 
     @classmethod
     def from_json(cls, json_str):
