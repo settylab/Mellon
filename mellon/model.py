@@ -21,6 +21,7 @@ from .parameters import (
     compute_mu,
     compute_initial_value,
     compute_initial_dimensionalities,
+    compute_landmarks,
     DEFAULT_N_LANDMARKS,
 )
 from .derivatives import (
@@ -563,7 +564,8 @@ class FunctionEstimator(BaseEstimator):
         :rtype: function, array-like
         """
         self._set_x(x)
-        self._prepare_attribute("nn_distances")
+        if self.ls is None:
+            self._prepare_attribute("nn_distances")
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
@@ -672,12 +674,20 @@ class FunctionEstimator(BaseEstimator):
         :rtype: array-like
         """
 
+        self._set_x(x)
+        if self.ls is None:
+            self._prepare_attribute("nn_distances")
+        self._prepare_attribute("ls")
+        self._prepare_attribute("cov_func")
         if Xnew is None:
             Xnew = x
+            self._prepare_attribute("landmarks")
+            landmarks = self.landmarks
+        else:
+            n_landmarks = self.n_landmarks
+            logger.info(f"Computing {n_landmarks:,} landmarks for Xnew.")
+            landmarks = compute_landmarks(Xnew, n_landmarks)
 
-        self.prepare_inference(x)
-
-        landmarks = self.landmarks
         mu = self.mu
         cov_func = self.cov_func
         sigma = self.sigma
