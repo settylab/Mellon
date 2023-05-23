@@ -12,7 +12,7 @@ from .conditional import (
     LandmarksConditionalMeanCholesky,
     LandmarksConditionalMeanY,
 )
-from .util import DEFAULT_JITTER
+from .util import ensure_2d, DEFAULT_JITTER
 
 
 DEFAULT_N_ITER = 100
@@ -340,8 +340,7 @@ def compute_conditional_mean(
         pre_transformation is not None
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
-        if len(landmarks.shape) < 2:
-            landmarks = landmarks[:, None]
+        landmarks = ensure_2d(landmarks)
         return LandmarksConditionalMeanCholesky(
             landmarks,
             pre_transformation,
@@ -351,8 +350,7 @@ def compute_conditional_mean(
             jitter=jitter,
         )
     else:
-        if len(landmarks.shape) < 2:
-            landmarks = landmarks[:, None]
+        landmarks = ensure_2d(landmarks)
         return LandmarksConditionalMean(
             x,
             landmarks,
@@ -407,8 +405,7 @@ def compute_conditional_mean_explog(
             )
         )
     else:
-        if len(landmarks.shape) < 2:
-            landmarks = landmarks[:, None]
+        landmarks = ensure_2d(landmarks)
         return Exp(
             LandmarksConditionalMean(
                 x,
@@ -463,8 +460,7 @@ def compute_conditional_mean_y(
             jitter=jitter,
         )
     else:
-        if len(landmarks.shape) < 2:
-            landmarks = landmarks[:, None]
+        landmarks = ensure_2d(landmarks)
         return LandmarksConditionalMeanY(
             x,
             landmarks,

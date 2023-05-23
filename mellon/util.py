@@ -15,6 +15,7 @@ from jax.numpy import (
     ones,
     arange,
     concatenate,
+    atleast_2d,
 )
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm, lstsq, matrix_rank
@@ -254,3 +255,18 @@ def make_serializable(x):
             f"An error occurred while attempting to make object serializable: {e}"
         )
         return x
+
+
+def ensure_2d(X):
+    """
+    Ensures that the input JAX array, X, is at least 2-dimensional.
+
+    :param X: The input JAX array to be made 2-dimensional.
+    :type X: jnp.array
+    :return: The input array transformed to a 2-dimensional array.
+    :rtype: jnp.array
+
+    If X is 1-dimensional, it is reshaped to a 2-dimensional array,
+    where each element of X becomes a row in the 2-dimensional array.
+    """
+    return atleast_2d(X.T).T

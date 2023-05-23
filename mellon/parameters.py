@@ -3,7 +3,7 @@ from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle, local_dimensionality, Log, DEFAULT_JITTER
+from .util import mle, local_dimensionality, Log, DEFAULT_JITTER, ensure_2d
 from .decomposition import (
     _check_method,
     _full_rank,
@@ -35,8 +35,7 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     if n_landmarks == 0:
         return None
     n = x.shape[0]
-    if len(x.shape) < 2:
-        x = x[:, None]
+    x = ensure_2d(x)
     assert n_landmarks > 1, "n_landmarks musst be larger 1 or euqual to 0"
     if n_landmarks >= n:
         return None
@@ -54,8 +53,7 @@ def compute_distances(x, k):
     :return: distances - The k observed nearest neighbor distances.
     :rtype: array-like
     """
-    if len(x.shape) < 2:
-        x = x[:, None]
+    x = ensure_2d(x)
     if x.shape[1] >= 20:
         tree = BallTree(x, metric="euclidean")
     else:
@@ -194,8 +192,7 @@ def compute_L(
     :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
-    if len(x.shape) < 2:
-        x = x[:, None]
+    x = ensure_2d(x)
     if landmarks is None:
         n = x.shape[0]
         method = _check_method(rank, n, method)
@@ -209,8 +206,7 @@ def compute_L(
                 x, cov_func, rank=rank, method=method, jitter=jitter
             )
     else:
-        if len(landmarks.shape) < 2:
-            landmarks = landmarks[:, None]
+        landmarks = ensure_2d(landmarks)
 
         n_landmarks = landmarks.shape[0]
         method = _check_method(rank, n_landmarks, method)

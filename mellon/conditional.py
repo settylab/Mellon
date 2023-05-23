@@ -1,15 +1,11 @@
-from jax.numpy import dot, square, isnan, any, atleast_2d
+from jax.numpy import dot, square, isnan, any
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-from .util import stabilize, DEFAULT_JITTER, Log, make_serializable
+from .util import stabilize, DEFAULT_JITTER, Log, make_serializable, ensure_2d
 from .base_predictor import Predictor
 
 
 logger = Log()
-
-
-def make_2d(X):
-    return atleast_2d(X.T).T
 
 
 class FullConditionalMean(Predictor):
@@ -40,7 +36,7 @@ class FullConditionalMean(Predictor):
         :return: conditional_mean - The conditioned Gaussian process mean function.
         :rtype: function
         """
-        x = make_2d(x)
+        x = ensure_2d(x)
         sigma2 = square(sigma)
         K = cov_func(x, x)
         sigma2 = max(sigma2, jitter)
@@ -73,7 +69,7 @@ class FullConditionalMean(Predictor):
         weights = self.weights
         mu = self.mu
 
-        Xnew = make_2d(Xnew)
+        Xnew = ensure_2d(Xnew)
         Kus = cov_func(Xnew, x)
         return mu + dot(Kus, weights)
 
@@ -107,8 +103,8 @@ class FullConditionalMeanY(Predictor):
         :return: conditional_mean - The conditioned Gaussian process mean function.
         :rtype: function
         """
-        x = make_2d(x)
-        Xnew = make_2d(Xnew)
+        x = ensure_2d(x)
+        Xnew = ensure_2d(Xnew)
         sigma2 = square(sigma)
         K = cov_func(x, x)
         sigma2 = max(sigma2, jitter)
@@ -175,8 +171,8 @@ class LandmarksConditionalMean(Predictor):
         :return: conditional_mean - The conditioned Gaussian process mean function.
         :rtype: function
         """
-        x = make_2d(x)
-        xu = make_2d(xu)
+        x = ensure_2d(x)
+        xu = ensure_2d(xu)
         sigma2 = square(sigma)
         Kuu = cov_func(xu, xu)
         Kuf = cov_func(xu, x)
@@ -214,7 +210,7 @@ class LandmarksConditionalMean(Predictor):
         weights = self.weights
         mu = self.mu
 
-        Xnew = make_2d(Xnew)
+        Xnew = ensure_2d(Xnew)
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
 
@@ -248,7 +244,7 @@ class LandmarksConditionalMeanCholesky(Predictor):
         :return: conditional_mean - The conditioned Gaussian process mean function.
         :rtype: function
         """
-        xu = make_2d(xu)
+        xu = ensure_2d(xu)
         sigma2 = square(sigma)
         K = cov_func(xu, xu)
         sigma2 = max(sigma2, jitter)
@@ -280,7 +276,7 @@ class LandmarksConditionalMeanCholesky(Predictor):
         weights = self.weights
         mu = self.mu
 
-        Xnew = make_2d(Xnew)
+        Xnew = ensure_2d(Xnew)
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
 
@@ -318,9 +314,9 @@ class LandmarksConditionalMeanY(Predictor):
         :return: conditional_mean - The conditioned Gaussian process mean function.
         :rtype: function
         """
-        x = make_2d(x)
-        xu = make_2d(xu)
-        Xnew = make_2d(Xnew)
+        x = ensure_2d(x)
+        xu = ensure_2d(xu)
+        Xnew = ensure_2d(Xnew)
         sigma2 = square(sigma)
         Kuu = cov_func(xu, xu)
         Kuf = cov_func(xu, x)
