@@ -222,6 +222,7 @@ def test_FunctionEstimator():
     err = jnp.std(pred_appr - pred)
     assert err < 1e-1, "The low landmarks approximation should be close to the default."
 
+    _ = est.multi_fit_predict(X, Y)
     m_pred_xu = est_full.multi_fit_predict(X, Y, est.landmarks)
     m_pred_app = est.multi_fit_predict(X, Y, est.landmarks)
     assert m_pred_xu.shape == (
