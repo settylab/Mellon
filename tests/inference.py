@@ -50,7 +50,7 @@ def test_run_advi():
     result = mellon.run_advi(loss_f, init, n_iter=2)
     assert hasattr(result, "pre_transformation")
     assert hasattr(result, "pre_transformation_std")
-    assert hasattr(result, "ELBOs")
+    assert hasattr(result, "losses")
     diff = jnp.abs(result.pre_transformation - known_optimum)
     assert jnp.max(diff) < 1e0, "Optimization result shoud be close to known minimum."
 

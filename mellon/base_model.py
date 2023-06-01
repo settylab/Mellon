@@ -233,7 +233,7 @@ class BaseEstimator:
             )
             self.pre_transformation = results.pre_transformation
             self.pre_transformation_std = results.pre_transformation_std
-            self.ELBOs = results.ELBOs
+            self.losses = results.losses
         elif optimizer == "L-BFGS-B":
             results = minimize_lbfgsb(
                 function,

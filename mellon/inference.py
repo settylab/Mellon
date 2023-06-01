@@ -593,5 +593,5 @@ def run_advi(
 
     params, stds = get_params(opt_state)
 
-    Results = namedtuple("Results", "pre_transformation pre_transformation_std ELBOs")
+    Results = namedtuple("Results", "pre_transformation pre_transformation_std losses")
     return Results(params, stds, elbos)
