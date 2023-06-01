@@ -124,19 +124,20 @@ def test_rank(input, tol=DEFAULT_RANK_TOL, threshold=None):
             )
         else:
             logger.info(
-                f"Rank fraction ({rank_fraction:.1%}) is within acceptable range. "
+                f"Rank fraction ({rank_fraction:.1%}, lower is better) is "
+                "within acceptable range. "
                 "Current settings should provide satisfactory model performance."
             )
     else:
         print(
             f"The approx. rank fraction is {rank_fraction:.1%} "
-            f"({approx_rank:,} of {max_rank:,})."
+            f"({approx_rank:,} of {max_rank:,}). Lower is better."
         )
 
     return approx_rank.item()
 
 
-def vector_map(fun, X, in_axis=0):
+def vector_map(fun, X, in_axis=0, do_jit=True):
     """
     Applies jax just in time compilation and vmap to quickly evaluate a
     function for multiple input arrays.
@@ -151,7 +152,9 @@ def vector_map(fun, X, in_axis=0):
     :return: Stacked results of the function calls.
     :rtype: array-like
     """
-    vfun = vmap(jit(fun), in_axis)
+    if do_jit:
+        fun = jit(fun)
+    vfun = vmap(fun, in_axis)
     return vfun(X)
 
 

@@ -504,6 +504,9 @@ class FunctionEstimator(BaseEstimator):
     :type cov_func: function or None
     :param sigma: The white moise standard deviation. Defaults to 0.
     :type sigma: float
+    :param jit: Use jax just in time compilation for loss and its gradient
+        during optimization. Defaults to False.
+    :type jit: bool
     :ivar n_landmarks: The number of landmark points.
     :ivar jitter: A small amount added to the diagonal of the covariance matrix
         for numerical stability.
@@ -535,6 +538,7 @@ class FunctionEstimator(BaseEstimator):
         ls_factor=1,
         cov_func=None,
         sigma=0,
+        jit=True,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
@@ -549,6 +553,7 @@ class FunctionEstimator(BaseEstimator):
             cov_func=cov_func,
         )
         self.sigma = sigma
+        self.jit = jit
 
     def prepare_inference(self, x):
         R"""
@@ -692,6 +697,7 @@ class FunctionEstimator(BaseEstimator):
         cov_func = self.cov_func
         sigma = self.sigma
         jitter = self.jitter
+        jit = self.jit
 
         conditional = compute_conditional_mean_y(
             x,
@@ -703,7 +709,7 @@ class FunctionEstimator(BaseEstimator):
             jitter=jitter,
         )
 
-        return vector_map(conditional, Y)
+        return vector_map(conditional, Y, do_jit=jit)
 
 
 class DimensionalityEstimator(BaseEstimator):
