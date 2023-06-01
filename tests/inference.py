@@ -39,6 +39,21 @@ def test_minimize_adam():
     diff = jnp.abs(result.pre_transformation - known_optimum)
     assert jnp.max(diff) < 1e0, "Optimization result shoud be close to known minimum."
 
+def test_run_advi():
+    din = 2
+
+    def loss_f(x):
+        return jnp.sum(x**2)
+
+    known_optimum = jnp.zeros(din)
+    init = jnp.ones(din)
+    result = mellon.run_advi(loss_f, init, n_iter=2)
+    assert hasattr(result, "pre_transformation")
+    assert hasattr(result, "pre_transformation_std")
+    assert hasattr(result, "ELBOs")
+    diff = jnp.abs(result.pre_transformation - known_optimum)
+    assert jnp.max(diff) < 1e0, "Optimization result shoud be close to known minimum."
+
 
 def test_minimize_lbfgsb():
     din = 2

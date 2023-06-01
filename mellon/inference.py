@@ -1,7 +1,10 @@
 from collections import namedtuple
-from jax.numpy import log, pi, exp, stack, arange, sort
+from functools import partial
+from jax import random, vmap
+from jax.numpy import log, pi, exp, stack, arange, sort, mean, zeros_like
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
+import jax.scipy.stats.norm as norm
 import jax
 from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
@@ -17,6 +20,7 @@ from .util import ensure_2d, DEFAULT_JITTER
 
 DEFAULT_N_ITER = 100
 DEFAULT_INIT_LEARN_RATE = 1
+DEFAULT_NUM_SAMPLES = 40
 DEFAULT_OPTIMIZER = "L-BFGS-B"
 DEFAULT_JIT = False
 
@@ -481,3 +485,113 @@ def Exp(func):
         return exp(func(x))
 
     return new_func
+
+
+def generate_gaussian_sample(rng, mean, log_std):
+    """
+    Generates a single sample from a multivariate Gaussian with diagonal covariance.
+
+    :param rng: random number generator
+    :param mean: mean of the Gaussian distribution
+    :param log_std: logarithm of standard deviation of the Gaussian distribution
+    :return: sample from the Gaussian distribution
+    """
+    return mean + exp(log_std) * random.normal(rng, mean.shape)
+
+
+def calculate_gaussian_logpdf(x, mean, log_std):
+    """
+    Calculates the log probability density function of a multivariate Gaussian with diagonal covariance.
+
+    :param x: value to evaluate the Gaussian on
+    :param mean: mean of the Gaussian distribution
+    :param log_std: logarithm of standard deviation of the Gaussian distribution
+    :return: log pdf of the Gaussian distribution
+    """
+    return arraysum(vmap(norm.logpdf)(x, mean, exp(log_std)))
+
+
+def calculate_elbo(logprob, rng, mean, log_std):
+    """
+    Calculates the single-sample Monte Carlo estimate of the variational lower bound (ELBO).
+
+    :param logprob: log probability of the sample
+    :param rng: random number generator
+    :param mean: mean of the Gaussian distribution
+    :param log_std: logarithm of standard deviation of the Gaussian distribution
+    :return: ELBO estimate
+    """
+    sample = generate_gaussian_sample(rng, mean, log_std)
+    return logprob(sample) - calculate_gaussian_logpdf(sample, mean, log_std)
+
+
+def calculate_batch_elbo(logprob, rng, params, num_samples):
+    """
+    Calculates the average ELBO over a batch of random samples.
+
+    :param logprob: log probability of the sample
+    :param rng: random number generator
+    :param params: parameters of the Gaussian distribution
+    :param num_samples: number of samples in the batch
+    :return: batch ELBO
+    """
+    rngs = random.split(rng, num_samples)
+    vectorized_elbo = vmap(partial(calculate_elbo, logprob), in_axes=(0, None, None))
+    return mean(vectorized_elbo(rngs, *params))
+
+
+def run_advi(
+    loss_func,
+    initial_parameters,
+    n_iter=DEFAULT_N_ITER,
+    init_learn_rate=DEFAULT_INIT_LEARN_RATE,
+    nsamples=DEFAULT_NUM_SAMPLES,
+    jit=DEFAULT_JIT,
+):
+    """
+    Performs automatic differentiation variational inference (ADVI) to fit a
+    Gaussian approximation to an intractable, unnormalized density.
+
+    :param loss_func: function to calculate the loss
+    :param initial_parameters: initial parameters for the optimization
+    :param n_iter: number of iterations for the optimization (default: DEFAULT_N_ITER)
+    :param init_learn_rate: The initial learn rate. Defaults to 1.
+    :type init_learn_rate: float
+    :return: parameters, standard deviations, and loss after the optimization
+    :return: Results - A named tuple containing pre_transformation,
+        pre_transform_std, losses: The optimized parameters, the optimized
+        standard deviations, and a history of ELBO values.
+    :rtype: array-like, array-like, Object
+    """
+
+    def negative_logprob(x):
+        return -loss_func(x)
+
+    def objective(params, t):
+        rng = random.PRNGKey(t)
+        return -calculate_batch_elbo(negative_logprob, rng, params, nsamples)
+
+    def learn_schedule(i):
+        return exp(-1e-2 * i) * init_learn_rate
+
+    init_mean, init_std = initial_parameters, -10 * zeros_like(initial_parameters)
+    opt_init, opt_update, get_params = adam(learn_schedule)
+    opt_state = opt_init((init_mean, init_std))
+
+    def update(i, opt_state):
+        params = get_params(opt_state)
+        elbo, gradient = jax.value_and_grad(objective)(params, i)
+        return opt_update(i, gradient, opt_state), elbo
+
+    if jit:
+        update = jax.jit(update)
+
+    elbos = list()
+    for t in range(n_iter):
+        opt_state, elbo = update(t, opt_state)
+        elbos.append(elbo.item())
+
+    params, stds = get_params(opt_state)
+
+    Results = namedtuple("Results", "pre_transformation pre_transformation_std ELBOs")
+    return Results(params, stds, elbos)

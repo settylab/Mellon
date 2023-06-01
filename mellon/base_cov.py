@@ -13,6 +13,7 @@ MELLON_NAME = __name__.split(".")[0]
 
 logger = Log()
 
+
 class Covariance(ABC):
     R"""
     Base covariance function.
@@ -72,14 +73,14 @@ class Covariance(ABC):
         if module_name == "__main__":
             logger.warning(
                 f'The covariance function "{clsname}" is not part of {MELLON_NAME} '
-                f'and seems to be user defined. Make sure the implementation '
-                'is available for deserialization.'
+                f"and seems to be user defined. Make sure the implementation "
+                "is available for deserialization."
             )
         elif module_name != MELLON_NAME:
             logger.warning(
                 f'The covariance function "{clsname}" is not part of {MELLON_NAME} '
                 f'but of the module "{module_name}". Make sure the module '
-                'is available for deserialization.'
+                "is available for deserialization."
             )
         module = import_module(module_name)
         version = getattr(module, "__version__", "NA")

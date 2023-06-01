@@ -86,8 +86,9 @@ class DensityEstimator(BaseEstimator):
         matrix to bind eigenvalues numerically away from 0 ensuring numerical
         stabilitity. Defaults to 1e-6.
     :type jitter: float
-    :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
-        for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
+    :param optimizer: Select optimizer 'L-BFGS-B', stochastic optimizer 'adam',
+        or automatic differentiation variational inference 'advi' for the
+        maximum a posteriori or posterior density estimation. Defaults to 'L-BFGS-B'.
     :type optimizer: str
     :param n_iter: The number of optimization iterations. Defaults to 100.
     :type n_iter: int
@@ -142,8 +143,8 @@ class DensityEstimator(BaseEstimator):
     :ivar d_method: The method to determin intrinsic dimensionality.
     :ivar jitter: A small amount added to the diagonal of the covariance matrix
         for numerical stability.
-    :ivar n_iter: The number of optimization iterations if adam optimizer is used.
-    :ivar init_learn_rate: The initial learn rate when adam optimizer is used.
+    :ivar n_iter: The number of optimization iterations if adam or advi optimizer is used.
+    :ivar init_learn_rate: The initial learn rate when adam or advi optimizer is used.
     :ivar landmarks: The points to quantize the data.
     :ivar nn_distances: The nearest neighbor distances for each data point.
     :ivar d: The local dimensionality of the data.
