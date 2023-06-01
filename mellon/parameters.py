@@ -193,15 +193,20 @@ def compute_L(
     :rtype: array-like
     """
     x = ensure_2d(x)
+    n_samples = x.shape[0]
     if landmarks is None:
         n = x.shape[0]
         method = _check_method(rank, n, method)
 
         if type(rank) is int and rank == n or type(rank) is float and rank == 1.0:
-            logger.info("Doing full-rank Cholesky decomposition.")
+            logger.info(
+                f"Doing full-rank Cholesky decomposition for {n_samples:,} samples."
+            )
             return _full_rank(x, cov_func, jitter=jitter)
         else:
-            logger.info("Doing full-rank singular value decomposition.")
+            logger.info(
+                f"Doing full-rank singular value decomposition for {n_samples:,} samples."
+            )
             return _full_decomposition_low_rank(
                 x, cov_func, rank=rank, method=method, jitter=jitter
             )
@@ -217,10 +222,16 @@ def compute_L(
             or type(rank) is float
             and rank == 1.0
         ):
-            logger.info("Doing low-rank Cholesky decomposition.")
+            logger.info(
+                "Doing low-rank Cholesky decomposition for "
+                f"{n_samples:,} samples and {n_landmarks:,} landmarks."
+            )
             return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
         else:
-            logger.info("Doing low-rank improved Nyström decomposition.")
+            logger.info(
+                "Doing low-rank improved Nyström decomposition for "
+                f"{n_samples:,} samples and {n_landmarks:,} landmarks."
+            )
             return _modified_low_rank(
                 x, cov_func, landmarks, rank=rank, method=method, jitter=jitter
             )
