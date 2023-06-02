@@ -92,6 +92,17 @@ class BaseEstimator:
             string += "L=L, "
         return string
 
+    def __call__(self, x=None):
+        """This calls self.fit_predict(x):
+        Fit model and make prediction on training data x.
+
+        :param x: Data points.
+        :type x: array-like
+        :return: Predictions.
+        :rtype: array-like
+        """
+        return self.fit_predict(x=x)
+
     def _set_x(self, x):
         self.x = x
 

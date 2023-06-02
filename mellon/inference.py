@@ -530,7 +530,7 @@ def calculate_batch_elbo(logprob, rng, params, num_samples):
     Calculates the average ELBO over a batch of random samples.
 
     :param logprob: log probability of the sample
-    :param rng: random number generator
+    :param rng: random number generator key
     :param params: parameters of the Gaussian distribution
     :param num_samples: number of samples in the batch
     :return: batch ELBO

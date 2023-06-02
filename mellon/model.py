@@ -556,6 +556,20 @@ class FunctionEstimator(BaseEstimator):
         self.sigma = sigma
         self.jit = jit
 
+    def __call__(self, x=None, y=None):
+        """This calls self.fit_predict(x, y):
+        Compute the conditional mean and return the smoothed function values
+        at the points x.
+
+        :param x: The training instances to estimate function.
+        :type x: array-like
+        :param y: The training function values on cell states.
+        :type y: array-like
+        :return: condition_mean - The conditional mean function value at each test point in x.
+        :rtype: array-like
+        """
+        return self.fit_predict(x=x, y=y)
+
     def prepare_inference(self, x):
         R"""
         Set all attributes in preparation. It is not necessary to call this
