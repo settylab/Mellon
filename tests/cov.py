@@ -5,7 +5,7 @@ import mellon
 def test_Matern32():
     n = 2
     d = 2
-    cov = mellon.Matern32(1.2)
+    cov = mellon.cov.Matern32(1.2)
     assert (
         len(str(cov)) > 0
     ), "The covariance function should have a string representation."
@@ -20,7 +20,7 @@ def test_Matern32():
 def test_Matern52():
     n = 2
     d = 2
-    cov = mellon.Matern52(1.2)
+    cov = mellon.cov.Matern52(1.2)
     assert (
         len(str(cov)) > 0
     ), "The covariance function should have a string representation."
@@ -35,7 +35,7 @@ def test_Matern52():
 def test_ExpQuad():
     n = 2
     d = 2
-    cov = mellon.ExpQuad(1.2)
+    cov = mellon.cov.ExpQuad(1.2)
     assert (
         len(str(cov)) > 0
     ), "The covariance function should have a string representation."
@@ -50,7 +50,7 @@ def test_ExpQuad():
 def test_Exponential():
     n = 2
     d = 2
-    cov = mellon.Exponential(1.2)
+    cov = mellon.cov.Exponential(1.2)
     assert (
         len(str(cov)) > 0
     ), "The covariance function should have a string representation."
@@ -65,7 +65,7 @@ def test_Exponential():
 def test_RatQuad():
     n = 2
     d = 2
-    cov = mellon.RatQuad(3, 1.2)
+    cov = mellon.cov.RatQuad(3, 1.2)
     assert (
         len(str(cov)) > 0
     ), "The covariance function should have a string representation."

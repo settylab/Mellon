@@ -5,8 +5,8 @@ import mellon
 def test_Add():
     n = 2
     d = 2
-    cov1 = mellon.Matern32(1.4)
-    cov2 = mellon.Exponential(3.4)
+    cov1 = mellon.cov.Matern32(1.4)
+    cov2 = mellon.cov.Exponential(3.4)
 
     cov = cov1 + cov2
     assert (
@@ -20,7 +20,7 @@ def test_Add():
     ), "Covariance should be computed for each pair of samples."
 
     json = cov.to_json()
-    recov = mellon.Covariance.from_json(json)
+    recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
     assert jnp.all(jnp.isclose(values, revalues)), (
         "Serialization + deserialization of added covariance functions must return the same result."
@@ -30,8 +30,8 @@ def test_Add():
 def test_Mul():
     n = 2
     d = 2
-    cov1 = mellon.Matern32(1.4)
-    cov2 = mellon.Exponential(3.4)
+    cov1 = mellon.cov.Matern32(1.4)
+    cov2 = mellon.cov.Exponential(3.4)
 
     cov = cov1 * cov2
     assert (
@@ -45,7 +45,7 @@ def test_Mul():
     ), "Covariance should be computed for each pair of samples."
 
     json = cov.to_json()
-    recov = mellon.Covariance.from_json(json)
+    recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
     assert jnp.all(jnp.isclose(values, revalues)), (
         "Serialization + deserialization of added covariance functions must return the same result."
@@ -55,7 +55,7 @@ def test_Mul():
 def test_Pow():
     n = 2
     d = 2
-    cov1 = mellon.Matern32(1.4)
+    cov1 = mellon.cov.Matern32(1.4)
 
     cov = cov1**3.2
     assert (
@@ -69,7 +69,7 @@ def test_Pow():
     ), "Covariance should be computed for each pair of samples."
 
     json = cov.to_json()
-    recov = mellon.Covariance.from_json(json)
+    recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
     assert jnp.all(jnp.isclose(values, revalues)), (
         "Serialization + deserialization of added covariance functions must return the same result."
@@ -79,9 +79,9 @@ def test_Pow():
 def test_Hirachical():
     n = 2
     d = 2
-    cov1 = mellon.Matern32(1.4)
-    cov2 = mellon.Exponential(3.4)
-    cov3 = mellon.RatQuad(1.1, 3.4)
+    cov1 = mellon.cov.Matern32(1.4)
+    cov2 = mellon.cov.Exponential(3.4)
+    cov3 = mellon.cov.RatQuad(1.1, 3.4)
 
     cov = 0.2 + 1.1 * cov1 + 2.1 * cov2 * cov3
     assert (
@@ -95,7 +95,7 @@ def test_Hirachical():
     ), "Covariance should be computed for each pair of samples."
 
     json = cov.to_json()
-    recov = mellon.Covariance.from_json(json)
+    recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
     assert jnp.all(jnp.isclose(values, revalues)), (
         "Serialization + deserialization of added covariance functions must return the same result."

@@ -123,7 +123,7 @@ class Predictor(ABC):
         :return: A dictionary representing the state of the predictor.
         :rtype: dict
         """
-        module_name = self.__class__.__module__.split(".")[0]
+        module_name = self.__class__.__module__
         module = import_module(module_name)
         version = getattr(module, "__version__", "NA")
 

@@ -68,7 +68,7 @@ class Covariance(ABC):
         :return: A dictionary representing the state of the predictor.
         :rtype: dict
         """
-        module_name = self.__class__.__module__.split(".")[0]
+        module_name = self.__class__.__module__
         clsname = self.__class__.__name__
         if module_name == "__main__":
             logger.warning(
@@ -76,7 +76,7 @@ class Covariance(ABC):
                 f"and seems to be user defined. Make sure the implementation "
                 "is available for deserialization."
             )
-        elif module_name != MELLON_NAME:
+        elif module_name.split(".")[0] != MELLON_NAME:
             logger.warning(
                 f'The covariance function "{clsname}" is not part of {MELLON_NAME} '
                 f'but of the module "{module_name}". Make sure the module '

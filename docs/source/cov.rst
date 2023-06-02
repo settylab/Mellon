@@ -10,7 +10,7 @@ Here is how you can pass a pre-existing covariance function class (which is the 
 .. code-block:: python
    :caption: Pass a predefined covariance function class (Default behavior)
 
-   from mellon import Matern52
+   from mellon.cov import Matern52
    cov_func_cury = Matern52
    cov_func = Matern52(length_scale)
 
@@ -42,7 +42,7 @@ The `Covariance` class also supports arithmetic operations such as addition, mul
 .. code-block:: python
    :caption: Combining two covariance functions.
 
-   from mellon import Matern52, ExpQuad
+   from mellon.cov import Matern52, ExpQuad
    cov_func = Matern52(length_scale)*.7 + ExpQuad(length_scale)*.3
 
 Implemented Covariance Functions

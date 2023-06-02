@@ -8,7 +8,7 @@ def test_compute_transform():
     z = jnp.ones(din)
     mu = jnp.ones(dout)
     L = jnp.ones((dout, din))
-    transform = mellon.compute_transform(mu, L)
+    transform = mellon.inference.compute_transform(mu, L)
     assert callable(transform), "compute_transform should returna function."
     y = transform(z)
     assert y.shape == (dout,), "The transformation shoudl produce the right shape."
@@ -17,7 +17,7 @@ def test_compute_transform():
 def test_compute_loss_func():
     din = 2
     nn_distances = jnp.ones(din)
-    loss_f = mellon.compute_loss_func(nn_distances, 2, lambda x: x, 2)
+    loss_f = mellon.inference.compute_loss_func(nn_distances, 2, lambda x: x, 2)
     assert callable(loss_f), "compute_loss_func should returna function."
     z = jnp.ones(din)
     loss = loss_f(z)
@@ -32,7 +32,7 @@ def test_minimize_adam():
 
     known_optimum = jnp.zeros(din)
     init = jnp.ones(din)
-    result = mellon.minimize_adam(loss_f, init, n_iter=2)
+    result = mellon.inference.minimize_adam(loss_f, init, n_iter=2)
     assert hasattr(result, "pre_transformation")
     assert hasattr(result, "opt_state")
     assert hasattr(result, "losses")
@@ -47,7 +47,7 @@ def test_run_advi():
 
     known_optimum = jnp.zeros(din)
     init = jnp.ones(din)
-    result = mellon.run_advi(loss_f, init, n_iter=2)
+    result = mellon.inference.run_advi(loss_f, init, n_iter=2)
     assert hasattr(result, "pre_transformation")
     assert hasattr(result, "pre_transformation_std")
     assert hasattr(result, "losses")
@@ -63,7 +63,7 @@ def test_minimize_lbfgsb():
 
     known_optimum = jnp.zeros(din)
     init = jnp.ones(din)
-    result = mellon.minimize_lbfgsb(loss_f, init)
+    result = mellon.inference.minimize_lbfgsb(loss_f, init)
     assert hasattr(result, "pre_transformation")
     assert hasattr(result, "opt_state")
     assert hasattr(result, "loss")
@@ -76,7 +76,7 @@ def test_compute_log_density_x():
         return hash(x)
 
     x = (1,)
-    result = mellon.compute_log_density_x(x, test_trans)
+    result = mellon.inference.compute_log_density_x(x, test_trans)
     assert result == test_trans(
         x
     ), "The latend representation of the density should be transformed correctly."
