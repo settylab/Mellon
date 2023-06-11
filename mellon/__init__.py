@@ -13,3 +13,11 @@ from .model import (
 from .base_predictor import Predictor
 from .cov import Covariance
 from .util import Log
+
+from . import cov
+from . import model
+from . import parameters
+from . import inference
+from . import conditional
+from . import decomposition
+from . import derivatives
