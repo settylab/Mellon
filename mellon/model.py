@@ -44,132 +44,149 @@ logger = Log()
 
 class DensityEstimator(BaseEstimator):
     R"""
-    A non-parametric density estimator.
-    DensityEstimator performs Bayesian inference with a Gaussian process prior and Nearest
-    Neighbor likelihood. All intermediate computations are cached as instance variables, so
-    the user can view intermediate results and save computation time by passing precomputed
-    values as arguments to a new model.
+    A class for non-parametric density estimation. It performs Bayesian inference with
+    a Gaussian process prior and Nearest Neighbor likelihood. All intermediate computations
+    are cached as instance variables, which allows viewing intermediate results and
+    saving computation time by passing precomputed values as arguments to a new model.
 
-    :param cov_func_curry: The generator of the Gaussian process covariance function.
-        Must be a curry that takes one length scale argument and returns a
+    Parameters
+    ----------
+    cov_func_curry : function or type
+        The generator of the Gaussian process covariance function.
+        This must be a curry that takes one length scale argument and returns a
         covariance function of the form k(x, y) :math:`\rightarrow` float.
-        Defaults to the type Matern52.
-    :type cov_func_curry: function or type
-    :param n_landmarks: The number of landmark points. If less than 1 or greater than or
-        equal to the number of training points, does not compute or use inducing points.
+        Defaults to Matern52.
+    n_landmarks : int
+        The number of landmark points. If less than 1 or greater than or equal to the
+        number of training points, inducing points will not be computed or used.
         Defaults to 5000.
-    :type n_landmarks: int
-    :param rank: The rank of the approximate covariance matrix.
-        If rank is an int, an :math:`n \times` rank matrix
-        :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
-        :math:`n \times n` covariance matrix.
-        If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
-        of :math:`L` is selected such that the included eigenvalues of the covariance
-        between landmark points account for the specified percentage of the
-        sum of eigenvalues. Defaults to 0.99.
-    :type rank: int or float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
-        Defaults to 'auto'.
-    :type method: str
-    :param d_method: Method to compute intrinsic dimensionality of the data.
-        Implemended options are
-        * 'embedding' use the embedding dimension `x.shape[1]`
-        * 'fractal' use the average fractal dimension (experimental)
+    rank : int or float
+        The rank of the approximate covariance matrix. If rank is an int, an :math:`n \times`
+        rank matrix :math:`L` is computed such that :math:`L L^\top \approx K`, where `K` is the
+        exact :math:`n \times n` covariance matrix. If rank is a float 0.0 :math:`\le` rank
+        :math:`\le` 1.0, the rank/size of :math:`L` is selected such that the included eigenvalues
+        of the covariance between landmark points account for the specified percentage of the sum
+        of eigenvalues. Defaults to 0.99.
+    method : str
+        Determines how the rank is interpreted: as a fixed number of eigenvectors ('fixed'), a
+        percent of eigenvalues ('percent'), or automatically ('auto'). If 'auto', the rank is
+        interpreted as a fixed number of eigenvectors if it is an int and as a percent of
+        eigenvalues if it is a float. This parameter is provided for clarity in the ambiguous case
+        of 1 vs 1.0. Defaults to 'auto'.
+    d_method : str
+        The method to compute the intrinsic dimensionality of the data. Implemented options are
+        - 'embedding': uses the embedding dimension `x.shape[1]`
+        - 'fractal': uses the average fractal dimension (experimental)
         Defaults to 'embedding'.
-    :type d_method: str
-    :param jitter: A small amount to add to the diagonal of the covariance
-        matrix to bind eigenvalues numerically away from 0 ensuring numerical
-        stabilitity. Defaults to 1e-6.
-    :type jitter: float
-    :param optimizer: Select optimizer 'L-BFGS-B', stochastic optimizer 'adam',
-        or automatic differentiation variational inference 'advi' for the
-        maximum a posteriori or posterior density estimation. Defaults to 'L-BFGS-B'.
-    :type optimizer: str
-    :param n_iter: The number of optimization iterations. Defaults to 100.
-    :type n_iter: int
-    :param init_learn_rate: The initial learn rate. Defaults to 1.
-    :type init_learn_rate: float
-    :param landmarks: The points to quantize the data for the approximate covariance. If None,
-        landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
+    jitter : float
+        A small amount added to the diagonal of the covariance matrix to bind eigenvalues
+        numerically away from 0, ensuring numerical stability. Defaults to 1e-6.
+    optimizer : str
+        The optimizer for the maximum a posteriori or posterior density estimation. Options are
+        'L-BFGS-B', stochastic optimizer 'adam', or automatic differentiation variational
+        inference 'advi'. Defaults to 'L-BFGS-B'.
+    n_iter : int
+        The number of optimization iterations. Defaults to 100.
+    init_learn_rate : float
+        The initial learning rate. Defaults to 1.
+    landmarks : array-like or None
+        The points used to quantize the data for the approximate covariance. If None,
+        landmarks are set as k-means centroids with k=n_landmarks. This is ignored if n_landmarks
         is greater than or equal to the number of training points. Defaults to None.
-    :type landmarks: array-like or None
-    :param nn_distances: The nearest neighbor distances at each
-        data point. If None, computes the nearest neighbor distances automatically, with
-        a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
+    nn_distances : array-like or None
+        The nearest neighbor distances at each data point. If None, the nearest neighbor
+        distances are computed automatically, using a KDTree if the dimensionality of the data
+        is less than 20, or a BallTree otherwise. Defaults to None.
+    d : int, array-like or None
+        The intrinsic dimensionality of the data, i.e., the dimensionality of the embedded
+        manifold. If None, `d` is set to the size of axis 1 of the training data points.
         Defaults to None.
-    :type nn_distances: array-like or None
-    :param d: The intrinsic dimensionality of the data, i.e., the dimansionality of
-        the embedded manifold.
-        If None, sets d to the size of axis 1
-        of the training data points. Defaults to None.
-    :type d: int, array-like or None
-    :param mu: The mean :math:`\mu` of the Gaussian process. If None, sets
-        :math:`\mu` to the 1th percentile
-        of :math:`\text{mle}(\text{nn_distances}, d) - 10`, where
-        :math:`\text{mle} = \log(\text{gamma}(d/2 + 1))
-        - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})`. Defaults to None.
-    :type mu: float or None
-    :param ls: The length scale of the Gaussian process covariance function. If None,
-        sets ls to the geometric mean of the nearest neighbor distances times a constant.
-        If cov_func is supplied explictly, ls has no effect. Defaults to None.
-    :type ls: float or None
-    :param cov_func: The Gaussian process covariance function of the form
-        k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
-        function cov_func = cov_func_curry(ls). Defaults to None.
-    :type cov_func: function or None
-    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-        If None, automatically computes L. Defaults to None.
-    :type L: array-like or None
-    :param initial_value: The initial guess for optimization. If None, finds
-        :math:`z` that minimizes :math:`||Lz + \mu - mle|| + ||z||`, where
-        :math:`\text{mle} = \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi)
-        - d \cdot \log(\text{nn_distances})`,
-        where :math:`d` is the intrinsic dimensionality of the data. Defaults to None.
-    :type initial_value: array-like or None
-    :param jit: Use jax just in time compilation for loss and its gradient
-        during optimization. Defaults to False.
-    :type jit: bool
-    :ivar cov_func_curry: The generator of the Gaussian process covariance function.
-    :ivar n_landmarks: The number of landmark points.
-    :ivar rank: The rank of approximate covariance matrix or percentage of
-        eigenvalues included in approximate covariance matrix.
-    :ivar method: The method to interpret the rank as a fixed number of eigenvectors
-        or a percentage of eigenvalues.
-    :ivar d_method: The method to determin intrinsic dimensionality.
-    :ivar jitter: A small amount added to the diagonal of the covariance matrix
-        for numerical stability.
-    :ivar n_iter: The number of optimization iterations if adam or advi optimizer is used.
-    :ivar init_learn_rate: The initial learn rate when adam or advi optimizer is used.
-    :ivar landmarks: The points to quantize the data.
-    :ivar nn_distances: The nearest neighbor distances for each data point.
-    :ivar d: The local dimensionality of the data.
-    :ivar mu: The Gaussian process mean :math:`\mu`.
-    :ivar ls: The Gaussian process covariance function length scale.
-    :ivar ls_factor: Factor to scale the automatically selected length scale.
-        Defaults to 1.
-    :ivar cov_func: The Gaussian process covariance function.
-    :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-    :ivar initial_value: The initial guess for Maximum A Posteriori optimization.
-    :ivar optimizer: Optimizer for the maximum a posteriori density estimation.
-    :ivar x: The training data.
-    :ivar transform: A function
-        :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(\mu, K')`.
-        Used to map the latent representation to the log-density on the
-        training data.
-    :ivar loss_func: The Bayesian loss function.
-    :ivar pre_transformation: The optimized parameters :math:`z \sim \text{Normal}(0, I)` before
-        transformation to :math:`\text{Normal}(\mu, K')`, where :math:`I` is the identity matrix
-        and :math:`K'` is the approximate covariance matrix.
-    :ivar opt_state: The final state the optimizer.
-    :ivar losses: The history of losses throughout training of adam or final
-        loss of L-BFGS-B.
-    :ivar log_density_x: The log density at the training points.
-    :ivar log_density_func: A function that computes the log density at arbitrary prediction points.
+    mu : float or None
+        The mean :math:`\mu` of the Gaussian process. If None, sets :math:`\mu` to the 1st
+        percentile of :math:`\text{mle}(\text{nn_distances}, d) - 10`, where :math:`\text{mle} =
+        \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})`.
+        Defaults to None.
+    ls : float or None
+        The length scale of the Gaussian process covariance function. If None, `ls` is set to
+        the geometric mean of the nearest neighbor distances times a constant. If `cov_func`
+        is supplied explicitly, `ls` has no effect. Defaults to None.
+    cov_func : function or None
+        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
+        If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
+        Defaults to None.
+    L : array-like or None
+        A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
+        If None, `L` is computed automatically. Defaults to None.
+    initial_value : array-like or None
+        The initial guess for optimization. If None, the value :math:`z` that minimizes
+        :math:`||Lz + \mu - mle|| + ||z||` is found, where :math:`\text{mle} = \log(\text{gamma}(d/2 + 1))
+        - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})` and :math:`d` is the intrinsic
+        dimensionality of the data. Defaults to None.
+    jit : bool
+        Use jax just-in-time compilation for loss and its gradient during optimization.
+        Defaults to False.
+
+    Attributes
+    ----------
+    cov_func_curry : function
+        The generator of the Gaussian process covariance function.
+    n_landmarks : int
+        The number of landmark points.
+    rank : int or float
+        The rank of the approximate covariance matrix.
+    method : str
+        Determines how the rank is interpreted: as a fixed number of eigenvectors ('fixed'), a
+        percent of eigenvalues ('percent'), or automatically ('auto').
+    d_method : str
+        The method to compute the intrinsic dimensionality of the data.
+    jitter : float
+        A small amount added to the diagonal of the covariance matrix.
+    n_iter : int
+        The number of optimization iterations.
+    init_learn_rate : float
+        The initial learning rate.
+    landmarks : array-like
+        The points used to quantize the data for the approximate covariance.
+    nn_distances : array-like
+        The nearest neighbor distances at each data point.
+    d : int
+        The intrinsic dimensionality of the data.
+    mu : float
+        The mean of the Gaussian process.
+    ls : float
+        The length scale of the Gaussian process covariance function.
+    cov_func : function
+        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
+    L : array-like
+        A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
+    initial_value : array-like
+        The initial guess for optimization.
+    jit : bool
+        Use jax just-in-time compilation for loss and its gradient during optimization.
+    x : ndarray
+        Training data.
+    transform : function
+        Data transformation function applied before modeling.
+    loss_func : function
+        Loss function used for optimization.
+    pre_transformation : ndarray
+        Data after being preprocessed but before being transformed.
+    opt_state : OptimizeResult
+        The result of the optimization.
+    losses : list of float
+        The loss for each iteration during optimization.
+    log_density_x : float
+        Logarithmic density of training data.
+    log_density_func: mellon.Predictor
+        An instance of `mellon.Predictor` that computes the log density
+        at arbitrary prediction points. Provides methods for gradient and
+        Hessian computations, and has serialization/deserialization features.
+        Refer to `mellon.Predictor` documentation for more details.
+    predict: mellon.Predictor
+        An instance of `mellon.Predictor` that computes the log density
+        at arbitrary prediction points. Provides methods for gradient and
+        Hessian computations, and has serialization/deserialization features.
+        Refer to `mellon.Predictor` documentation for more details.
     """
 
     def __init__(
@@ -429,7 +446,11 @@ class DensityEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-        Predict the log density at each point in x.
+        An instance of the `mellon.Predictor` that predicts the log density at each point in x.
+
+        It contains a __call__ method which can be used to predict the log density.
+        The instance also supports serialization features which allows for saving
+        and loading the predictor state. Refer to mellon.Predictor documentation for more details.
 
         :param x: The new data to predict.
         :type x: array-like
@@ -467,60 +488,73 @@ class DensityEstimator(BaseEstimator):
 
 class FunctionEstimator(BaseEstimator):
     R"""
-    Uses a conditional normal distribution to smoothen and extend a function
-    on all cell states using the Mellon abstractions.
+    This class implements a Function Estimator that uses a conditional normal distribution
+    to smoothen and extend a function on all cell states using the Mellon abstractions.
 
-    :param cov_func_curry: The generator of the Gaussian process covariance function.
-        Must be a curry that takes one length scale argument and returns a
-        covariance function of the form k(x, y) :math:`\rightarrow` float.
-        Defaults to the type Matern52.
-    :type cov_func_curry: function or type
-    :param n_landmarks: The number of landmark points. If less than 1 or greater than or
-        equal to the number of training points, does not compute or use inducing points.
-        Defaults to 5000.
-    :type n_landmarks: int
-    :type method: str
-    :param jitter: A small amount to add to the diagonal of the covariance
-        matrix to bind eigenvalues numerically away from 0 ensuring numerical
-        stabilitity. Defaults to 1e-6.
-    :type jitter: float
-    :param landmarks: The points to quantize the data for the approximate covariance. If None,
-        landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
-        is greater than or equal to the number of training points. Defaults to None.
-    :type landmarks: array-like or None
-    :param nn_distances: The nearest neighbor distances at each
-        data point. If None, computes the nearest neighbor distances automatically, with
-        a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
+    Parameters
+    ----------
+    cov_func_curry : function or type
+        A curry that takes one length scale argument and returns a covariance function
+        of the form k(x, y) :math:`\rightarrow` float. Defaults to Matern52.
+    n_landmarks : int, optional
+        The number of landmark points. If less than 1 or greater than or equal to the
+        number of training points, inducing points will not be computed or used. Defaults to 5000.
+    jitter : float, optional
+        A small amount added to the diagonal of the covariance matrix to ensure numerical stability.
+        Defaults to 1e-6.
+    landmarks : array-like or None, optional
+        Points used to quantize the data for the approximate covariance. If None, landmarks are
+        set as k-means centroids with k=n_landmarks. This is ignored if n_landmarks is greater than
+        or equal to the number of training points. Defaults to None.
+    nn_distances : array-like or None, optional
+        The nearest neighbor distances at each data point. If None, computes the nearest neighbor
+        distances automatically, with a KDTree if the dimensionality of the data is less than 20,
+        or a BallTree otherwise. Defaults to None.
+    mu : float or None, optional
+        The mean of the Gaussian process :math:`\mu`. Defaults to 0.
+    ls : float or None, optional
+        The length scale of the Gaussian process covariance function. If None, sets ls to the
+        geometric mean of the nearest neighbor distances times a constant. This has no effect
+        if cov_func is supplied explicitly. Defaults to None.
+    cov_func : function or None, optional
+        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
+        If None, automatically generates the covariance function cov_func = cov_func_curry(ls).
         Defaults to None.
-    :type nn_distances: array-like or None
-    :param mu: The mean of the Gaussian process :math:`\mu`. Defaults to 0.
-    :type mu: float or None
-    :param ls: The length scale of the Gaussian process covariance function. If None,
-        sets ls to the geometric mean of the nearest neighbor distances times a constant.
-        If cov_func is supplied explictly, ls has no effect. Defaults to None.
-    :type ls: float or None
-    :param cov_func: The Gaussian process covariance function of the form
-        k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
-        function cov_func = cov_func_curry(ls). Defaults to None.
-    :type cov_func: function or None
-    :param sigma: The white moise standard deviation. Defaults to 0.
-    :type sigma: float
-    :param jit: Use jax just in time compilation for loss and its gradient
-        during optimization. Defaults to False.
-    :type jit: bool
-    :ivar n_landmarks: The number of landmark points.
-    :ivar jitter: A small amount added to the diagonal of the covariance matrix
-        for numerical stability.
-    :ivar landmarks: The points to quantize the data.
-    :ivar nn_distances: The nearest neighbor distances for each data point.
-    :ivar mu: The Gaussian process mean :math:`\mu`.
-    :ivar ls: The Gaussian process covariance function length scale.
-    :ivar ls_factor: Factor to scale the automatically selected length scale.
-        Defaults to 1.
-    :ivar cov_func: The Gaussian process covariance function.
-    :ivar sigma: White noise standard deviation.
-    :ivar x: The cell states.
-    :ivar y: Function values on cell states.
+    sigma : float, optional
+        The standard deviation of the white noise. Defaults to 0.
+    jit : bool, optional
+        Use JAX just-in-time compilation for the loss function and its gradient during optimization.
+        Defaults to False.
+
+    Attributes
+    ----------
+    n_landmarks : int
+        The number of landmark points.
+    jitter : float
+        A small amount added to the diagonal of the covariance matrix for numerical stability.
+    landmarks : array-like
+        The points used to quantize the data.
+    nn_distances : array-like
+        The nearest neighbor distances for each data point.
+    mu : float
+        The mean of the Gaussian process :math:`\mu`.
+    ls : float
+        The length scale of the Gaussian process covariance function.
+    ls_factor : float
+        Factor used to scale the automatically selected length scale. Defaults to 1.
+    cov_func : function
+        The Gaussian process covariance function.
+    sigma : float
+        Standard deviation of the white noise.
+    x : array-like
+        The cell states.
+    y : array-like
+        Function values on the cell states.
+    predict: mellon.Predictor
+        An instance of `mellon.Predictor` that computes the function values
+        at arbitrary prediction points. Provides methods for gradient and
+        Hessian computations, and has serialization/deserialization features.
+        Refer to `mellon.Predictor` documentation for more details.
     """
 
     def __init__(
@@ -654,7 +688,11 @@ class FunctionEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-        Predict the function at each point in x.
+        An instance of the `mellon.Predictor` that predicts the function values at each point in x.
+
+        It contains a __call__ method which can be used to predict the function values
+        The instance also supports serialization features which allows for saving
+        and loading the predictor state. Refer to mellon.Predictor documentation for more details.
 
         :param x: The new data to predict.
         :type x: array-like
@@ -729,137 +767,123 @@ class FunctionEstimator(BaseEstimator):
 
 class DimensionalityEstimator(BaseEstimator):
     R"""
-    A non-parametric estimator for local dimensionality and density.
-    DimensionalityEstimator performs Bayesian inference with a Gaussian process prior and
-    a normal distribution for local scaling rates.
-    All intermediate computations are cached as instance variables, so
-    the user can view intermediate results and save computation time by passing precomputed
-    values as arguments to a new model.
+    This class provides a non-parametric method for estimating local dimensionality and density.
+    It uses Bayesian inference with a Gaussian process prior and a normal distribution for local scaling rates.
+    The class caches all intermediate computations as instance variables, enabling users to view intermediate results and
+    save computational time by passing precomputed values to a new model instance.
 
-    :param cov_func_curry: The generator of the Gaussian process covariance function.
-        Must be a curry that takes one length scale argument and returns a
-        covariance function of the form k(x, y) :math:`\rightarrow` float.
-        Defaults to the type Matern52.
-    :type cov_func_curry: function or type
-    :param n_landmarks: The number of landmark points. If less than 1 or greater than or
-        equal to the number of training points, does not compute or use inducing points.
-        Defaults to 5000.
-    :type n_landmarks: int
-    :param rank: The rank of the approximate covariance matrix.
-        If rank is an int, an :math:`n \times` rank matrix
-        :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
-        :math:`n \times n` covariance matrix.
-        If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
-        of :math:`L` is selected such that the included eigenvalues of the covariance
-        between landmark points account for the specified percentage of the
-        sum of eigenvalues. Defaults to 0.99.
-    :type rank: int or float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Provided for explictness and to clarify the ambiguous case of 1 vs 1.0.
-        Defaults to 'auto'.
-    :type method: str
-    :param jitter: A small amount to add to the diagonal of the covariance
-        matrix to bind eigenvalues numerically away from 0 ensuring numerical
-        stabilitity. Defaults to 1e-6.
-    :type jitter: float
-    :param optimizer: Select optimizer 'L-BFGS-B' or stochastic optimizer 'adam'
-        for the maximum a posteriori density estimation. Defaults to 'L-BFGS-B'.
-    :type optimizer: str
-    :param n_iter: The number of optimization iterations. Defaults to 100.
-    :type n_iter: int
-    :param init_learn_rate: The initial learn rate. Defaults to 1.
-    :type init_learn_rate: float
-    :param landmarks: The points to quantize the data for the approximate covariance. If None,
-        landmarks are set as k-means centroids with k=n_landmarks. Ignored if n_landmarks
-        is greater than or equal to the number of training points. Defaults to None.
-    :type landmarks: array-like or None
-    :param k: The number of nearest neighbor distances to consider. Defaults to 10.
-    :type k: int
-    :param distances: The k nearest neighbor distances at each
-        data point. If None, computes the nearest neighbor distances automatically, with
-        a KDTree if the dimensionality of the data is less than 20, or a BallTree otherwise.
-        Defaults to None.
-    :type distances: array-like or None
-    :param d: The estimated local intrinsic dimensionality of the data.
-        This is only used to initialize the density estimation.
-        If None, sets d to the emperical estimae.
-    :type d: array-like
-    :param mu_dim: The mean of the Gaussian process for log intrinsic
-        dimensionality :math:`\mu_D. Default is 0.
-    :type mu_dim: float or None
-    :param mu_dens: The mean of the Gaussian process for log density
-        :math:`\mu_\rho`. If None,
-        sets mu_dens to the 1th percentile
-        of :math:`\text{mle}(\text{nn_distances}, d) - 10`, where
-        :math:`\text{mle} = \log(\text{gamma}(d/2 + 1))
-        - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})`. Defaults to None.
-    :type mu_dens: float or None
-    :param ls: The length scale of the Gaussian process covariance function. If None,
-        sets ls to the geometric mean of the nearest neighbor distances times a constant.
-        If cov_func is supplied explictly, ls has no effect. Defaults to None.
-    :type ls: float or None
-    :param cov_func: The Gaussian process covariance function of the form
-        k(x, y) :math:`\rightarrow` float. If None, automatically generates the covariance
-        function cov_func = cov_func_curry(ls). Defaults to None.
-    :type cov_func: function or None
-    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-        If None, automatically computes L. Defaults to None.
-    :type L: array-like or None
-    :param initial_value: The initial guess for optimization. If None, finds
-        :math:`z` that minimizes :math:`||Lz + \mu_\cdot - mle|| + ||z||`, where
-        :math:`\text{mle}` is the maximum likelyhood estimate for the denisty
-        initialization and the neighborhood based local intrinstic dimensionality
-        for the dimensionality initializatuion.
-    :type initial_value: array-like or None
-    :param jit: Use jax just in time compilation for loss and its gradient
-        during optimization. Defaults to False.
-    :type jit: bool
-    :ivar cov_func_curry: The generator of the Gaussian process covariance function.
-    :ivar n_landmarks: The number of landmark points.
-    :ivar rank: The rank of approximate covariance matrix or percentage of
-        eigenvalues included in approximate covariance matrix.
-    :ivar method: The method to interpret the rank as a fixed number of eigenvectors
-        or a percentage of eigenvalues.
-    :ivar jitter: A small amount added to the diagonal of the covariance matrix
-        for numerical stability.
-    :ivar n_iter: The number of optimization iterations if adam optimizer is used.
-    :ivar init_learn_rate: The initial learn rate when adam optimizer is used.
-    :ivar landmarks: The points to quantize the data.
-    :ivar nn_distances: The nearest neighbor distances for each data point.
-    :ivar mu_dim: The Gaussian process mean :math:`\mu_D`.
-    :ivar mu_dens: The Gaussian process mean :math:`\mu_\rho`.
-    :ivar ls: The Gaussian process covariance function length scale.
-    :ivar ls_factor: Factor to scale the automatically selected length scale.
-        Defaults to 1.
-    :ivar cov_func: The Gaussian process covariance function.
-    :ivar L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
-    :ivar initial_value: The initial guess for Maximum A Posteriori optimization.
-    :ivar optimizer: Optimizer for the maximum a posteriori density estimation.
-    :ivar x: The training data.
-    :ivar transform: A function
-        :math:`z \sim \text{Normal}(0, I) \rightarrow \text{Normal}(\mu_\cdot, K')`.
-        Used to map the latent representation to the log-density on the
-        training data.
-    :ivar loss_func: The Bayesian loss function.
-    :ivar pre_transformation: The optimized parameters :math:`z \sim \text{Normal}(0, I)` before
-        transformation to :math:`\text{Normal}(\mu_\cdot, K')`, where :math:`I` is the identity matrix
-        and :math:`K'` is the approximate covariance matrix.
-    :ivar opt_state: The final state the optimizer.
-    :ivar losses: The history of losses throughout training of adam or final
-        loss of L-BFGS-B.
-    :ivar local_dim_x: The local intrinsic dimensionality at the training points.
-    :ivar log_density_x: The log density with variing units at the training
-        points. Density indicates the number of cells per volume in state
-        space. Since the intrinsic dimensionality of the volume changes, the resulting
-        density unit varies.
-    :ivar local_dim_func: A function that computes the local intrinsic dimensionality
-        at arbitrary prediction points.
-    :ivar log_density_func: A function that computes the log density with
-        variing units at arbitrary prediction points.
+    Parameters
+    ----------
+    cov_func_curry: function or type, optional (default=Matern52)
+        A generator for the Gaussian process covariance function. It should be a curry function taking one length scale argument
+        and returning a covariance function of the form k(x, y) :math:`\rightarrow` float.
+
+    n_landmarks: int, optional (default=5000)
+        The number of landmark points. If less than 1 or greater than or equal to the number of training points,
+        inducing points are not computed or used.
+
+    rank: int or float, optional (default=0.99)
+        The rank of the approximate covariance matrix. When interpreted as an integer, an :math:`n \times` rank matrix
+        :math:`L` is computed such that :math:`L L^\top \approx K`, where :math:`K` is the exact :math:`n \times n` covariance matrix.
+        When interpreted as a float (between 0.0 and 1.0), the rank/size of :math:`L` is chosen such that the included eigenvalues of the covariance
+        between landmark points account for the specified percentage of the total eigenvalues.
+
+    method: str, optional (default='auto')
+        Determines whether the `rank` parameter is interpreted as a fixed number of eigenvectors ('fixed'), a percentage of eigenvalues ('percent'),
+        or determined automatically ('auto'). In 'auto' mode, `rank` is treated as a fixed number if it is an integer, or a percentage if it's a float.
+
+    jitter: float, optional (default=1e-6)
+        A small amount added to the diagonal of the covariance matrix to ensure numerical stability by keeping eigenvalues away from 0.
+
+    optimizer: str, optional (default='L-BFGS-B')
+        The optimizer to use for maximum a posteriori density estimation. It can be either 'L-BFGS-B' or 'adam'.
+
+    n_iter: int, optional (default=100)
+        The number of iterations for optimization.
+
+    init_learn_rate: float, optional (default=1)
+        The initial learning rate for the optimizer.
+
+    landmarks: array-like or None, optional
+        Points used to quantize the data for approximate covariance. If None, landmarks are set as k-means centroids
+        with k=n_landmarks. If the number of landmarks is greater than or equal to the number of training points, this parameter is ignored.
+
+    k: int, optional (default=10)
+        The number of nearest neighbor distances to consider.
+
+    distances: array-like or None, optional
+        The k nearest neighbor distances at each data point. If None, these distances are computed automatically using KDTree (if data dimensionality is < 20)
+        or BallTree otherwise.
+
+    d: array-like, optional
+        The estimated local intrinsic dimensionality of the data. This is only used to initialize the density estimation.
+        If None, an empirical estimate is used.
+
+    mu_dim: float or None, optional (default=0)
+        The mean of the Gaussian process for log intrinsic dimensionality :math:`\mu_D`.
+
+    mu_dens: float or None, optional
+        The mean of the Gaussian process for log density :math:`\mu_\rho`. If None,
+        `mu_dens` is set to the 1st percentile of :math:`\text{mle}(\text{nn_distances}, d) - 10`.
+
+    ls: float or None, optional
+        The length scale of the Gaussian process covariance function. If None, it's set to the geometric mean of the nearest neighbor distances multiplied by a constant.
+        If `cov_func` is supplied explicitly, `ls` has no effect.
+
+    cov_func: function or None, optional
+        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float. If None, the covariance function is generated automatically as `cov_func = cov_func_curry(ls)`.
+
+    L: array-like or None, optional
+        A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix. If None, `L` is computed automatically.
+
+    initial_value: array-like or None, optional
+        The initial guess for optimization. If None, an optimized :math:`z` is found that minimizes :math:`||Lz + \mu_\cdot - mle|| + ||z||`, where :math:`\text{mle}` is the maximum likelihood estimate
+        for density initialization and the neighborhood-based local intrinsic dimensionality for dimensionality initialization.
+
+    jit: bool, optional (default=False)
+        If True, use JAX's just-in-time compilation for loss and its gradient during optimization.
+
+    Attributes
+    ----------
+    The attributes of this class correspond to the parameters of the same names, with the following additional attributes:
+
+    x: array-like
+        The training data.
+
+    transform: function
+        Used to map the latent representation to the log-density on the training data.
+
+    loss_func: function
+        The Bayesian loss function.
+
+    pre_transformation: array-like
+        The optimized parameters before transformation, used to map the latent representation to the log-density on the training data.
+
+    opt_state: object
+        The final state of the optimizer.
+
+    losses: list or float
+        The history of losses throughout training with 'adam' or final loss with 'L-BFGS-B'.
+
+    local_dim_x: array-like
+        The local intrinsic dimensionality at the training points.
+
+    log_density_x: array-like
+        The log density with varying units at the training points. Density indicates the number of cells per volume in state space.
+        As the intrinsic dimensionality of the volume changes, the resulting density unit varies.
+
+    local_dim_func: mellon.Predictor
+        An instance of `mellon.Predictor` that computes the local intrinsic dimensionality
+        at arbitrary prediction points. Provides methods for gradient and
+        Hessian computations, and has serialization/deserialization features.
+        Refer to `mellon.Predictor` documentation for more details.
+
+
+    log_density_func: mellon.Predictor
+        An instance of `mellon.Predictor` that computes the log density with varying units
+        at arbitrary prediction points. Provides methods for gradient and
+        Hessian computations, and has serialization/deserialization features.
+        Refer to `mellon.Predictor` documentation for more details.
     """
 
     def __init__(
@@ -1168,8 +1192,11 @@ class DimensionalityEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-        Predict the dimensionality at each point in x.
-        Alias for predict_dimensionality().
+        An instance of the `mellon.Predictor` that predicts the dimensionality at each point in x.
+
+        It contains a __call__ method which can be used to predict the dimensionality.
+        The instance also supports serialization features which allows for saving
+        and loading the predictor state. Refer to mellon.Predictor documentation for more details.
 
         :param x: The new data to predict.
         :type x: array-like
