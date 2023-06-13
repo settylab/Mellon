@@ -15,12 +15,11 @@ from jax.numpy import (
     ones,
     arange,
     concatenate,
-    atleast_2d,
 )
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm, lstsq, matrix_rank
 from jax.scipy.special import gammaln
-from jax import jit, vmap
+from jax import vmap
 from sklearn.neighbors import BallTree, KDTree
 
 
@@ -137,27 +136,6 @@ def test_rank(input, tol=DEFAULT_RANK_TOL, threshold=None):
     return approx_rank.item()
 
 
-def vector_map(fun, X, in_axis=0, do_jit=True):
-    """
-    Applies jax just in time compilation and vmap to quickly evaluate a
-    function for multiple input arrays.
-
-    :param fun: The function to evaluate.
-    :type fun: function
-    :param X: Array of intput arrays.
-    :type X: array-like
-    :param in_axis: An integer, None, or (nested) standard Python container
-        (tuple/list/dict) thereof specifying which input array axes to map over.
-        S. documantation of jax.vmap.
-    :return: Stacked results of the function calls.
-    :rtype: array-like
-    """
-    if do_jit:
-        fun = jit(fun)
-    vfun = vmap(fun, in_axis)
-    return vfun(X)
-
-
 def local_dimensionality(x, k=30, x_query=None, neighbor_idx=None):
     """
     Compute an estimate of the local fractal dimension of a data set using nearest neighbors.
@@ -232,44 +210,3 @@ class Log(object):
         """Turn on logging."""
         cls.__new__(cls)
         cls.logger.setLevel(logging.INFO)
-
-
-def make_serializable(x):
-    """
-    Converts a given object to a serializable format.
-
-    :param x: The object to be made serializable.
-    :type x: An array or a number.
-    :return: The object in a serializable format if possible, otherwise the original object.
-    :rtype: Depends on the input object.
-
-    This function attempts to convert objects (e.g. numpy arrays or jax arrays)
-    to lists which can be serialized to formats like JSON.
-    If conversion is not possible, the original object is returned.
-    """
-    try:
-        return x.tolist()
-    except AttributeError:
-        # If `tolist` method does not exist, return the original object.
-        return x
-    except Exception as e:
-        logger = Log()
-        logger.error(
-            f"An error occurred while attempting to make object serializable: {e}"
-        )
-        return x
-
-
-def ensure_2d(X):
-    """
-    Ensures that the input JAX array, X, is at least 2-dimensional.
-
-    :param X: The input JAX array to be made 2-dimensional.
-    :type X: jnp.array
-    :return: The input array transformed to a 2-dimensional array.
-    :rtype: jnp.array
-
-    If X is 1-dimensional, it is reshaped to a 2-dimensional array,
-    where each element of X becomes a row in the 2-dimensional array.
-    """
-    return atleast_2d(X.T).T

@@ -1,7 +1,8 @@
 from jax.numpy import dot, square, isnan, any
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-from .util import stabilize, DEFAULT_JITTER, Log, make_serializable, ensure_2d
+from .util import stabilize, DEFAULT_JITTER, Log
+from .helper import ensure_2d, make_serializable
 from .base_predictor import Predictor
 
 

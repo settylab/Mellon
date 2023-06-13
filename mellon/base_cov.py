@@ -7,7 +7,8 @@ import json
 from jax.numpy import asarray as asjnparray
 from jax.numpy import isscalar
 
-from .util import make_serializable, Log
+from .util import Log
+from .helper import make_serializable, deserialize
 
 MELLON_NAME = __name__.split(".")[0]
 
@@ -85,6 +86,7 @@ class Covariance(ABC):
         module = import_module(module_name)
         version = getattr(module, "__version__", "NA")
         state = {
+            "type":"mellon.Covariance",
             "data": self._data_dict(),
             "metadata": {
                 "classname": clsname,
@@ -108,7 +110,7 @@ class Covariance(ABC):
         """
         data = state["data"]
         for name, value in data.items():
-            val = asjnparray(value)
+            val = deserialize(value)
             setattr(self, name, val)
 
     def to_json(self):
@@ -119,7 +121,7 @@ class Covariance(ABC):
         :return: An JASON string.
         :rtype: string
         """
-        return json.dumps(self.to_dict())
+        return json.dumps(self.__getstate__())
 
     def to_dict(self):
         """Serialize the predictor to a python dictionary."""
@@ -150,6 +152,10 @@ class Covariance(ABC):
         :return: An instance of the covariance function.
         :rtype: Covariance subclass instance
         """
+        if not isinstance(state, dict) or state.get("type") != "mellon.Covariance":
+            raise ValueError(
+                "The passed dict does not seem to define a covariance kernel."
+            )
         clsname = state["metadata"]["classname"]
         module_name = state["metadata"]["module_name"]
 
@@ -197,6 +203,7 @@ class CovariancePair(Covariance):
         else:
             right_data = make_serializable(self.right)
         state = {
+            "type": "mellon.Covariance",
             "left_data": self.left.__getstate__(),
             "right_data": right_data,
             "metadata": {
@@ -219,14 +226,18 @@ class CovariancePair(Covariance):
         :param state: A dictionary representing the state of the covariance function.
         :type state: dict
         """
+        if not isinstance(state, dict) or state.get("type") != "mellon.Covariance":
+            raise ValueError(
+                "The passed dict does not seem to define a covariance kernel."
+            )
         self.left = Covariance.from_dict(state["left_data"])
-        if isinstance(state["right_data"], dict):
+        if (
+            isinstance(state["right_data"], dict)
+            and state["right_data"].get("type") == "mellon.Covariance"
+        ):
             self.right = Covariance.from_dict(state["right_data"])
         else:
-            if isscalar(state["right_data"]):
-                self.right = state["right_data"]
-            else:
-                self.right = asjnparray(state["right_data"])
+            self.right = deserialize(state["right_data"])
 
 
 class Add(CovariancePair):
@@ -267,3 +278,4 @@ class Pow(CovariancePair):
 
     def k(self, x, y):
         return self.left(x, y) ** self.right
+

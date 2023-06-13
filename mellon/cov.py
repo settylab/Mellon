@@ -1,5 +1,5 @@
 from jax.numpy import sqrt, exp, square
-from .base_cov import Covariance
+from .base_cov import Covariance, select_active_dims
 from .util import distance
 
 

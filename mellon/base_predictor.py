@@ -6,11 +6,11 @@ from datetime import datetime
 import gzip
 import bz2
 
-from jax.numpy import asarray as asjnparray
 import json
 
 from .base_cov import Covariance
 from .util import Log
+from .helper import deserialize
 from .derivatives import (
     gradient,
     hessian,
@@ -129,7 +129,7 @@ class Predictor(ABC):
 
         state = {
             "data": self._data_dict(),
-            "cov_func": self.cov_func.to_dict(),
+            "cov_func": self.cov_func.__getstate__(),
             "metadata": {
                 "classname": self.__class__.__name__,
                 "module_name": module_name,
@@ -152,7 +152,7 @@ class Predictor(ABC):
         """
         data = state["data"]
         for name, value in data.items():
-            val = asjnparray(value)
+            val = deserialize(value)
             setattr(self, name, val)
         self.cov_func = Covariance.from_dict(state["cov_func"])
 

@@ -15,7 +15,8 @@ from .conditional import (
     LandmarksConditionalMeanCholesky,
     LandmarksConditionalMeanY,
 )
-from .util import ensure_2d, DEFAULT_JITTER
+from .util import DEFAULT_JITTER
+from .helper import ensure_2d
 
 
 DEFAULT_N_ITER = 100

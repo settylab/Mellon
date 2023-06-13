@@ -31,10 +31,10 @@ from .derivatives import (
 )
 from .util import (
     DEFAULT_JITTER,
-    vector_map,
     Log,
     local_dimensionality,
 )
+from .helper import vector_map
 
 
 DEFAULT_D_METHOD = "embedding"
@@ -75,8 +75,8 @@ class DensityEstimator(BaseEstimator):
         of 1 vs 1.0. Defaults to 'auto'.
     d_method : str
         The method to compute the intrinsic dimensionality of the data. Implemented options are
-        - 'embedding': uses the embedding dimension `x.shape[1]`
-        - 'fractal': uses the average fractal dimension (experimental)
+         - 'embedding': uses the embedding dimension `x.shape[1]`
+         - 'fractal': uses the average fractal dimension (experimental)
         Defaults to 'embedding'.
     jitter : float
         A small amount added to the diagonal of the covariance matrix to bind eigenvalues
@@ -636,14 +636,14 @@ class FunctionEstimator(BaseEstimator):
         :return: condition_mean_function - The conditional mean function.
         :rtype: array-like
         """
+        if x is None:
+            x = self.x
         if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             raise ValueError(message)
         if self.x is None and x is None:
             message = "Required argument x is missing and self.x has not been set."
             raise ValueError(message)
-        if x is None:
-            x = self.x
         if y is None:
             message = "Required argument y is missing."
             raise ValueError(message)

@@ -3,7 +3,8 @@ from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle, local_dimensionality, Log, DEFAULT_JITTER, ensure_2d
+from .util import mle, local_dimensionality, Log, DEFAULT_JITTER
+from .helper import ensure_2d
 from .decomposition import (
     _check_method,
     _full_rank,
