@@ -24,11 +24,6 @@ from .parameters import (
     compute_landmarks,
     DEFAULT_N_LANDMARKS,
 )
-from .derivatives import (
-    gradient,
-    hessian,
-    hessian_log_determinant,
-)
 from .util import (
     DEFAULT_JITTER,
     Log,
@@ -77,6 +72,7 @@ class DensityEstimator(BaseEstimator):
         The method to compute the intrinsic dimensionality of the data. Implemented options are
          - 'embedding': uses the embedding dimension `x.shape[1]`
          - 'fractal': uses the average fractal dimension (experimental)
+
         Defaults to 'embedding'.
     jitter : float
         A small amount added to the diagonal of the covariance matrix to bind eigenvalues
@@ -178,11 +174,6 @@ class DensityEstimator(BaseEstimator):
     log_density_x : float
         Logarithmic density of training data.
     log_density_func: mellon.Predictor
-        An instance of `mellon.Predictor` that computes the log density
-        at arbitrary prediction points. Provides methods for gradient and
-        Hessian computations, and has serialization/deserialization features.
-        Refer to `mellon.Predictor` documentation for more details.
-    predict: mellon.Predictor
         An instance of `mellon.Predictor` that computes the log density
         at arbitrary prediction points. Provides methods for gradient and
         Hessian computations, and has serialization/deserialization features.
@@ -550,11 +541,6 @@ class FunctionEstimator(BaseEstimator):
         The cell states.
     y : array-like
         Function values on the cell states.
-    predict: mellon.Predictor
-        An instance of `mellon.Predictor` that computes the function values
-        at arbitrary prediction points. Provides methods for gradient and
-        Hessian computations, and has serialization/deserialization features.
-        Refer to `mellon.Predictor` documentation for more details.
     """
 
     def __init__(

@@ -5,7 +5,7 @@ from .util import distance
 
 
 class Matern32(Covariance):
-    """
+    R"""
     Implementation of the Matern-3/2 kernel function, a member of the Matern
     family of kernels.
 
@@ -63,7 +63,7 @@ class Matern32(Covariance):
 
 
 class Matern52(Covariance):
-    """
+    R"""
     Implementation of the Matern-5/2 kernel function, a member of the Matern
     family of kernels.
 
@@ -122,7 +122,7 @@ class Matern52(Covariance):
 
 
 class ExpQuad(Covariance):
-    """
+    R"""
     Exponentiated Quadratic kernel, also known as the squared exponential or the Gaussian kernel.
 
     The kernel is defined as:
@@ -159,7 +159,7 @@ class ExpQuad(Covariance):
 
 
 class Exponential(Covariance):
-    """
+    R"""
     Exponential kernel.
 
     The kernel is defined as:
@@ -196,7 +196,7 @@ class Exponential(Covariance):
 
 
 class RatQuad(Covariance):
-    """
+    R"""
     Rational Quadratic kernel.
 
     The kernel is defined as:

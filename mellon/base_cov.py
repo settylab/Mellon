@@ -4,9 +4,6 @@ from importlib import import_module
 from datetime import datetime
 import json
 
-from jax.numpy import asarray as asjnparray
-from jax.numpy import isscalar
-
 from .util import Log
 from .helper import make_serializable, deserialize
 

@@ -1,6 +1,7 @@
 import sys
 import logging
 
+from jax.config import config as jaxconfig
 from jax.numpy import (
     eye,
     log,
@@ -210,3 +211,20 @@ class Log(object):
         """Turn on logging."""
         cls.__new__(cls)
         cls.logger.setLevel(logging.INFO)
+
+
+def set_jax_config(enable_x64=True, platform_name="cpu"):
+    """
+    Sets up the JAX configuration with the specified settings.
+
+    Parameters
+    ----------
+    enable_x64 : bool, optional
+        Whether to enable 64-bit (double precision) computations in JAX.
+        Defaults to True.
+    platform_name : str, optional
+        The platform name to use in JAX ('cpu', 'gpu', or 'tpu').
+        Defaults to 'cpu'.
+    """
+    jaxconfig.update("jax_enable_x64", enable_x64)
+    jaxconfig.update("jax_platform_name", platform_name)

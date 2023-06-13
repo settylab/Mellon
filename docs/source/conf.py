@@ -41,7 +41,7 @@ release = get_version('../../mellon/__init__.py')
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-        'sphinx.ext.autodoc', 'nbsphinx',
+        'sphinx.ext.autodoc', 'nbsphinx', 'sphinx.ext.napoleon',
         ]
 
 source_suffix = ['.rst', '.md']
