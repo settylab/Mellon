@@ -86,7 +86,7 @@ class Covariance(ABC):
         module = import_module(module_name)
         version = getattr(module, "__version__", "NA")
         state = {
-            "type":"mellon.Covariance",
+            "type": "mellon.Covariance",
             "data": self._data_dict(),
             "metadata": {
                 "classname": clsname,
@@ -278,4 +278,3 @@ class Pow(CovariancePair):
 
     def k(self, x, y):
         return self.left(x, y) ** self.right
-

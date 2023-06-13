@@ -8,7 +8,7 @@ this_directory = Path(__file__).parent
 
 def get_version(rel_path):
     for line in (this_directory / rel_path).read_text().splitlines():
-        if line.startswith('__version__'):
+        if line.startswith("__version__"):
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
     else:
@@ -17,7 +17,7 @@ def get_version(rel_path):
 
 setup(
     name="mellon",
-    version=get_version('mellon/__init__.py'),
+    version=get_version("mellon/__init__.py"),
     description="Non-parametric density estimator.",
     url="https://github.com/settylab/mellon",
     author="Setty Lab",

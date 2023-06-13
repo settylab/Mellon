@@ -3,7 +3,7 @@ from jax.config import config as jaxconfig
 jaxconfig.update("jax_enable_x64", True)
 jaxconfig.update("jax_platform_name", "cpu")
 
-__version__ = "1.2.0"
+__version__ = "1.3.0rc"
 
 from .model import (
     DensityEstimator,

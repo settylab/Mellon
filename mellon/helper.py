@@ -3,6 +3,7 @@ from jax.numpy import (
     atleast_2d,
     ndarray,
     array,
+    isscalar,
 )
 
 
@@ -90,3 +91,27 @@ def ensure_2d(X):
     where each element of X becomes a row in the 2-dimensional array.
     """
     return atleast_2d(X.T).T
+
+
+def select_active_dims(x, active_dims):
+    """
+    Select the active dimensions from the input.
+
+    Parameters
+    ----------
+    x : array-like
+        Input array.
+
+    selected_dimensions : array-like, slice or scalar
+        The indices of the active dimensions. It could be a scalar, a list, a numpy array, or a slice object.
+
+    Returns
+    -------
+    x : array-like
+        Array with selected dimensions.
+    """
+    if active_dims is not None:
+        if isscalar(active_dims):
+            active_dims = [active_dims]
+        x = x[:, active_dims]
+    return x
