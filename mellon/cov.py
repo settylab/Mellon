@@ -11,7 +11,9 @@ class Matern32(Covariance):
 
     The Matern-3/2 kernel function is defined as:
 
-    :math:`(1 + \frac{\sqrt{3}||x-y||}{l}) \cdot e^{-\frac{\sqrt{3}||x-y||}{l}}`
+    .. math::
+
+        (1 + \frac{\sqrt{3}||x-y||}{l}) \cdot e^{-\frac{\sqrt{3}||x-y||}{l}}
 
     where `x` and `y` are input vectors and `l` is the length-scale.
 
@@ -37,7 +39,7 @@ class Matern32(Covariance):
         self.active_dims = active_dims
 
     def k(self, x, y):
-        """
+        R"""
         Compute the Matern-3/2 kernel function between inputs `x` and `y`.
 
         The kernel function is computed over the active dimensions, specified
@@ -69,8 +71,10 @@ class Matern52(Covariance):
 
     The Matern-5/2 kernel function is defined as:
 
-    :math:`(1 + \frac{\sqrt{5}||x-y||}{l} + \frac{5||x-y||^2}{3l^2})
-    \cdot e^{-\frac{\sqrt{5}||x-y||}{l}}`
+    .. math::
+
+        (1 + \frac{\sqrt{5}||x-y||}{l} + \frac{5||x-y||^2}{3l^2})
+        \cdot e^{-\frac{\sqrt{5}||x-y||}{l}}
 
     where `x` and `y` are input vectors and `l` is the length-scale.
 
@@ -96,7 +100,7 @@ class Matern52(Covariance):
         self.active_dims = active_dims
 
     def k(self, x, y):
-        """
+        R"""
         Compute the Matern-5/2 kernel function between inputs `x` and `y`.
 
         The kernel function is computed over the active dimensions, specified
@@ -127,7 +131,9 @@ class ExpQuad(Covariance):
 
     The kernel is defined as:
 
-    :math:`e^{-\frac{||x-y||^2}{2 l^2}}`
+    .. math::
+
+        e^{-\frac{||x-y||^2}{2 l^2}}
 
     This class can be used as a function curry, meaning it can be called
     like a function on two inputs `x` and `y`.
@@ -151,6 +157,24 @@ class ExpQuad(Covariance):
         self.active_dims = active_dims
 
     def k(self, x, y):
+        R"""
+        Compute the Exponentiated Quadratic kernel function between inputs `x` and `y`.
+
+        The kernel function is computed over the active dimensions, specified
+        by the `active_dims` parameter during initialization.
+
+        Parameters
+        ----------
+        x : array-like
+            First input array.
+        y : array-like
+            Second input array.
+
+        Returns
+        -------
+        similarity : float
+            The computed kernel function.
+        """
         x = select_active_dims(x, self.active_dims)
         y = select_active_dims(y, self.active_dims)
         r = distance(x, y) / self.ls
@@ -164,7 +188,9 @@ class Exponential(Covariance):
 
     The kernel is defined as:
 
-    :math:`e^{-\frac{||x-y||}{2l}}`
+    .. math::
+
+        e^{-\frac{||x-y||}{2l}}
 
     This class can be used as a function curry, meaning it can be called
     like a function on two inputs `x` and `y`.
@@ -188,6 +214,24 @@ class Exponential(Covariance):
         self.active_dims = active_dims
 
     def k(self, x, y):
+        R"""
+        Compute the Exponential kernel function between inputs `x` and `y`.
+
+        The kernel function is computed over the active dimensions, specified
+        by the `active_dims` parameter during initialization.
+
+        Parameters
+        ----------
+        x : array-like
+            First input array.
+        y : array-like
+            Second input array.
+
+        Returns
+        -------
+        similarity : float
+            The computed kernel function.
+        """
         x = select_active_dims(x, self.active_dims)
         y = select_active_dims(y, self.active_dims)
         r = distance(x, y) / self.ls
@@ -201,7 +245,9 @@ class RatQuad(Covariance):
 
     The kernel is defined as:
 
-    :math:`(1 + \frac{||x-y||^2}{2 \alpha l^2})^{-\alpha l}`
+    .. math::
+
+        (1 + \frac{||x-y||^2}{2 \alpha l^2})^{-\alpha l}
 
     This class can be used as a function curry, meaning it can be called
     like a function on two inputs `x` and `y`.
@@ -229,6 +275,24 @@ class RatQuad(Covariance):
         self.active_dims = active_dims
 
     def k(self, x, y):
+        R"""
+        Compute the Rational Quadratic kernel function between inputs `x` and `y`.
+
+        The kernel function is computed over the active dimensions, specified
+        by the `active_dims` parameter during initialization.
+
+        Parameters
+        ----------
+        x : array-like
+            First input array.
+        y : array-like
+            Second input array.
+
+        Returns
+        -------
+        similarity : float
+            The computed kernel function.
+        """
         x = select_active_dims(x, self.active_dims)
         y = select_active_dims(y, self.active_dims)
         r = distance(x, y) / self.ls
