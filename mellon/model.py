@@ -181,10 +181,10 @@ class DensityEstimator(BaseEstimator):
     log_density_x : float
         Logarithmic density of training data.
     log_density_func: mellon.Predictor
-        An instance of `mellon.Predictor` that computes the log density
+        An instance of :class:`mellon.Predictor` that computes the log density
         at arbitrary prediction points. Provides methods for gradient and
         Hessian computations, and has serialization/deserialization features.
-        Refer to `mellon.Predictor` documentation for more details.
+        Refer to :class:`mellon.Predictor` documentation for more details.
     """
 
     def __init__(
@@ -449,7 +449,7 @@ class DensityEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-        An instance of the `mellon.Predictor` that predicts the log density at each point in x.
+    An instance of the :class:`mellon.Predictor` that predicts the log density at each point in x.
 
         It contains a __call__ method which can be used to predict the log density.
         The instance also supports serialization features which allows for saving
@@ -693,11 +693,11 @@ class FunctionEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-        An instance of the `mellon.Predictor` that predicts the function values at each point in x.
+        An instance of the :class:`mellon.Predictor` that predicts the function values at each point in x.
 
         It contains a __call__ method which can be used to predict the function values
         The instance also supports serialization features which allows for saving
-        and loading the predictor state. Refer to mellon.Predictor documentation for more details.
+        and loading the predictor state. Refer to :class:`mellon.Predictor` documentation for more details.
 
         :param x: The new data to predict.
         :type x: array-like
@@ -882,17 +882,17 @@ class DimensionalityEstimator(BaseEstimator):
         As the intrinsic dimensionality of the volume changes, the resulting density unit varies.
 
     local_dim_func: mellon.Predictor
-        An instance of `mellon.Predictor` that computes the local intrinsic dimensionality
+        An instance of :class:`mellon.Predictor` that computes the local intrinsic dimensionality
         at arbitrary prediction points. Provides methods for gradient and
         Hessian computations, and has serialization/deserialization features.
-        Refer to `mellon.Predictor` documentation for more details.
+        Refer to :class:`mellon.Predictor` documentation for more details.
 
 
     log_density_func: mellon.Predictor
-        An instance of `mellon.Predictor` that computes the log density with varying units
+        An instance of :class:`mellon.Predictor` that computes the log density with varying units
         at arbitrary prediction points. Provides methods for gradient and
         Hessian computations, and has serialization/deserialization features.
-        Refer to `mellon.Predictor` documentation for more details.
+        Refer to :class:`mellon.Predictor` documentation for more details.
     """
 
     def __init__(
@@ -1203,7 +1203,7 @@ class DimensionalityEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-        An instance of the `mellon.Predictor` that predicts the dimensionality at each point in x.
+        An instance of the :class:`mellon.Predictor` that predicts the dimensionality at each point in x.
 
         It contains a __call__ method which can be used to predict the dimensionality.
         The instance also supports serialization features which allows for saving

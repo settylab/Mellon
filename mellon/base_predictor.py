@@ -22,6 +22,33 @@ logger = Log()
 
 
 class Predictor(ABC):
+    """
+    Abstract base class for predictor models. It provides a common interface for all subclasses, which are expected to 
+    implement the `__call__` method for making predictions.
+
+    An instance `predictor` of a subclass of `Predictor` can be used to make a prediction by calling it with input data `x`:
+    
+    >>> y = predictor(x)
+
+    It is the responsibility of subclasses to define the behaviour of `__call__`.
+
+    Methods
+    -------
+    __call__(x: Union[array-like, pd.DataFrame]):
+        This makes predictions for an input `x`. The input data type can be either an array-like object 
+        (like list or numpy array) or a pandas DataFrame.
+
+        Parameters
+        ----------
+        x : array-like or pandas.DataFrame
+            The input data on which to make a prediction.
+
+        Returns
+        -------
+        This method returns the predictions made by the model on the input data `x`.
+        The prediction is usually array-like with as many entries as `x.shape[0]`.
+    """
+
     @abstractmethod
     def __init__(self):
         """Initialize the predictor. Must be overridden by subclasses."""
