@@ -18,7 +18,7 @@ def _validate_positive_float(value, param_name, optional=False):
     if value is None and optional:
         return None
 
-    if not isinstance(value, (float, int)) or value <= 0:
+    if not isinstance(value, (float, int)) or value < 0:
         raise ValueError(f"'{param_name}' should be a positive float number")
     return float(value)
 
