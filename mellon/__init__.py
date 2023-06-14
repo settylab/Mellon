@@ -11,7 +11,6 @@ from .util import Log
 
 from . import util
 from . import cov
-from . import model
 from . import parameters
 from . import inference
 from . import conditional
