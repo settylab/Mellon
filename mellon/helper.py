@@ -1,4 +1,5 @@
 from jax import jit, vmap
+
 from jax.numpy import (
     atleast_2d,
     ndarray,

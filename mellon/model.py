@@ -30,6 +30,13 @@ from .util import (
     local_dimensionality,
 )
 from .helper import vector_map
+from .validation import (
+    _validate_positive_int,
+    _validate_positive_float,
+    _validate_float,
+    _validate_string,
+    _validate_array,
+)
 
 
 DEFAULT_D_METHOD = "embedding"
@@ -207,21 +214,23 @@ class DensityEstimator(BaseEstimator):
             n_landmarks=n_landmarks,
             rank=rank,
             jitter=jitter,
+            optimizer=optimizer,
+            n_iter=n_iter,
+            init_learn_rate=init_learn_rate,
             landmarks=landmarks,
             nn_distances=nn_distances,
+            d=d,
             mu=mu,
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
             L=L,
+            initial_value=initial_value,
+            jit=jit,
         )
-        self.method = method
-        self.d_method = d_method
-        self.optimizer = optimizer
-        self.n_iter = n_iter
-        self.init_learn_rate = init_learn_rate
-        self.initial_value = initial_value
-        self.d = d
+        self.d_method = _validate_string(
+            d_method, "d_method", choices={"fractal", "embedding"}
+        )
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -229,7 +238,6 @@ class DensityEstimator(BaseEstimator):
         self.pre_transformation = None
         self.log_density_x = None
         self.log_density_func = None
-        self.jit = jit
 
     def __repr__(self):
         name = self.__class__.__name__
@@ -402,7 +410,9 @@ class DensityEstimator(BaseEstimator):
         :rtype: array-like
         """
         if pre_transformation is not None:
-            self.pre_transformation = pre_transformation
+            self.pre_transformation = _validate_array(
+                pre_transformation, "pre_transformation"
+            )
         self._set_log_density_x()
         if build_predict:
             self._set_log_density_func()
@@ -501,7 +511,7 @@ class FunctionEstimator(BaseEstimator):
         The nearest neighbor distances at each data point. If None, computes the nearest neighbor
         distances automatically, with a KDTree if the dimensionality of the data is less than 20,
         or a BallTree otherwise. Defaults to None.
-    mu : float or None, optional
+    mu : float
         The mean of the Gaussian process :math:`\mu`. Defaults to 0.
     ls : float or None, optional
         The length scale of the Gaussian process covariance function. If None, sets ls to the
@@ -572,9 +582,10 @@ class FunctionEstimator(BaseEstimator):
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
+            jit=jit,
         )
-        self.sigma = sigma
-        self.jit = jit
+        self.mu = _validate_float(mu, "mu")
+        self.sigma = _validate_positive_float(sigma, "sigma")
 
     def __call__(self, x=None, y=None):
         """This calls self.fit_predict(x, y):
@@ -625,8 +636,11 @@ class FunctionEstimator(BaseEstimator):
         if x is None:
             x = self.x
         if self.x is not None and self.x is not x:
-            message = "self.x has been set already, but is not equal to the argument x."
-            raise ValueError(message)
+            message = (
+                "self.x has been set already, but is not equal to the argument x. "
+                "Current landmarks might be inapropriate."
+            )
+            logger.warning(message)
         if self.x is None and x is None:
             message = "Required argument x is missing and self.x has not been set."
             raise ValueError(message)
@@ -634,7 +648,6 @@ class FunctionEstimator(BaseEstimator):
             message = "Required argument y is missing."
             raise ValueError(message)
         landmarks = self.landmarks
-        pre_transformation = self.pre_transformation
         mu = self.mu
         cov_func = self.cov_func
         sigma = self.sigma
@@ -642,7 +655,7 @@ class FunctionEstimator(BaseEstimator):
         conditional = compute_conditional_mean(
             x,
             landmarks,
-            pre_transformation,
+            None,
             y,
             mu,
             cov_func,
@@ -899,25 +912,26 @@ class DimensionalityEstimator(BaseEstimator):
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
             rank=rank,
+            method=method,
             jitter=jitter,
+            optimizer=optimizer,
+            n_iter=n_iter,
+            init_learn_rate=init_learn_rate,
             landmarks=landmarks,
             nn_distances=None,
+            d=d,
             mu=mu_dens,
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
             L=L,
+            initial_value=initial_value,
+            jit=jit,
         )
-        self.k = k
-        self.d = d
-        self.mu_dim = mu_dim
-        self.mu_dens = mu_dens
-        self.method = method
-        self.distances = distances
-        self.optimizer = optimizer
-        self.n_iter = n_iter
-        self.init_learn_rate = init_learn_rate
-        self.initial_value = initial_value
+        self.k = _validate_positive_int(k, "k")
+        self.mu_dim = _validate_float(mu_dim, "mu_dim")
+        self.mu_dens = _validate_float(mu_dens, "mu_dens", optional=True)
+        self.distances = _validate_array(distances, "distances", optional=True)
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -927,7 +941,6 @@ class DimensionalityEstimator(BaseEstimator):
         self.log_density_x = None
         self.local_dim_func = None
         self.log_density_func = None
-        self.jit = jit
 
     def __repr__(self):
         name = self.__class__.__name__

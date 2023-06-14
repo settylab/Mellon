@@ -1,5 +1,5 @@
 from .cov import Matern52
-from .decomposition import DEFAULT_RANK
+from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
 from .inference import (
     minimize_adam,
     run_advi,
@@ -7,6 +7,7 @@ from .inference import (
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_OPTIMIZER,
+    DEFAULT_JIT,
 )
 from .parameters import (
     compute_landmarks,
@@ -20,6 +21,18 @@ from .util import (
     test_rank,
     DEFAULT_JITTER,
     Log,
+)
+from .validation import (
+    _validate_positive_int,
+    _validate_positive_float,
+    _validate_float_or_int,
+    _validate_float,
+    _validate_string,
+    _validate_bool,
+    _validate_array,
+    _validate_cov_func_curry,
+    _validate_cov_func,
+    _validate_float_or_iterable_numerical,
 )
 
 
@@ -40,6 +53,7 @@ class BaseEstimator:
         cov_func_curry=DEFAULT_COV_FUNC,
         n_landmarks=DEFAULT_N_LANDMARKS,
         rank=DEFAULT_RANK,
+        method=DEFAULT_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -53,18 +67,36 @@ class BaseEstimator:
         cov_func=None,
         L=None,
         initial_value=None,
+        jit=DEFAULT_JIT,
     ):
-        self.cov_func_curry = cov_func_curry
-        self.n_landmarks = n_landmarks
-        self.rank = rank
-        self.jitter = jitter
-        self.landmarks = landmarks
-        self.nn_distances = nn_distances
-        self.mu = mu
-        self.ls = ls
-        self.ls_factor = ls_factor
-        self.cov_func = cov_func
-        self.L = L
+        self.cov_func_curry = _validate_cov_func_curry(
+            cov_func_curry, cov_func, "cov_func_curry"
+        )
+        self.n_landmarks = _validate_positive_int(n_landmarks, "n_landmarks")
+        self.rank = _validate_float_or_int(rank, "rank")
+        self.method = _validate_string(
+            method, "method", choices={"percent", "fixed", "auto"}
+        )
+        self.jitter = _validate_positive_float(jitter, "jitter")
+        self.landmarks = _validate_array(landmarks, "landmarks", optional=True)
+        self.nn_distances = _validate_array(nn_distances, "nn_distances", optional=True)
+        self.mu = _validate_float(mu, "mu", optional=True)
+        self.ls = _validate_positive_float(ls, "ls", optional=True)
+        self.ls_factor = _validate_positive_float(ls_factor, "ls_factor")
+        self.cov_func = _validate_cov_func(cov_func, "cov_func", optional=True)
+        self.L = _validate_array(L, "L", optional=True)
+        self.d = _validate_float_or_iterable_numerical(d, "d", optional=True)
+        self.initial_value = _validate_array(
+            initial_value, "initial_value", optional=True
+        )
+        self.optimizer = _validate_string(
+            optimizer, "optimizer", choices={"adam", "advi", "L-BFGS-B"}
+        )
+        self.n_iter = _validate_positive_int(n_iter, "n_iter")
+        self.init_learn_rate = _validate_positive_float(
+            init_learn_rate, "init_learn_rate"
+        )
+        self.jit = _validate_bool(jit, "jit")
         self.x = None
         self.pre_transformation = None
 
@@ -104,7 +136,7 @@ class BaseEstimator:
         return self.fit_predict(x=x)
 
     def _set_x(self, x):
-        self.x = x
+        self.x = _validate_array(x, "x")
 
     def _compute_landmarks(self):
         x = self.x

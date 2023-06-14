@@ -78,7 +78,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
         )
         logger.warning(message)
     p = count_nonzero(s > 0)  # stability
-    summed = cumsum(s[: -p - 1: -1])
+    summed = cumsum(s[: -p - 1 : -1])
     if method == "percent":
         # automatically choose rank to capture some percent of the eigenvalues
         target = summed[-1] * rank
