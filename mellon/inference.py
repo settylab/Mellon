@@ -16,7 +16,7 @@ from .conditional import (
     LandmarksConditionalMeanY,
 )
 from .util import DEFAULT_JITTER
-from .helper import ensure_2d
+from .helper import ensure_2d, Exp
 
 
 DEFAULT_N_ITER = 100
@@ -475,17 +475,6 @@ def compute_conditional_mean_y(
             sigma=sigma,
             jitter=jitter,
         )
-
-
-def Exp(func):
-    """
-    Function wrapper, making a function that returns the exponent of the wrapped function.
-    """
-
-    def new_func(x):
-        return exp(func(x))
-
-    return new_func
 
 
 def generate_gaussian_sample(rng, mean, log_std):

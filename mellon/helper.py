@@ -5,7 +5,19 @@ from jax.numpy import (
     ndarray,
     array,
     isscalar,
+    exp,
 )
+
+
+def Exp(func):
+    """
+    Function wrapper, making a function that returns the exponent of the wrapped function.
+    """
+
+    def new_func(x):
+        return exp(func(x))
+
+    return new_func
 
 
 def make_serializable(x):
