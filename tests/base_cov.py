@@ -82,7 +82,7 @@ def test_Hirachical():
     cov1 = mellon.cov.Matern52(1.4, active_dims=0)
     cov2 = mellon.cov.Exponential(3.4, active_dims=[1, 2])
     cov3 = mellon.cov.RatQuad(1.1, 3.4, active_dims=slice(0, 2, 1))
-    cov4 = mellon.cov.Matern52(1.0, active_dims=2)
+    cov4 = mellon.cov.Matern52(1.0, active_dims=[False, True, True])
 
     cov = 0.2 + 1.1 * cov1 + 2.1 * cov2 * cov3 + cov4
     assert (
