@@ -438,6 +438,8 @@ class DensityEstimator(BaseEstimator):
             raise ValueError(message)
         if x is None:
             x = self.x
+        else:
+            x = _validate_array(x, "x")
 
         self.prepare_inference(x)
         self.run_inference()
@@ -482,6 +484,8 @@ class DensityEstimator(BaseEstimator):
             raise error
         if x is None:
             x = self.x
+        else:
+            x = _validate_array(x, "x")
 
         self.fit(x, build_predict=build_predict)
         return self.log_density_x
@@ -635,6 +639,8 @@ class FunctionEstimator(BaseEstimator):
         """
         if x is None:
             x = self.x
+        else:
+            x = _validate_array(x, "x")
         if self.x is not None and self.x is not x:
             message = (
                 "self.x has been set already, but is not equal to the argument x. "
@@ -712,6 +718,8 @@ class FunctionEstimator(BaseEstimator):
         :return: condition_mean - The conditional mean function value at each test point in x.
         :rtype: array-like
         """
+        x = _validate_array(x, "x")
+        y = _validate_array(y, "y")
 
         self.fit(x, y)
         return self.predict(x)
@@ -732,6 +740,8 @@ class FunctionEstimator(BaseEstimator):
         """
 
         self._set_x(x)
+        Y = _validate_array(Y, "Y")
+        Xnew = _validate_array(Xnew, "Xnew", optional=True)
         if self.ls is None:
             self._prepare_attribute("nn_distances")
         self._prepare_attribute("ls")
@@ -1166,6 +1176,8 @@ class DimensionalityEstimator(BaseEstimator):
             raise ValueError(message)
         if x is None:
             x = self.x
+        else:
+            x = _validate_array(x, "x")
 
         self.prepare_inference(x)
         self.run_inference()
@@ -1226,6 +1238,8 @@ class DimensionalityEstimator(BaseEstimator):
             raise error
         if x is None:
             x = self.x
+        else:
+            x = _validate_array(x, "x")
 
         self.fit(x, build_predict=build_predict)
         return self.local_dim_x
