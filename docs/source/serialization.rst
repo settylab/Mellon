@@ -36,7 +36,8 @@ Estimators can be serialized to an `AnnData`_ object. The `log_density` computat
     X = # your data here
     ad = anndata.AnnData(X=X)
     est = mellon.DensityEstimator()
-    ad.obs["log_density"] = est.fit_predict(X)
+    est.fit(X)
+    ad.obs["log_density"] = est.predict(X)
 
     # Serialization
     ad.uns["log_density_function"] = est.predict.to_dict()

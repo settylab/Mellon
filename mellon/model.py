@@ -449,7 +449,7 @@ class DensityEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-    An instance of the :class:`mellon.Predictor` that predicts the log density at each point in x.
+        An instance of the :class:`mellon.Predictor` that predicts the log density at each point in x.
 
         It contains a __call__ method which can be used to predict the log density.
         The instance also supports serialization features which allows for saving
