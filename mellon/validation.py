@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from jax.numpy import array
+from jax.numpy import asarray
 
 from .base_cov import Covariance
 
@@ -48,7 +48,7 @@ def _validate_array(iterable, name, optional=False):
         raise TypeError(f"{name} should be iterable, got {type(iterable)} instead.")
 
     try:
-        return array(iterable, dtype=float)
+        return asarray(iterable, dtype=float)
     except Exception:
         raise ValueError(f"Could not convert {name} to a numeric array.")
 
@@ -79,7 +79,7 @@ def _validate_float_or_iterable_numerical(value, name, optional=False):
 
     if isinstance(value, Iterable):
         try:
-            return array(value, dtype=float)
+            return asarray(value, dtype=float)
         except Exception:
             raise ValueError(f"Could not convert {name} to a numeric array.")
 
