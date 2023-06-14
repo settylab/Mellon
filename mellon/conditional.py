@@ -4,6 +4,7 @@ from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
 from .helper import ensure_2d, make_serializable
 from .base_predictor import Predictor
+from .validation import _validate_array
 
 
 logger = Log()
@@ -65,12 +66,14 @@ class FullConditionalMean(Predictor):
         }
 
     def __call__(self, Xnew):
+        Xnew = _validate_array(Xnew, "Xnew")
+        Xnew = ensure_2d(Xnew)
+
         cov_func = self.cov_func
         x = self.x
         weights = self.weights
         mu = self.mu
 
-        Xnew = ensure_2d(Xnew)
         Kus = cov_func(Xnew, x)
         return mu + dot(Kus, weights)
 
@@ -132,6 +135,8 @@ class FullConditionalMeanY(Predictor):
         }
 
     def __call__(self, y):
+        y = _validate_array(y, "y")
+
         L = self.L
         Kus = self.Kus
         mu = self.mu
@@ -206,12 +211,14 @@ class LandmarksConditionalMean(Predictor):
         }
 
     def __call__(self, Xnew):
+        Xnew = _validate_array(Xnew, "Xnew")
+        Xnew = ensure_2d(Xnew)
+
         cov_func = self.cov_func
         xu = self.landmarks
         weights = self.weights
         mu = self.mu
 
-        Xnew = ensure_2d(Xnew)
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
 
@@ -272,12 +279,14 @@ class LandmarksConditionalMeanCholesky(Predictor):
         }
 
     def __call__(self, Xnew):
+        Xnew = _validate_array(Xnew, "Xnew")
+        Xnew = ensure_2d(Xnew)
+
         cov_func = self.cov_func
         xu = self.landmarks
         weights = self.weights
         mu = self.mu
 
-        Xnew = ensure_2d(Xnew)
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
 
@@ -351,6 +360,8 @@ class LandmarksConditionalMeanY(Predictor):
         }
 
     def __call__(self, y):
+        y = _validate_array(y, "y")
+
         L_B = self.L_B
         A = self.A
         Luu = self.Luu
