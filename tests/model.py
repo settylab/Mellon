@@ -250,6 +250,65 @@ def test_FunctionEstimator():
     )
 
 
+def test_TimeSensitiveDensityEstimator(tmp_path):
+    n = 100
+    d = 2
+    seed = 535
+    test_file = tmp_path / "predictor.json"
+    logger = mellon.Log()
+    key = jax.random.PRNGKey(seed)
+    L = jax.random.uniform(key, (d, d))
+    cov = L.T.dot(L)
+    X = jax.random.multivariate_normal(key, jnp.ones(d), cov, (n,))
+    times = jnp.repeat(jnp.arange(10), 10)
+
+    est = mellon.TimeSensitiveDensityEstimator()
+    log_dens = est.fit_predict(X, times)
+    assert log_dens.shape == (n,), "There should be one density value for each sample."
+    d_std = jnp.std(log_dens)
+
+    def relative_err(dens):
+        diff = jnp.std(log_dens - dens)
+        return diff / d_std
+
+    pred_log_dens = est.predict(X, times)
+    assert relative_err(pred_log_dens) < 1e-5, (
+        "The predicive function should be consistent with the density on "
+        "the training samples."
+    )
+
+    fullX = jnp.column_stack((X, times))
+    grads = est.predict.gradient(fullX)
+    assert (
+        grads.shape == fullX.shape
+    ), "The gradient should have the same shape as the input."
+
+    hess = est.predict.hessian(fullX)
+    assert hess.shape == (n, d+1, d+1), "The hessian should have the correct shape."
+
+    result = est.predict.hessian_log_determinant(fullX)
+    assert (
+        len(result) == 2
+    ), "hessian_log_determinan should return signes and lg-values."
+    sng, ld = result
+    assert sng.shape == (n,), "There should be one sign for each hessian determinan."
+    assert ld.shape == (n,), "There should be one value for each hessian determinan."
+
+    assert len(str(est)) > 0, "The model should have a string representation."
+
+    # Test serialization
+    est.predict.to_json(test_file)
+    logger.info(f"Serialized the predictor and saved it to {test_file}.")
+    predictor = mellon.Predictor.from_json(test_file)
+    logger.info("Deserialized the predictor from the JSON file.")
+    reprod = predictor(X, times)
+    logger.info("Made a prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(pred_log_dens, reprod))
+    assert_msg = "Serialized + deserialized predictor should produce the same results."
+    assert is_close, assert_msg
+    logger.info("Assertion passed: the deserialized predictor produced the expected results.")
+
+
 def test_DimensionalityEstimator():
     n = 100
     d = 2

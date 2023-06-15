@@ -36,34 +36,44 @@ class DimensionalityEstimator(BaseEstimator):
     R"""
     This class provides a non-parametric method for estimating local dimensionality and density.
     It uses Bayesian inference with a Gaussian process prior and a normal distribution for local scaling rates.
-    The class caches all intermediate computations as instance variables, enabling users to view intermediate results and
+    The class caches all intermediate computations as instance variables,
+    enabling users to view intermediate results and
     save computational time by passing precomputed values to a new model instance.
 
     Parameters
     ----------
     cov_func_curry: function or type, optional (default=Matern52)
-        A generator for the Gaussian process covariance function. It should be a curry function taking one length scale argument
+        A generator for the Gaussian process covariance function. It should be
+        a curry function taking one length scale argument
         and returning a covariance function of the form k(x, y) :math:`\rightarrow` float.
 
     n_landmarks: int, optional (default=5000)
-        The number of landmark points. If less than 1 or greater than or equal to the number of training points,
+        The number of landmark points. If less than 1 or greater than or equal
+        to the number of training points,
         inducing points are not computed or used.
 
     rank: int or float, optional (default=0.99)
-        The rank of the approximate covariance matrix. When interpreted as an integer, an :math:`n \times` rank matrix
-        :math:`L` is computed such that :math:`L L^\top \approx K`, where :math:`K` is the exact :math:`n \times n` covariance matrix.
-        When interpreted as a float (between 0.0 and 1.0), the rank/size of :math:`L` is chosen such that the included eigenvalues of the covariance
+        The rank of the approximate covariance matrix. When interpreted as an
+        integer, an :math:`n \times` rank matrix
+        :math:`L` is computed such that :math:`L L^\top \approx K`, where
+        :math:`K` is the exact :math:`n \times n` covariance matrix.
+        When interpreted as a float (between 0.0 and 1.0), the rank/size of
+        :math:`L` is chosen such that the included eigenvalues of the covariance
         between landmark points account for the specified percentage of the total eigenvalues.
 
     method: str, optional (default='auto')
-        Determines whether the `rank` parameter is interpreted as a fixed number of eigenvectors ('fixed'), a percentage of eigenvalues ('percent'),
-        or determined automatically ('auto'). In 'auto' mode, `rank` is treated as a fixed number if it is an integer, or a percentage if it's a float.
+        Determines whether the `rank` parameter is interpreted as a fixed
+        number of eigenvectors ('fixed'), a percentage of eigenvalues ('percent'),
+        or determined automatically ('auto'). In 'auto' mode, `rank` is treated
+        as a fixed number if it is an integer, or a percentage if it's a float.
 
     jitter: float, optional (default=1e-6)
-        A small amount added to the diagonal of the covariance matrix to ensure numerical stability by keeping eigenvalues away from 0.
+        A small amount added to the diagonal of the covariance matrix to ensure
+        numerical stability by keeping eigenvalues away from 0.
 
     optimizer: str, optional (default='L-BFGS-B')
-        The optimizer to use for maximum a posteriori density estimation. It can be either 'L-BFGS-B' or 'adam'.
+        The optimizer to use for maximum a posteriori density estimation.
+        It can be either 'L-BFGS-B', 'adam', or 'advi'.
 
     n_iter: int, optional (default=100)
         The number of iterations for optimization.
@@ -72,18 +82,22 @@ class DimensionalityEstimator(BaseEstimator):
         The initial learning rate for the optimizer.
 
     landmarks: array-like or None, optional
-        Points used to quantize the data for approximate covariance. If None, landmarks are set as k-means centroids
-        with k=n_landmarks. If the number of landmarks is greater than or equal to the number of training points, this parameter is ignored.
+        Points used to quantize the data for approximate covariance. If None,
+        landmarks are set as k-means centroids
+        with k=n_landmarks. If the number of landmarks is greater than or equal
+        to the number of training points, this parameter is ignored.
 
     k: int, optional (default=10)
         The number of nearest neighbor distances to consider.
 
     distances: array-like or None, optional
-        The k nearest neighbor distances at each data point. If None, these distances are computed automatically using KDTree (if data dimensionality is < 20)
+        The k nearest neighbor distances at each data point. If None, these
+        distances are computed automatically using KDTree (if data dimensionality is < 20)
         or BallTree otherwise.
 
     d: array-like, optional
-        The estimated local intrinsic dimensionality of the data. This is only used to initialize the density estimation.
+        The estimated local intrinsic dimensionality of the data. This is only
+        used to initialize the density estimation.
         If None, an empirical estimate is used.
 
     mu_dim: float or None, optional (default=0)
@@ -93,26 +107,40 @@ class DimensionalityEstimator(BaseEstimator):
         The mean of the Gaussian process for log density :math:`\mu_\rho`. If None,
         `mu_dens` is set to the 1st percentile of :math:`\text{mle}(\text{nn_distances}, d) - 10`.
 
-    ls: float or None, optional
-        The length scale of the Gaussian process covariance function. If None, it's set to the geometric mean of the nearest neighbor distances multiplied by a constant.
-        If `cov_func` is supplied explicitly, `ls` has no effect.
+    ls : float or None, optional
+        The length scale for the Gaussian process covariance function.
+        If None (default), the length scale is automatically selected based on
+        a heuristic link between the nearest neighbor distances and the optimal
+        length scale.
+
+    ls_factor : float, optional
+        A scaling factor applied to the length scale when it's automatically
+        selected. It is used to manually adjust the automatically chosen length
+        scale for finer control over the model's sensitivity to variations in the data.
 
     cov_func: function or None, optional
-        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float. If None, the covariance function is generated automatically as `cov_func = cov_func_curry(ls)`.
+        The Gaussian process covariance function of the form k(x, y)
+        :math:`\rightarrow` float. If None, the covariance function is generated
+        automatically as `cov_func = cov_func_curry(ls)`.
 
     L: array-like or None, optional
-        A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix. If None, `L` is computed automatically.
+        A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
+        covariance matrix. If None, `L` is computed automatically.
 
     initial_value: array-like or None, optional
-        The initial guess for optimization. If None, an optimized :math:`z` is found that minimizes :math:`||Lz + \mu_\cdot - mle|| + ||z||`, where :math:`\text{mle}` is the maximum likelihood estimate
-        for density initialization and the neighborhood-based local intrinsic dimensionality for dimensionality initialization.
+        The initial guess for optimization. If None, an optimized :math:`z` is
+        found that minimizes :math:`||Lz + \mu_\cdot - mle|| + ||z||`, where
+        :math:`\text{mle}` is the maximum likelihood estimate
+        for density initialization and the neighborhood-based local intrinsic
+        dimensionality for dimensionality initialization.
 
     jit: bool, optional (default=False)
         If True, use JAX's just-in-time compilation for loss and its gradient during optimization.
 
     Attributes
     ----------
-    The attributes of this class correspond to the parameters of the same names, with the following additional attributes:
+    The attributes of this class correspond to the parameters of the same names,
+    with the following additional attributes:
 
     x: array-like
         The training data.
@@ -124,7 +152,8 @@ class DimensionalityEstimator(BaseEstimator):
         The Bayesian loss function.
 
     pre_transformation: array-like
-        The optimized parameters before transformation, used to map the latent representation to the log-density on the training data.
+        The optimized parameters before transformation, used to map the latent
+        representation to the log-density on the training data.
 
     opt_state: object
         The final state of the optimizer.
@@ -136,8 +165,10 @@ class DimensionalityEstimator(BaseEstimator):
         The local intrinsic dimensionality at the training points.
 
     log_density_x: array-like
-        The log density with varying units at the training points. Density indicates the number of cells per volume in state space.
-        As the intrinsic dimensionality of the volume changes, the resulting density unit varies.
+        The log density with varying units at the training points. Density
+        indicates the number of cells per volume in state space.
+        As the intrinsic dimensionality of the volume changes, the resulting
+        density unit varies.
 
     local_dim_func: mellon.Predictor
         An instance of :class:`mellon.Predictor` that computes the local intrinsic dimensionality
@@ -232,7 +263,7 @@ class DimensionalityEstimator(BaseEstimator):
             f"d={self.d}, "
             f"mu_dim={self.mu_dim}, "
             f"mu_dens={self.mu_dens}, "
-            f"ls={self.mu}, "
+            f"ls={self.ls}, "
             f"cov_func={self.cov_func}, "
         )
         if self.L is None:
@@ -434,8 +465,6 @@ class DimensionalityEstimator(BaseEstimator):
             raise ValueError(message)
         if x is None:
             x = self.x
-        else:
-            x = _validate_array(x, "x")
 
         self.prepare_inference(x)
         self.run_inference()

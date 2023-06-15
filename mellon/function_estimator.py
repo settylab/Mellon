@@ -38,32 +38,47 @@ class FunctionEstimator(BaseEstimator):
     cov_func_curry : function or type
         A curry that takes one length scale argument and returns a covariance function
         of the form k(x, y) :math:`\rightarrow` float. Defaults to Matern52.
+
     n_landmarks : int, optional
         The number of landmark points. If less than 1 or greater than or equal to the
         number of training points, inducing points will not be computed or used. Defaults to 5000.
+
     jitter : float, optional
         A small amount added to the diagonal of the covariance matrix to ensure numerical stability.
         Defaults to 1e-6.
+
     landmarks : array-like or None, optional
         Points used to quantize the data for the approximate covariance. If None, landmarks are
         set as k-means centroids with k=n_landmarks. This is ignored if n_landmarks is greater than
         or equal to the number of training points. Defaults to None.
+
     nn_distances : array-like or None, optional
         The nearest neighbor distances at each data point. If None, computes the nearest neighbor
         distances automatically, with a KDTree if the dimensionality of the data is less than 20,
         or a BallTree otherwise. Defaults to None.
+
     mu : float
         The mean of the Gaussian process :math:`\mu`. Defaults to 0.
+
     ls : float or None, optional
-        The length scale of the Gaussian process covariance function. If None, sets ls to the
-        geometric mean of the nearest neighbor distances times a constant. This has no effect
-        if cov_func is supplied explicitly. Defaults to None.
+        The length scale for the Gaussian process covariance function.
+        If None (default), the length scale is automatically selected based on
+        a heuristic link between the nearest neighbor distances and the optimal
+        length scale.
+
+    ls_factor : float, optional
+        A scaling factor applied to the length scale when it's automatically
+        selected. It is used to manually adjust the automatically chosen length
+        scale for finer control over the model's sensitivity to variations in the data.
+
     cov_func : function or None, optional
         The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
         If None, automatically generates the covariance function cov_func = cov_func_curry(ls).
         Defaults to None.
+
     sigma : float, optional
         The standard deviation of the white noise. Defaults to 0.
+
     jit : bool, optional
         Use JAX just-in-time compilation for the loss function and its gradient during optimization.
         Defaults to False.
@@ -83,7 +98,7 @@ class FunctionEstimator(BaseEstimator):
     ls : float
         The length scale of the Gaussian process covariance function.
     ls_factor : float
-        Factor used to scale the automatically selected length scale. Defaults to 1.
+        Factor used to scale the automatically selected length scale.
     cov_func : function
         The Gaussian process covariance function.
     sigma : float

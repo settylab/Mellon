@@ -10,9 +10,12 @@ from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
 from .conditional import (
     FullConditionalMean,
+    FullConditionalMeanTimes,
     FullConditionalMeanY,
     LandmarksConditionalMean,
+    LandmarksConditionalMeanTimes,
     LandmarksConditionalMeanCholesky,
+    LandmarksConditionalMeanCholeskyTimes,
     LandmarksConditionalMeanY,
 )
 from .util import DEFAULT_JITTER
@@ -310,29 +313,35 @@ def compute_conditional_mean(
 ):
     R"""
     Builds the mean function of the Gaussian process, conditioned on the
-    function values (e.g., log-density) on x.
-    Returns a function that is defined on the whole domain of x.
+    function values (e.g., log-density) on x. Returns an instance of
+    mellon.Predictor that acts as a function, defined on the whole domain of x.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param landmarks: The landmark points for fast sparse computation.
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    landmarks : array-like or None
+        The landmark points for fast sparse computation.
         Landmarks can be None if not using landmark points.
-    :type landmarks: array-like
-    :param pre_transformation: The pre transform latent function representation.
-    :type pre_transformation: array-like or None
-    :param y: The function values at each point in x.
-    :type y: array-like
-    :param mu: The original Gaussian process mean :math:`\mu`.
-    :type mu: float
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param sigma: White moise veriance. Defaults to 0.
-    :type sigma: float
-    :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
-    :type jitter: float
-    :return: conditional_mean - The conditioned Gaussian process mean function.
-    :rtype: function
+    pre_transformation : array-like or None
+        The pre-transformed latent function representation.
+    y : array-like
+        The function values at each point in x.
+    mu : float
+        The original Gaussian process mean :math:`\mu`.
+    cov_func : function
+        The Gaussian process covariance function.
+    sigma : float, optional
+        White noise variance, by default 0.
+    jitter : float, optional
+        A small amount to add to the diagonal for stability, by default 1e-6.
+
+    Returns
+    -------
+    mellon.Predictor
+        The conditioned Gaussian process mean function.
     """
+
     if landmarks is None:
         return FullConditionalMean(
             x,
@@ -357,6 +366,83 @@ def compute_conditional_mean(
     else:
         landmarks = ensure_2d(landmarks)
         return LandmarksConditionalMean(
+            x,
+            landmarks,
+            y,
+            mu,
+            cov_func,
+            sigma=sigma,
+            jitter=jitter,
+        )
+
+
+def compute_conditional_mean_times(
+    x,
+    landmarks,
+    pre_transformation,
+    y,
+    mu,
+    cov_func,
+    sigma=0,
+    jitter=DEFAULT_JITTER,
+):
+    R"""
+    Builds the mean function of the Gaussian process, conditioned on the
+    function values (e.g., log-density) on x, taking into account the associated
+    times of each sample. Returns an instance of mellon.Predictor that acts as a
+    function, defined on the whole domain of x, and can be evaluated at any given time.
+
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    landmarks : array-like or None
+        The landmark points for fast sparse computation.
+        Landmarks can be None if not using landmark points.
+    pre_transformation : array-like or None
+        The pre-transformed latent function representation.
+    y : array-like
+        The function values at each point in x.
+    mu : float
+        The original Gaussian process mean :math:`\mu`.
+    cov_func : function
+        The Gaussian process covariance function.
+    sigma : float, optional
+        White noise variance, by default 0.
+    jitter : float, optional
+        A small amount to add to the diagonal for stability, by default 1e-6.
+
+    Returns
+    -------
+    mellon.Predictor
+        The conditioned Gaussian process mean function that also accepts a 'times'
+        argument to account for time-sensitive inferences.
+    """
+
+    if landmarks is None:
+        return FullConditionalMeanTimes(
+            x,
+            y,
+            mu,
+            cov_func,
+            jitter=jitter,
+        )
+    elif (
+        pre_transformation is not None
+        and pre_transformation.shape[0] == landmarks.shape[0]
+    ):
+        landmarks = ensure_2d(landmarks)
+        return LandmarksConditionalMeanCholeskyTimes(
+            landmarks,
+            pre_transformation,
+            mu,
+            cov_func,
+            sigma=sigma,
+            jitter=jitter,
+        )
+    else:
+        landmarks = ensure_2d(landmarks)
+        return LandmarksConditionalMeanTimes(
             x,
             landmarks,
             y,

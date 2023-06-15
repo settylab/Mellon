@@ -4,6 +4,7 @@ from .model import (
     DensityEstimator,
     FunctionEstimator,
     DimensionalityEstimator,
+    TimeSensitiveDensityEstimator,
 )
 from .base_predictor import Predictor
 from .cov import Covariance
@@ -23,6 +24,7 @@ __all__ = [
     "DensityEstimator",
     "FunctionEstimator",
     "DimensionalityEstimator",
+    "TimeSensitiveDensityEstimator",
     "Predictor",
     "Covariance",
     "Log",

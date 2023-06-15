@@ -4,24 +4,29 @@ from .inference import (
     compute_transform,
     compute_loss_func,
     compute_log_density_x,
-    compute_conditional_mean,
+    compute_conditional_mean_times,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_JIT,
     DEFAULT_OPTIMIZER,
 )
 from .parameters import (
+    compute_nn_distances_within_time_points,
+    compute_cov_func,
     compute_d,
     compute_d_factal,
     compute_mu,
     compute_initial_value,
     DEFAULT_N_LANDMARKS,
 )
+from .compute_ls_time import compute_ls_time
 from .util import (
     DEFAULT_JITTER,
     Log,
 )
 from .validation import (
+    _validate_time_x,
+    _validate_positive_float,
     _validate_string,
     _validate_array,
 )
@@ -32,9 +37,10 @@ DEFAULT_D_METHOD = "embedding"
 logger = Log()
 
 
-class DensityEstimator(BaseEstimator):
+class TimeSensitiveDensityEstimator(BaseEstimator):
     R"""
-    A class for non-parametric density estimation. It performs Bayesian inference with
+    A class for non-parametric density estimation with time sensitivity.
+    It performs Bayesian inference with
     a Gaussian process prior and Nearest Neighbor likelihood. All intermediate computations
     are cached as instance variables, which allows viewing intermediate results and
     saving computation time by passing precomputed values as arguments to a new model.
@@ -95,7 +101,8 @@ class DensityEstimator(BaseEstimator):
         is greater than or equal to the number of training points. Defaults to None.
 
     nn_distances : array-like or None
-        The nearest neighbor distances at each data point. If None, the nearest neighbor
+        The nearest neighbor distances at each data point within each time point.
+        If None, the nearest neighbor
         distances are computed automatically, using a KDTree if the dimensionality of the data
         is less than 20, or a BallTree otherwise. Defaults to None.
 
@@ -110,14 +117,40 @@ class DensityEstimator(BaseEstimator):
         \log(\text{gamma}(d/2 + 1)) - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})`.
         Defaults to None.
 
-    ls : float or None
-        The length scale of the Gaussian process covariance function. If None, `ls` is set to
-        the geometric mean of the nearest neighbor distances times a constant. If `cov_func`
-        is supplied explicitly, `ls` has no effect. Defaults to None.
+    ls : float or None, optional
+        The length scale for the Gaussian process covariance function.
+        If None (default), the length scale is automatically selected based on
+        a heuristic link between the nearest neighbor distances and the optimal
+        length scale.
 
-    cov_func : function or None
+    ls_time : float or None
+        The length scale of the Gaussian process covariance function for the time dimension.
+        If None, `ls_time` is set to the length scale that best induces a covariance
+        (using the `cov_func_curry`) between the time points that best mimics the
+        Pearson correlation observed between densities of the individual time points. If `cov_func`
+        is supplied explicitly, `ls_time` has no effect. Defaults to None.
+
+    ls_factor : float, optional
+        A scaling factor applied to the length scale when it's automatically
+        selected. It is used to manually adjust the automatically chosen length
+
+    ls_time_factor : float, optional
+        A scaling factor applied to the time length scale (`ls_time`) when it's automatically
+        selected. This allows for manual adjustment of the automatically determined time length scale.
+        Defaults to 1.
+
+    density_estimator_kwargs : dict, optional
+        A dictionary of keyword arguments to be passed for timepoint-specific
+        density estimation during the automatic selection of the time length scale `ls_time`.
+        This parameter allows custom configuration for the density estimation process.
+        Note that this parameter has no effect if `ls_time` is specified explicitly.
+        Default is an empty dictionary ({}).
+
+    cov_func : mellon.Covariance or None
         The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
-        If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
+        Should be an instance of a class that inherits from :class:`mellon.Covariance`.
+        If None, the covariance function `cov_func` is automatically generated as
+        `cov_func_curry(ls, active_dims=slice(None, -1)) * cov_func_curry(ls_time, active_dims=-1)`.
         Defaults to None.
 
     L : array-like or None
@@ -156,20 +189,21 @@ class DensityEstimator(BaseEstimator):
     landmarks : array-like
         The points used to quantize the data for the approximate covariance.
     nn_distances : array-like
-        The nearest neighbor distances at each data point.
+        The nearest neighbor distances at each data point within their respective time point.
     d : int
         The intrinsic dimensionality of the data.
     mu : float
         The mean of the Gaussian process.
-    ls : float or None, optional
-        The length scale for the Gaussian process covariance function.
-        If None (default), the length scale is automatically selected based on
-        a heuristic link between the nearest neighbor distances and the optimal
-        length scale.
-    ls_factor : float, optional
-        A scaling factor applied to the length scale when it's automatically
-        selected. It is used to manually adjust the automatically chosen length
-        scale for finer control over the model's sensitivity to variations in the data.
+    ls : float
+        The length scale of the Gaussian process covariance function for spacial dimensions.
+    ls_time : float
+        The length scale of the Gaussian process covariance function for the time dimension.
+    ls_factor : float
+        Factor used to scale the automatically selected length scale.
+    ls_time_factor : float
+        Factor used to scale the automatically selected time length scale.
+    density_estimator_kwargs : dict
+        A dictionary of keyword arguments for the density estimation within time points.
     cov_func : function
         The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
     L : array-like
@@ -215,7 +249,10 @@ class DensityEstimator(BaseEstimator):
         d=None,
         mu=None,
         ls=None,
+        ls_time=None,
         ls_factor=1,
+        ls_factor_times=1,
+        density_estimator_kwargs=dict(),
         cov_func=None,
         L=None,
         initial_value=None,
@@ -240,8 +277,15 @@ class DensityEstimator(BaseEstimator):
             initial_value=initial_value,
             jit=jit,
         )
+        if not isinstance(density_estimator_kwargs, dict):
+            raise ValueError("density_estimator_kwargs needs to be a dictionary.")
+        self.density_estimator_kwargs = density_estimator_kwargs
         self.d_method = _validate_string(
             d_method, "d_method", choices={"fractal", "embedding"}
+        )
+        self.ls_time = _validate_positive_float(ls_time, "ls_time", optional=True)
+        self.ls_factor_times = _validate_positive_float(
+            ls_factor_times, "ls_factor_times"
         )
         self.transform = None
         self.loss_func = None
@@ -273,6 +317,7 @@ class DensityEstimator(BaseEstimator):
             f"d={self.d}, "
             f"mu={self.mu}, "
             f"ls={self.ls}, "
+            f"ls_time={self.ls_time}, "
             f"cov_func={self.cov_func}, "
         )
         if self.L is None:
@@ -287,7 +332,7 @@ class DensityEstimator(BaseEstimator):
         return string
 
     def _compute_d(self):
-        x = self.x
+        x = self.x[:, :-1]
         if self.d_method == "fractal":
             logger.warning("Using EXPERIMENTAL fractal dimensionality selection.")
             d = compute_d_factal(x)
@@ -331,6 +376,38 @@ class DensityEstimator(BaseEstimator):
         loss_func = compute_loss_func(nn_distances, d, transform, k)
         return loss_func
 
+    def _compute_nn_distances(self):
+        x = self.x
+        logger.info("Computing nearest neighbor distances within time points.")
+        nn_distances = compute_nn_distances_within_time_points(x)
+        return nn_distances
+
+    def _compute_ls_time(self):
+        nn_distances = self.nn_distances
+        x = self.x
+        cov_func_curry = self.cov_func_curry
+        density_estimator_kwargs = self.density_estimator_kwargs
+        logger.info(
+            "Computing density within each time point to estimate the time "
+            "length scale `ls_time`. Specify `ls_time` to skip this step."
+        )
+        ls = compute_ls_time(
+            nn_distances,
+            x,
+            cov_func_curry,
+            density_estimator_kwargs=density_estimator_kwargs,
+        )
+        ls *= self.ls_factor_times
+        return ls
+
+    def _compute_cov_func(self):
+        cov_func_curry = self.cov_func_curry
+        ls = self.ls
+        ls_time = self.ls_time
+        cov_func = compute_cov_func(cov_func_curry, ls, ls_time)
+        logger.info("Using covariance function %s.", str(cov_func))
+        return cov_func
+
     def _set_log_density_x(self):
         pre_transformation = self.pre_transformation
         transform = self.transform
@@ -346,7 +423,7 @@ class DensityEstimator(BaseEstimator):
         cov_func = self.cov_func
         jitter = self.jitter
         logger.info("Computing predictive function.")
-        log_density_func = compute_conditional_mean(
+        log_density_func = compute_conditional_mean_times(
             x,
             landmarks,
             pre_transformation,
@@ -357,23 +434,42 @@ class DensityEstimator(BaseEstimator):
         )
         self.log_density_func = log_density_func
 
-    def prepare_inference(self, x):
-        R"""
-        Set all attributes in preparation for optimization, but do not
-        perform Bayesian inference. It is not necessary to call this
-        function before calling fit.
+    def _set_x(self, x, times=None):
+        self.x = _validate_time_x(x, times)
 
-        :param x: The training instances to estimate density function.
-        :type x: array-like
-        :return: loss_func, initial_value - The Bayesian loss function and
-            initial guess for optimization.
-        :rtype: function, array-like
+    def prepare_inference(self, x, times=None):
+        R"""
+        Prepares for optimization without performing Bayesian inference.
+        This method sets all attributes required for optimization.
+        It is not required to call this method manually before calling `fit`.
+
+        Parameters
+        ----------
+        x : array-like
+            The training instances for which the density function will be estimated.
+            If 'times' is None, the last column of 'x' is interpreted as the times.
+            Shape must be (n_samples, n_features).
+
+        times : array-like, optional
+            An array encoding the time points associated with each cell/row in 'x'.
+            If provided, it overrides the last column of 'x' as the times.
+            Shape must be either (n_samples,) or (n_samples, 1).
+
+        Returns
+        -------
+        loss_func : function
+            The Bayesian loss function that will be minimized during optimization.
+
+        initial_value : array-like
+            The initial guess for the optimization process.
         """
-        self._set_x(x)
+
+        self._set_x(x, times=times)
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
         self._prepare_attribute("mu")
         self._prepare_attribute("ls")
+        self._prepare_attribute("ls_time")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
         self._prepare_attribute("L")
@@ -430,18 +526,34 @@ class DensityEstimator(BaseEstimator):
             self._set_log_density_func()
         return self.log_density_x
 
-    def fit(self, x=None, build_predict=True):
+    def fit(self, x=None, times=None, build_predict=True):
         R"""
         Fit the model from end to end.
 
-        :param x: The training instances to estimate density function.
-        :type x: array-like
-        :param build_predict: Whether or not to build the prediction function.
-            Defaults to True.
-        :type build_predict: bool
-        :return: self - A fitted instance of this estimator.
-        :rtype: Object
+        Parameters
+        ----------
+        x : array-like, optional
+            The training instances to estimate density function.
+            If 'x' is not provided and 'self.x' is also None, a ValueError is raised.
+        times : array-like, optional
+            An array encoding the time points associated with each cell/row in 'x'.
+            Shape must be either (n_samples,) or (n_samples, 1).
+        build_predict : bool, optional
+            Whether or not to build the prediction function. Defaults to True.
+
+        Returns
+        -------
+        self : object
+            A fitted instance of this estimator.
+
+        Raises
+        ------
+        ValueError
+            If both 'x' and 'self.x' are None or if 'x' is provided and not equal to 'self.x'.
         """
+
+        if x is not None:
+            x = _validate_time_x(x, times)
         if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             raise ValueError(message)
@@ -451,7 +563,7 @@ class DensityEstimator(BaseEstimator):
         if x is None:
             x = self.x
 
-        self.prepare_inference(x)
+        self.prepare_inference(x, times)
         self.run_inference()
         self.process_inference(build_predict=build_predict)
         return self
@@ -461,20 +573,28 @@ class DensityEstimator(BaseEstimator):
         R"""
         An instance of the :class:`mellon.Predictor` that predicts the log density at each point in x.
 
-        It contains a __call__ method which can be used to predict the log density.
-        The instance also supports serialization features which allows for saving
+        The instance contains a __call__ method which can be used to predict the log density.
+        This instance also supports serialization features which allows for saving
         and loading the predictor state. Refer to mellon.Predictor documentation for more details.
 
-        :param x: The new data to predict.
-        :type x: array-like
-        :return: log_density - The log density at each test point in x.
-        :rtype: array-like
+        Note that the last column of the input array `x` should contain the time information.
+
+        Parameters
+        ----------
+        x : array-like
+            The new data to predict, where the last column should contain the time information.
+
+        Returns
+        -------
+        log_density : array-like
+            The log density at each test point in `x`.
+
         """
         if self.log_density_func is None:
             self._set_log_density_func()
         return self.log_density_func
 
-    def fit_predict(self, x=None, build_predict=False):
+    def fit_predict(self, x=None, times=None, build_predict=False):
         R"""
         Perform Bayesian inference and return the log density at training points.
 
@@ -482,6 +602,8 @@ class DensityEstimator(BaseEstimator):
         :type x: array-like
         :return: log_density_x - The log density at each training point in x.
         """
+        if x is not None:
+            x = _validate_time_x(x, times)
         if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             error = ValueError(message)
@@ -494,8 +616,6 @@ class DensityEstimator(BaseEstimator):
             raise error
         if x is None:
             x = self.x
-        else:
-            x = _validate_array(x, "x")
 
         self.fit(x, build_predict=build_predict)
         return self.log_density_x

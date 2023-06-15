@@ -1,4 +1,4 @@
-from jax.numpy import exp, log, quantile, stack
+from jax.numpy import exp, log, quantile, stack, unique, empty
 from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
@@ -64,15 +64,56 @@ def compute_distances(x, k):
 
 
 def compute_nn_distances(x):
-    R"""
-    Computes the distance to the nearest neighbor for each training instance.
+    """
+    Compute the distance to the nearest neighbor for each instance in the provided training dataset.
 
-    :param x: The training instances.
-    :type x: array-like
-    :return: nn_distances - The observed nearest neighbor distances.
-    :rtype: array-like
+    This function calculates the Euclidean distance between each instance in the dataset and its closest neighbor. 
+    It returns an array of these distances, ordered in the same way as the input instances.
+
+    Parameters
+    ----------
+    x : array-like of shape (n_samples, n_features)
+        An array-like object representing the training instances.
+
+    Returns
+    -------
+    nn_distances : array-like of shape (n_samples,)
+        An array of the Euclidean distances from each instance to its nearest neighbor in 
+        the input dataset. The ordering of the distances in this array corresponds to the 
+        ordering of the instances in the input data.
+
     """
     return compute_distances(x, 1)[:, 0]
+
+
+
+def compute_nn_distances_within_time_points(x):
+    R"""
+    Computes the distance to the nearest neighbor for each training instance
+    within the same time point group. It retains the original order of instances in `x`.
+
+    Parameters
+    ----------
+    x : array-like
+        The training instances where the last column encodes the time point for each instance.
+
+    Returns
+    -------
+    nn_distances : array-like
+        The observed nearest neighbor distances within the same time point group,
+        preserving the order of instances in `x`.
+
+    """
+    unique_times = unique(x[:, -1])
+    nn_distances = empty(x.shape[0])
+
+    for time in unique_times:
+        mask = x[:, -1] == time
+        x_at_time = x[mask, :-1]
+        nn_distances_at_time = compute_nn_distances(x_at_time)
+        nn_distances = nn_distances.at[mask].set(nn_distances_at_time)
+
+    return nn_distances
 
 
 def compute_d(x):
@@ -139,17 +180,35 @@ def compute_ls(nn_distances):
     return exp(log(nn_distances).mean() + 3.0)
 
 
-def compute_cov_func(cov_func_curry, ls):
+def compute_cov_func(cov_func_curry, ls, ls_time=None):
     R"""
-    Computes the Gaussian process covariance function from its generator and length scale.
+    Computes the Gaussian process covariance function from its generator and length scales.
 
-    :param cov_func_curry: The covariance function generator.
-    :type cov_func_curry: function or type
-    :param ls: The length scale of the covariance function.
-    :type ls: float
-    :return: cov_func - The Gaussian process covariance function k(x, y) :math:`\rightarrow` float.
-    :rtype: function
+    Parameters
+    ----------
+    cov_func_curry : function or type
+        The covariance function generator.
+
+    ls : float
+        The length scale of the covariance function.
+
+    ls_time : float, optional
+        The time-specific length scale of the covariance function.
+        If provided, the returned covariance function will account for the time-specific
+        dimension of the input data (last dimension assumed to be time). Defaults to None.
+
+    Returns
+    -------
+    cov_func : mellon.Covariance instance
+        The resulting Gaussian process covariance function. If `ls_time` is
+        provided, the covariance function is a product of two covariance functions,
+        one for the feature dimensions and one for the time dimension.
+        Otherwise, it's a single covariance function considering only the feature dimensions.
     """
+    if ls_time is not None:
+        return cov_func_curry(ls, active_dims=slice(None, -1)) * cov_func_curry(
+            ls_time, active_dims=-1
+        )
     return cov_func_curry(ls)
 
 
