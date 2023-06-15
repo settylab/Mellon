@@ -10,12 +10,12 @@ from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
 from .conditional import (
     FullConditionalMean,
-    FullConditionalMeanTimes,
+    FullConditionalMeanTime,
     FullConditionalMeanY,
     LandmarksConditionalMean,
-    LandmarksConditionalMeanTimes,
+    LandmarksConditionalMeanTime,
     LandmarksConditionalMeanCholesky,
-    LandmarksConditionalMeanCholeskyTimes,
+    LandmarksConditionalMeanCholeskyTime,
     LandmarksConditionalMeanY,
 )
 from .util import DEFAULT_JITTER
@@ -420,7 +420,7 @@ def compute_conditional_mean_times(
     """
 
     if landmarks is None:
-        return FullConditionalMeanTimes(
+        return FullConditionalMeanTime(
             x,
             y,
             mu,
@@ -432,7 +432,7 @@ def compute_conditional_mean_times(
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
         landmarks = ensure_2d(landmarks)
-        return LandmarksConditionalMeanCholeskyTimes(
+        return LandmarksConditionalMeanCholeskyTime(
             landmarks,
             pre_transformation,
             mu,
@@ -442,7 +442,7 @@ def compute_conditional_mean_times(
         )
     else:
         landmarks = ensure_2d(landmarks)
-        return LandmarksConditionalMeanTimes(
+        return LandmarksConditionalMeanTime(
             x,
             landmarks,
             y,

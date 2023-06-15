@@ -67,7 +67,7 @@ def compute_nn_distances(x):
     """
     Compute the distance to the nearest neighbor for each instance in the provided training dataset.
 
-    This function calculates the Euclidean distance between each instance in the dataset and its closest neighbor. 
+    This function calculates the Euclidean distance between each instance in the dataset and its closest neighbor.
     It returns an array of these distances, ordered in the same way as the input instances.
 
     Parameters
@@ -78,13 +78,12 @@ def compute_nn_distances(x):
     Returns
     -------
     nn_distances : array-like of shape (n_samples,)
-        An array of the Euclidean distances from each instance to its nearest neighbor in 
-        the input dataset. The ordering of the distances in this array corresponds to the 
+        An array of the Euclidean distances from each instance to its nearest neighbor in
+        the input dataset. The ordering of the distances in this array corresponds to the
         ordering of the instances in the input data.
 
     """
     return compute_distances(x, 1)[:, 0]
-
 
 
 def compute_nn_distances_within_time_points(x):

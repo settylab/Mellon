@@ -12,10 +12,12 @@ from .base_cov import Covariance
 from .util import Log
 from .helper import deserialize
 from .derivatives import (
+    derivative,
     gradient,
     hessian,
     hessian_log_determinant,
 )
+from .validation import _validate_time_x, _validate_float
 
 
 logger = Log()
@@ -30,7 +32,7 @@ class Predictor(ABC):
 
     >>> y = predictor(x)
 
-    It is the responsibility of subclasses to define the behaviour of `__call__`.
+    It is the responsibility of subclasses to define the behaviour of `_predict`.
 
     Methods
     -------
@@ -74,13 +76,16 @@ class Predictor(ABC):
         return string
 
     @abstractmethod
+    def _predict(self, *args, **kwars):
+        """Call the predictor. Must be overridden by subclasses."""
+
     def __call__(self, x):
-        """Call the predictor on input x. Must be overridden by subclasses.
+        """Make a prediction based on input x.
 
         :param x: Input data to the predictor.
         :type x: array-like
         """
-        pass
+        return self._predict(x)
 
     @abstractmethod
     def _data_dict(self):
@@ -297,3 +302,162 @@ class Predictor(ABC):
         instance.__setstate__(state)
 
         return instance
+
+
+class PredictorTime(Predictor):
+    """
+    Abstract base class for predictor models with a time covariate.
+
+    An instance `predictor` of a subclass of `PredictorTime` can be used to
+    make a prediction by calling it with input data `x` and `time`:
+
+    >>> y = predictor(x, time)
+
+    It is the responsibility of subclasses to define the behaviour of `_predict`.
+
+    Methods
+    -------
+    __call__(x: Union[array-like, pd.DataFrame]):
+        This makes predictions for an input `x`. The input data type can be either an array-like object
+        (like list or numpy array) or a pandas DataFrame.
+
+        Parameters
+        ----------
+        x : array-like or pandas.DataFrame
+            The input data on which to make a prediction.
+        time : scalar or array-like, optional
+            The time points associated with each cell/row in 'x'.
+            If 'time' is a scalar, it will be converted into a 1D array of the same size as 'x'.
+
+        Returns
+        -------
+        This method returns the predictions made by the model on the input data `x` and `time`.
+        The prediction is usually array-like with as many entries as `x.shape[0]`.
+    """
+
+    def __call__(self, Xnew, time=None):
+        """
+        Call method to use the class instance as a function. This method
+        deals with an optional 'time' argument.
+        If 'time' is a scalar, it converts it to a 1D array of the same size as 'Xnew'.
+
+        Parameters
+        ----------
+        Xnew : array-like
+            The new data points for prediction.
+        time : scalar or array-like, optional
+            The time points associated with each cell/row in 'Xnew'.
+            If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
+
+        Returns
+        -------
+        array-like
+            Predictions for 'Xnew'.
+
+        Raises
+        ------
+        ValueError
+            If 'time' is an array and its size does not match 'Xnew'.
+        """
+
+        # if time is a scalar, convert it into a 1D array of the same size as Xnew
+        Xnew = _validate_time_x(Xnew, time, cast_scalar=True)
+
+        return self._predict(Xnew)
+
+    def time_derivative(self, x, time, jit=True):
+        R"""
+        Computes the time derivative of the prediction function for each line in `x`.
+
+        This function applies a jax-based gradient operation to the density function evaluated at a specific time.
+        The derivative is with respect to time and not the inputs in `x`.
+
+        Parameters
+        ----------
+        x : array-like
+            Data points where the derivative is to be evaluated.
+        time : array-like or scalar
+            Time point or points at which to evaluate the derivative.
+            If time is an array then the time derivative will be computed for
+            all data-points and all times in the array. It must be 1-d.
+        time : array-like or scalar
+            Time point or points at which to evaluate the derivative.
+            If `time` is a scalar, the derivative will be computed at this
+            specific time point for all data points in `x`.
+            If `time` is an array, it should be 1-D and the time derivative
+            will be computed for all data-points at the corresponding time in the array.
+        jit : bool, optional
+            If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+
+        Returns
+        -------
+        array-like
+            The time derivative of the prediction function evaluated at each point in `x`.
+            The shape of the output array is the same as `x`.
+
+        """
+
+        def dens_at(t):
+            return self.__call__(x, t)
+
+        return derivative(dens_at, time, jit=jit)
+
+    def gradient(self, x, time, jit=True):
+        R"""
+        Conputes the gradient of the predict function for each cell state in x
+        and one fixed time.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: gradiants - The gradient of function at each point in x.
+            gradients.shape == x.shape
+        :rtype: array-like
+        """
+        time = _validate_float(time, "time", optional=True)
+
+        def dens_at(x):
+            return self.__call__(x, time)
+
+        return gradient(dens_at, x, jit=jit)
+
+    def hessian(self, x, time, jit=True):
+        R"""
+        Conputes the hessian of the predict function for each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: hessians - The hessian matrix of function at each point in x.
+            hessians.shape == X.shape + X.shape[1:]
+        :rtype: array-like
+        """
+        time = _validate_float(time, "time", optional=True)
+
+        def dens_at(x):
+            return self.__call__(x, time)
+
+        return hessian(dens_at, x, jit=jit)
+
+    def hessian_log_determinant(self, x, time, jit=True):
+        R"""
+        Conputes the logarirhm of the determinat of the predict function for
+        each line in x.
+
+        :param x: Data points.
+        :type x: array-like
+        :param jit: Use jax just in time compilation. Defaults to True.
+        :type jit: bool
+        :return: signs, log_determinants - The sign of the determinant
+            at each point x and the logarithm of its absolute value.
+            signs.shape == log_determinants.shape == x.shape[0]
+        :rtype: array-like, array-like
+        """
+        time = _validate_float(time, "time", optional=True)
+
+        def dens_at(x):
+            return self.__call__(x, time)
+
+        return hessian_log_determinant(dens_at, x, jit=jit)

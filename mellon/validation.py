@@ -1,13 +1,14 @@
 from collections.abc import Iterable
 
-from jax.numpy import asarray, concatenate
+from jax.numpy import asarray, concatenate, isscalar, full
 
 from .base_cov import Covariance
 
 
-def _validate_time_x(x, times=None):
+def _validate_time_x(x, times=None, cast_scalar=False):
     """
     Validates and concatenates 'x' and 'times' if 'times' is provided.
+    Allows Jax's JVPTracer objects and avoids explicit conversion in these cases.
 
     Parameters
     ----------
@@ -25,12 +26,14 @@ def _validate_time_x(x, times=None):
         The concatenated array of 'x' and 'times' (if provided).
     """
 
-    x = _validate_array(x, "x")
-    times = _validate_array(times, "times", optional=True)
-
-    # Validate 'x' shape
-    if x.ndim != 2:
-        raise ValueError("'x' must be a 2D array.")
+    x = _validate_array(x, "x", ndim=2)
+    if (
+        cast_scalar
+        and times is not None
+        and (isscalar(times) or all(s == 1 for s in times.shape))
+    ):
+        times = full(x.shape[0], times)
+    times = _validate_array(times, "times", optional=True, ndim=(1, 2))
 
     if times is not None:
         # Validate 'times' shape
@@ -41,7 +44,10 @@ def _validate_time_x(x, times=None):
 
         # Check that 'x' and 'times' have the same number of samples
         if x.shape[0] != times.shape[0]:
-            raise ValueError("'x' and 'times' must have the same number of samples.")
+            raise ValueError(
+                "'x' and 'times' must have the same number of samples. "
+                f"Got {x.shape} and {times.shape} shapes respectively."
+            )
 
         # Concatenate 'x' and 'times'
         x = concatenate((x, times), axis=1)
@@ -84,17 +90,64 @@ def _validate_positive_int(value, param_name, optional=False):
     return value
 
 
-def _validate_array(iterable, name, optional=False):
-    if iterable is None and optional:
-        return None
+def _validate_array(iterable, name, optional=False, ndim=None):
+    """
+    Validates and converts an iterable to a numpy array of type float.
+    Allows Jax's JVPTracer objects and avoids explicit conversion in these cases.
 
-    if not isinstance(iterable, Iterable):
-        raise TypeError(f"{name} should be iterable, got {type(iterable)} instead.")
+    Parameters
+    ----------
+    iterable : iterable or None
+        The iterable to be validated and converted. If optional=True, can also be None.
 
-    try:
-        return asarray(iterable, dtype=float)
-    except Exception:
-        raise ValueError(f"Could not convert {name} to a numeric array.")
+    name : str
+        The name of the variable, used in error messages.
+
+    optional : bool, optional
+        If True, 'iterable' can be None and the function will return None in this case.
+        If False and 'iterable' is None, a TypeError is raised. Defaults to False.
+
+    ndim : int or tuple of ints, optional
+        The number of dimensions the array must have. If specified and the number of dimensions
+        of 'iterable' is not in 'ndim', a ValueError is raised.
+
+    Returns
+    -------
+    numpy.ndarray or jax._src.interpreters.ad.JVPTracer
+        The input iterable converted to a numpy array of type float, or the input JVPTracer.
+
+    Raises
+    ------
+    TypeError
+        If 'iterable' is not iterable and not None, or if 'iterable' is None and optional=False.
+
+    ValueError
+        If 'iterable' can't be converted to a numpy array of type float,
+        or if the number of dimensions of 'iterable' is not in 'ndim'.
+    """
+
+    if iterable is None:
+        if optional:
+            return None
+        else:
+            raise TypeError(f"'{name}' can't be None.")
+
+    if isinstance(iterable, Iterable):
+        array = asarray(iterable, dtype=float)
+    else:
+        raise TypeError(
+            f"'{name}' should be iterable or a JVPTracer, got {type(iterable)} instead."
+        )
+
+    if ndim is not None:
+        if isinstance(ndim, int):
+            ndim = (ndim,)
+        if array.ndim not in ndim:
+            raise ValueError(
+                f"'{name}' must be a {ndim}-dimensional array, got {array.ndim}-dimensional array instead."
+            )
+
+    return array
 
 
 def _validate_bool(value, name):
@@ -152,3 +205,34 @@ def _validate_cov_func(cov_func, param_name, optional=False):
             f"'{param_name}' must be an instance of a subclass of mellon.Covariance"
         )
     return cov_func
+
+
+def _validate_1d(x):
+    """
+    Validates that `x` can be cast to a JAX array with exactly 1 dimension and float data type.
+
+    Parameters
+    ----------
+    x : array-like or scalar
+        The input data to be validated and cast.
+
+    Returns
+    -------
+    array-like
+        The validated and cast data. If `x` is a scalar, it is transformed into a 1D array with a single element.
+
+    Raises
+    ------
+    ValueError
+        If `x` cannot be cast to a JAX array with exactly 1 dimension.
+    """
+    x = asarray(x, dtype=float)
+
+    # Add an extra dimension if x is a scalar
+    if x.ndim == 0:
+        x = x[None]
+
+    if x.ndim != 1:
+        raise ValueError("`x` must be exactly 1-dimensional.")
+
+    return x

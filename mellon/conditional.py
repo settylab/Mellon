@@ -1,16 +1,16 @@
-from jax.numpy import dot, square, isnan, any, isscalar, full
+from jax.numpy import dot, square, isnan, any
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
 from .helper import ensure_2d, make_serializable
-from .base_predictor import Predictor
-from .validation import _validate_array, _validate_time_x
+from .base_predictor import Predictor, PredictorTime
+from .validation import _validate_array
 
 
 logger = Log()
 
 
-class FullConditionalMean(Predictor):
+class _FullConditionalMean:
     def __init__(
         self,
         x,
@@ -65,7 +65,7 @@ class FullConditionalMean(Predictor):
             "mu": make_serializable(self.mu),
         }
 
-    def __call__(self, Xnew):
+    def _predict(self, Xnew):
         Xnew = _validate_array(Xnew, "Xnew")
         Xnew = ensure_2d(Xnew)
 
@@ -78,38 +78,12 @@ class FullConditionalMean(Predictor):
         return mu + dot(Kus, weights)
 
 
-class FullConditionalMeanTimes(FullConditionalMean):
-    def __call__(self, Xnew, times=None):
-        """
-        Call method to use the class instance as a function. This method
-        deals with an optional 'times' argument.
-        If 'times' is a scalar, it converts it to a 1D array of the same size as 'Xnew'.
+class FullConditionalMean(_FullConditionalMean, Predictor):
+    pass
 
-        Parameters
-        ----------
-        Xnew : array-like
-            The new data points for prediction.
-        times : scalar or array-like, optional
-            The time points associated with each cell/row in 'Xnew'.
-            If 'times' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
 
-        Returns
-        -------
-        array-like
-            Predictions for 'Xnew'.
-
-        Raises
-        ------
-        ValueError
-            If 'times' is an array and its size does not match 'Xnew'.
-        """
-
-        # if times is a scalar, convert it into a 1D array of the same size as Xnew
-        if isscalar(times):
-            times = full(Xnew.shape[0], times)
-        Xnew = _validate_time_x(Xnew, times)
-
-        return super().__call__(Xnew)
+class FullConditionalMeanTime(_FullConditionalMean, PredictorTime):
+    pass
 
 
 class FullConditionalMeanY(Predictor):
@@ -168,7 +142,7 @@ class FullConditionalMeanY(Predictor):
             "mu": make_serializable(self.mu),
         }
 
-    def __call__(self, y):
+    def _predict(self, y):
         y = _validate_array(y, "y")
 
         L = self.L
@@ -179,7 +153,7 @@ class FullConditionalMeanY(Predictor):
         return mu + dot(Kus, weights)
 
 
-class LandmarksConditionalMean(Predictor):
+class _LandmarksConditionalMean:
     def __init__(
         self,
         x,
@@ -244,7 +218,7 @@ class LandmarksConditionalMean(Predictor):
             "mu": make_serializable(self.mu),
         }
 
-    def __call__(self, Xnew):
+    def _predict(self, Xnew):
         Xnew = _validate_array(Xnew, "Xnew")
         Xnew = ensure_2d(Xnew)
 
@@ -257,41 +231,15 @@ class LandmarksConditionalMean(Predictor):
         return mu + dot(Kus, weights)
 
 
-class LandmarksConditionalMeanTimes(LandmarksConditionalMean):
-    def __call__(self, Xnew, times=None):
-        """
-        Call method to use the class instance as a function. This method
-        deals with an optional 'times' argument.
-        If 'times' is a scalar, it converts it to a 1D array of the same size as 'Xnew'.
-
-        Parameters
-        ----------
-        Xnew : array-like
-            The new data points for prediction.
-        times : scalar or array-like, optional
-            The time points associated with each cell/row in 'Xnew'.
-            If 'times' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
-
-        Returns
-        -------
-        array-like
-            Predictions for 'Xnew'.
-
-        Raises
-        ------
-        ValueError
-            If 'times' is an array and its size does not match 'Xnew'.
-        """
-
-        # if times is a scalar, convert it into a 1D array of the same size as Xnew
-        if isscalar(times):
-            times = full(Xnew.shape[0], times)
-        Xnew = _validate_time_x(Xnew, times)
-
-        return super().__call__(Xnew)
+class LandmarksConditionalMean(_LandmarksConditionalMean, Predictor):
+    pass
 
 
-class LandmarksConditionalMeanCholesky(Predictor):
+class LandmarksConditionalMeanTime(_LandmarksConditionalMean, PredictorTime):
+    pass
+
+
+class _LandmarksConditionalMeanCholesky:
     def __init__(
         self,
         xu,
@@ -346,7 +294,7 @@ class LandmarksConditionalMeanCholesky(Predictor):
             "mu": make_serializable(self.mu),
         }
 
-    def __call__(self, Xnew):
+    def _predict(self, Xnew):
         Xnew = _validate_array(Xnew, "Xnew")
         Xnew = ensure_2d(Xnew)
 
@@ -359,38 +307,16 @@ class LandmarksConditionalMeanCholesky(Predictor):
         return mu + dot(Kus, weights)
 
 
-class LandmarksConditionalMeanCholeskyTimes(LandmarksConditionalMeanCholesky):
-    def __call__(self, Xnew, times=None):
-        """
-        Call method to use the class instance as a function. This method
-        deals with an optional 'times' argument.
-        If 'times' is a scalar, it converts it to a 1D array of the same size as 'Xnew'.
+class LandmarksConditionalMeanCholesky(
+    _LandmarksConditionalMeanCholesky, PredictorTime
+):
+    pass
 
-        Parameters
-        ----------
-        Xnew : array-like
-            The new data points for prediction.
-        times : scalar or array-like, optional
-            The time points associated with each cell/row in 'Xnew'.
-            If 'times' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
 
-        Returns
-        -------
-        array-like
-            Predictions for 'Xnew'.
-
-        Raises
-        ------
-        ValueError
-            If 'times' is an array and its size does not match 'Xnew'.
-        """
-
-        # if times is a scalar, convert it into a 1D array of the same size as Xnew
-        if isscalar(times):
-            times = full(Xnew.shape[0], times)
-        Xnew = _validate_time_x(Xnew, times)
-
-        return super().__call__(Xnew)
+class LandmarksConditionalMeanCholeskyTime(
+    _LandmarksConditionalMeanCholesky, PredictorTime
+):
+    pass
 
 
 class LandmarksConditionalMeanY(Predictor):
@@ -461,7 +387,7 @@ class LandmarksConditionalMeanY(Predictor):
             "mu": make_serializable(self.mu),
         }
 
-    def __call__(self, y):
+    def _predict(self, y):
         y = _validate_array(y, "y")
 
         L_B = self.L_B

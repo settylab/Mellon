@@ -469,7 +469,9 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         else:
             x = _validate_time_x(x, times)
             if self.x is not None and self.x is not x:
-                message = "self.x has been set already, but is not equal to the argument x."
+                message = (
+                    "self.x has been set already, but is not equal to the argument x."
+                )
                 raise ValueError(message)
 
         self._set_x(x)

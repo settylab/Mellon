@@ -1,4 +1,4 @@
-from jax.numpy import exp, unique, empty, corrcoef, zeros, abs, stack
+from jax.numpy import exp, unique, corrcoef, zeros, abs, stack
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm
 from jaxopt import ScipyMinimize
@@ -67,13 +67,14 @@ def compute_ls_time(
 
     densities = stack(densities)
     corrs = corrcoef(densities)
-    delta_t = abs(unique_times.reshape(-1, 1) - unique_times.reshape(1, -1)).reshape(-1, 1)
+    delta_t = abs(unique_times.reshape(-1, 1) - unique_times.reshape(1, -1)).reshape(
+        -1, 1
+    )
 
     def ls_loss(log_ls):
         ls = exp(log_ls)
         covs = cov_func_curry(ls)(delta_t, zeros((1, 1))).reshape((n_times, n_times))
         return norm(covs - corrs)
-
 
     opt = ScipyMinimize(fun=ls_loss, method="L-BFGS-B", jit=False).run(0.0)
     ls = exp(opt.params)

@@ -1,5 +1,43 @@
 import jax
 
+from .validation import _validate_1d
+
+
+def derivative(function, x, jit=True):
+    """
+    Computes the derivative of a scalar function at each point in `x`.
+
+    This function applies a jax-based derivative operation to the input function evaluated at specific points in `x`.
+    The derivative is with respect to the function's input.
+
+    Parameters
+    ----------
+    function : callable
+        A function that takes in a scalar input and outputs a scalar.
+        The function must have the signature function(x: scalar) -> scalar.
+    x : array-like or scalar
+        Data point or points at which to evaluate the derivative.
+        If `x` is an array then the derivative will be computed for
+        all points in the array. It must be 1-d.
+    jit : bool, optional
+        If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+
+    Returns
+    -------
+    array-like
+        The derivative of the function evaluated at each point in `x`.
+        The shape of the output array is the same as `x`.
+
+    """
+    x = _validate_1d(x)
+
+    def get_grad(x):
+        return jax.jacrev(function)(x).squeeze()
+
+    if jit:
+        get_grad = jax.jit(get_grad)
+    return jax.vmap(get_grad, in_axes=(0,))(x)
+
 
 def gradient(function, x, jit=True):
     R"""
