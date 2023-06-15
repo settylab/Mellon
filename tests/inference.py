@@ -39,6 +39,7 @@ def test_minimize_adam():
     diff = jnp.abs(result.pre_transformation - known_optimum)
     assert jnp.max(diff) < 1e0, "Optimization result shoud be close to known minimum."
 
+
 def test_run_advi():
     din = 2
 

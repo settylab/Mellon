@@ -56,7 +56,9 @@ def test_compute_L():
 def test_compute_initial_value():
     n = 2
     d = 2
-    iv = mellon.parameters.compute_initial_value(jnp.arange(n) + 1, 3, 1, jnp.ones((n, d)))
+    iv = mellon.parameters.compute_initial_value(
+        jnp.arange(n) + 1, 3, 1, jnp.ones((n, d))
+    )
     assert iv.dtype.kind == "f", "The initial value should have floating point numbers."
     assert iv.shape == (d,), "The initial value should have the right dimensionality."
     assert jnp.isfinite(iv).all(), "The initial value should have finite entries."

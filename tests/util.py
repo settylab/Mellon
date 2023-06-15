@@ -28,6 +28,7 @@ def test_distances():
     dist = mellon.util.distance(x, x)
     assert dist.shape == (n, n), "Distances should be computed for each pair of points."
 
+
 def test_test_rank():
     seed = 423
     shape = (5, 10)
@@ -35,14 +36,15 @@ def test_test_rank():
     L = jax.random.uniform(key, shape=shape)
 
     mellon.util.test_rank(L)
-    rank = mellon.util.test_rank(L, tol=.5)
+    rank = mellon.util.test_rank(L, tol=0.5)
     assert rank == 4, "The approx. rank with tol=.5 of the test matrix should be 4."
-    mellon.util.test_rank(L, threshold=.5)
-    mellon.util.test_rank(L, tol=1, threshold=.5)
+    mellon.util.test_rank(L, threshold=0.5)
+    mellon.util.test_rank(L, tol=1, threshold=0.5)
 
     est = mellon.DensityEstimator().fit(L)
     rank = mellon.util.test_rank(est)
     assert rank == 1, "The approx. rank of the test data should be 1."
+
 
 def test_local_dimensionality():
     n = 10

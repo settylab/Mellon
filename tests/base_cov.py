@@ -22,9 +22,9 @@ def test_Add():
     json = cov.to_json()
     recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
-    assert jnp.all(jnp.isclose(values, revalues)), (
-        "Serialization + deserialization of added covariance functions must return the same result."
-    )
+    assert jnp.all(
+        jnp.isclose(values, revalues)
+    ), "Serialization + deserialization of added covariance functions must return the same result."
 
 
 def test_Mul():
@@ -47,9 +47,9 @@ def test_Mul():
     json = cov.to_json()
     recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
-    assert jnp.all(jnp.isclose(values, revalues)), (
-        "Serialization + deserialization of added covariance functions must return the same result."
-    )
+    assert jnp.all(
+        jnp.isclose(values, revalues)
+    ), "Serialization + deserialization of added covariance functions must return the same result."
 
 
 def test_Pow():
@@ -71,9 +71,9 @@ def test_Pow():
     json = cov.to_json()
     recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
-    assert jnp.all(jnp.isclose(values, revalues)), (
-        "Serialization + deserialization of added covariance functions must return the same result."
-    )
+    assert jnp.all(
+        jnp.isclose(values, revalues)
+    ), "Serialization + deserialization of added covariance functions must return the same result."
 
 
 def test_Hirachical():
@@ -98,6 +98,6 @@ def test_Hirachical():
     json = cov.to_json()
     recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
-    assert jnp.all(jnp.isclose(values, revalues)), (
-        "Serialization + deserialization of added covariance functions must return the same result."
-    )
+    assert jnp.all(
+        jnp.isclose(values, revalues)
+    ), "Serialization + deserialization of added covariance functions must return the same result."
