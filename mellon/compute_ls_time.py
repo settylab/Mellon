@@ -1,4 +1,4 @@
-from jax.numpy import exp, unique, empty, corrcoef, zeros, abs
+from jax.numpy import exp, unique, empty, corrcoef, zeros, abs, stack
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm
 from jaxopt import ScipyMinimize
@@ -41,9 +41,10 @@ def compute_ls_time(
         The optimal length scale for time (`ls_time`).
     """
     times = x[:, -1]
+    states = x[:, :-1]
     unique_times = unique(times)
     n_times = len(unique_times)
-    densities = empty((x.shape[0], n_times))
+    densities = []
     predictors = []
 
     for i, time in enumerate(unique_times):
@@ -61,10 +62,11 @@ def compute_ls_time(
         x_at_time = x[mask, :-1]
         est = DensityEstimator(**density_estimator_kwargs)
         est.fit(x_at_time)
-        densities = densities.at[mask, i].set(est.predict(x_at_time))
+        densities.append(est.predict(states))
         predictors.append(est)
 
-    corrs = corrcoef(densities.T)
+    densities = stack(densities)
+    corrs = corrcoef(densities)
     delta_t = abs(unique_times.reshape(-1, 1) - unique_times.reshape(1, -1)).reshape(-1, 1)
 
     def ls_loss(log_ls):

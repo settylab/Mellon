@@ -388,8 +388,8 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         cov_func_curry = self.cov_func_curry
         density_estimator_kwargs = self.density_estimator_kwargs
         logger.info(
-            "Computing density within each time point to estimate the time "
-            "length scale `ls_time`. Specify `ls_time` to skip this step."
+            "Initiating density computation for each time point to estimate the 'ls_time' parameter. "
+            "You can directly specify 'ls_time' to bypass this computation-intensive step."
         )
         ls = compute_ls_time(
             nn_distances,
