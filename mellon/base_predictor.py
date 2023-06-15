@@ -52,7 +52,7 @@ class Predictor(ABC):
     """
 
     # number of features of input data (x.shape[1]) to be specified in __init__
-    n_features: int
+    n_input_features: int
 
     @abstractmethod
     def __init__(self):
@@ -93,7 +93,7 @@ class Predictor(ABC):
         ----------
         x : array-like
             The input data to the predictor.
-            The array should have shape (n_samples, n_features).
+            The array should have shape (n_samples, n_input_features).
 
         Returns
         -------
@@ -108,9 +108,9 @@ class Predictor(ABC):
         """
         x = ensure_2d(x)
         x = _validate_array(x, "x")
-        if x.shape[1] != self.n_features:
+        if x.shape[1] != self.n_input_features:
             raise ValueError(
-                f"The predictor was trained on data with {self.n_features} features. "
+                f"The predictor was trained on data with {self.n_input_features} features. "
                 f"However, the provided input data has {x.shape[1]} features. "
                 "Please ensure that the input data has the same number of features as the training data."
             )
@@ -188,7 +188,7 @@ class Predictor(ABC):
         module = import_module(module_name)
         version = getattr(module, "__version__", "NA")
         data = self._data_dict()
-        data.update({"n_features": self.n_features})
+        data.update({"n_input_features": self.n_input_features})
 
         state = {
             "data": data,
@@ -393,7 +393,7 @@ class PredictorTime(Predictor):
 
         # if time is a scalar, convert it into a 1D array of the same size as Xnew
         Xnew = _validate_time_x(
-            Xnew, time, n_features=self.n_features, cast_scalar=True
+            Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
 
         return self._predict(Xnew)

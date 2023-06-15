@@ -56,7 +56,7 @@ class _FullConditionalMean:
         self.x = x
         self.weights = weights
         self.mu = mu
-        self.n_features = x.shape[1]
+        self.n_input_features = x.shape[1]
 
     def _data_dict(self):
         return {
@@ -131,7 +131,7 @@ class FullConditionalMeanY(Predictor):
         self.L = L
         self.Kus = Kus
         self.mu = mu
-        self.n_features = 1
+        self.n_input_features = 1
 
     def _data_dict(self):
         return {
@@ -206,7 +206,7 @@ class _LandmarksConditionalMean:
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
-        self.n_features = xu.shape[1]
+        self.n_input_features = xu.shape[1]
 
     def _data_dict(self):
         return {
@@ -280,7 +280,7 @@ class _LandmarksConditionalMeanCholesky:
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
-        self.n_features = xu.shape[1]
+        self.n_input_features = xu.shape[1]
 
     def _data_dict(self):
         return {
@@ -369,7 +369,7 @@ class LandmarksConditionalMeanY(Predictor):
         self.Luu = Luu
         self.Kus = Kus
         self.mu = mu
-        self.n_features = 1
+        self.n_input_features = 1
 
     def _data_dict(self):
         return {
