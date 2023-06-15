@@ -74,7 +74,6 @@ def compute_ls_time(
 
 
     opt = ScipyMinimize(fun=ls_loss, method="L-BFGS-B", jit=False).run(0.0)
-    print(opt)
     ls = exp(opt.params)
 
     if return_data:
