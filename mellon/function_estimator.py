@@ -297,5 +297,7 @@ class FunctionEstimator(BaseEstimator):
             sigma,
             jitter=jitter,
         )
+        def squeezed_conditional(y):
+            return conditional(y).squeeze()
 
-        return vector_map(conditional, Y, do_jit=jit).squeeze()
+        return vector_map(squeezed_conditional, Y, do_jit=jit)
