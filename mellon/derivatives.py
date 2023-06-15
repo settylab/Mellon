@@ -32,11 +32,11 @@ def derivative(function, x, jit=True):
     x = _validate_1d(x)
 
     def get_grad(x):
-        return jax.jacrev(function)(x).squeeze()
+        return jax.jacrev(function)(x)
 
     if jit:
         get_grad = jax.jit(get_grad)
-    return jax.vmap(get_grad, in_axes=(0,))(x)
+    return jax.vmap(get_grad, in_axes=(0,))(x).squeeze()
 
 
 def gradient(function, x, jit=True):

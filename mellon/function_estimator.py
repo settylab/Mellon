@@ -323,4 +323,4 @@ class FunctionEstimator(BaseEstimator):
             jitter=jitter,
         )
 
-        return vector_map(conditional, Y, do_jit=jit)
+        return vector_map(conditional, Y, do_jit=jit).squeeze()

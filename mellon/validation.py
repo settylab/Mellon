@@ -5,10 +5,15 @@ from jax.numpy import asarray, concatenate, isscalar, full
 from .base_cov import Covariance
 
 
-def _validate_time_x(x, times=None, cast_scalar=False):
+def _validate_time_x(x, times=None, n_features=None, cast_scalar=False):
     """
     Validates and concatenates 'x' and 'times' if 'times' is provided.
-    Allows Jax's JVPTracer objects and avoids explicit conversion in these cases.
+
+    If 'times' is provided, the function reshapes it if necessary and checks for
+    matching number of samples in 'x' and 'times', before concatenating.
+
+    If 'n_features' is provided, the function checks if 'x' has the correct number
+    of features.
 
     Parameters
     ----------
@@ -20,10 +25,25 @@ def _validate_time_x(x, times=None, cast_scalar=False):
         An array encoding the time points associated with each cell/row in 'x'.
         Shape must be either (n_samples,) or (n_samples, 1).
 
+    n_features : int, optional
+        The expected number of features in 'x' including 'times' if it is provided.
+
+    cast_scalar : bool, optional
+        If true and 'times' is a scalar, it will be cast to a 1D array with a length
+        equal to the number of samples in 'x'.
+
     Returns
     -------
     array-like
-        The concatenated array of 'x' and 'times' (if provided).
+        The concatenated array of 'x' and 'times' (if provided), or 'x' if 'times'
+        is not provided.
+
+    Raises
+    ------
+    ValueError
+        If 'times' is not a 1D or 2D array with 1 column, or 'x' and 'times' don't
+        have the same number of samples, or 'x' does not have the expected number
+        of features.
     """
 
     x = _validate_array(x, "x", ndim=2)
@@ -46,11 +66,22 @@ def _validate_time_x(x, times=None, cast_scalar=False):
         if x.shape[0] != times.shape[0]:
             raise ValueError(
                 "'x' and 'times' must have the same number of samples. "
-                f"Got {x.shape} and {times.shape} shapes respectively."
+                f"Got {x.shape[0]} for 'x' and {times.shape[0]} for 'times'."
             )
 
         # Concatenate 'x' and 'times'
         x = concatenate((x, times), axis=1)
+
+    if n_features is not None:
+        if x.shape[1] == n_features - 1 and times is None:
+            raise ValueError(
+                f"Expected {n_features} features including 'times' in 'x' but "
+                f"only found {x.shape[1]} features and 'times' is not provided."
+            )
+        elif x.shape[1] != n_features:
+            raise ValueError(
+                f"Wrong number of features in 'x'. Expected {n_features} but got {x.shape[1]}."
+            )
 
     return x
 
@@ -74,6 +105,12 @@ def _validate_positive_float(value, param_name, optional=False):
 
 
 def _validate_float(value, param_name, optional=False):
+    def __init__(self):
+        pass
+
+    def k(self):
+        pass
+
     if value is None and optional:
         return None
 
@@ -192,7 +229,9 @@ def _validate_cov_func_curry(cov_func_curry, cov_func, param_name):
         )
 
     if cov_func_curry is not None:
-        if not issubclass(cov_func_curry, Covariance):
+        if not isinstance(cov_func_curry, type) or not issubclass(
+            cov_func_curry, Covariance
+        ):
             raise ValueError(f"'{param_name}' must be a subclass of mellon.Covariance")
     return cov_func_curry
 

@@ -4,7 +4,6 @@ from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
 from .helper import ensure_2d, make_serializable
 from .base_predictor import Predictor, PredictorTime
-from .validation import _validate_array
 
 
 logger = Log()
@@ -57,6 +56,7 @@ class _FullConditionalMean:
         self.x = x
         self.weights = weights
         self.mu = mu
+        self.n_features = x.shape[1]
 
     def _data_dict(self):
         return {
@@ -66,9 +66,6 @@ class _FullConditionalMean:
         }
 
     def _predict(self, Xnew):
-        Xnew = _validate_array(Xnew, "Xnew")
-        Xnew = ensure_2d(Xnew)
-
         cov_func = self.cov_func
         x = self.x
         weights = self.weights
@@ -134,6 +131,7 @@ class FullConditionalMeanY(Predictor):
         self.L = L
         self.Kus = Kus
         self.mu = mu
+        self.n_features = 1
 
     def _data_dict(self):
         return {
@@ -143,8 +141,6 @@ class FullConditionalMeanY(Predictor):
         }
 
     def _predict(self, y):
-        y = _validate_array(y, "y")
-
         L = self.L
         Kus = self.Kus
         mu = self.mu
@@ -210,6 +206,7 @@ class _LandmarksConditionalMean:
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
+        self.n_features = xu.shape[1]
 
     def _data_dict(self):
         return {
@@ -219,9 +216,6 @@ class _LandmarksConditionalMean:
         }
 
     def _predict(self, Xnew):
-        Xnew = _validate_array(Xnew, "Xnew")
-        Xnew = ensure_2d(Xnew)
-
         cov_func = self.cov_func
         xu = self.landmarks
         weights = self.weights
@@ -286,6 +280,7 @@ class _LandmarksConditionalMeanCholesky:
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
+        self.n_features = xu.shape[1]
 
     def _data_dict(self):
         return {
@@ -295,9 +290,6 @@ class _LandmarksConditionalMeanCholesky:
         }
 
     def _predict(self, Xnew):
-        Xnew = _validate_array(Xnew, "Xnew")
-        Xnew = ensure_2d(Xnew)
-
         cov_func = self.cov_func
         xu = self.landmarks
         weights = self.weights
@@ -377,6 +369,7 @@ class LandmarksConditionalMeanY(Predictor):
         self.Luu = Luu
         self.Kus = Kus
         self.mu = mu
+        self.n_features = 1
 
     def _data_dict(self):
         return {
@@ -388,8 +381,6 @@ class LandmarksConditionalMeanY(Predictor):
         }
 
     def _predict(self, y):
-        y = _validate_array(y, "y")
-
         L_B = self.L_B
         A = self.A
         Luu = self.Luu

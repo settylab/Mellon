@@ -1,4 +1,5 @@
 from jax.numpy import exp, log, quantile, stack, unique, empty
+from jax.numpy import sum as arraysum
 from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
@@ -108,6 +109,15 @@ def compute_nn_distances_within_time_points(x):
 
     for time in unique_times:
         mask = x[:, -1] == time
+        n_samples = arraysum(mask)
+        if n_samples < 2:
+            raise ValueError(
+                f"Insufficient data: Only {n_samples} sample(s) found at time point {time}. "
+                "Nearest neighbors cannot be computed with less than two samples per time point. "
+                "Please confirm if you have provided the correct time axis. "
+                "If the time points indeed have very few samples, consider aggregating nearby time points for better results, "
+                "or you may specify `nn_distances` manually."
+            )
         x_at_time = x[mask, :-1]
         nn_distances_at_time = compute_nn_distances(x_at_time)
         nn_distances = nn_distances.at[mask].set(nn_distances_at_time)
