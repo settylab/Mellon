@@ -369,6 +369,16 @@ class DensityEstimator(BaseEstimator):
             initial guess for optimization.
         :rtype: function, array-like
         """
+        if x is None:
+            x = self.x
+            if self.x is None:
+                message = "Required argument x is missing and self.x has not been set."
+                raise ValueError(message)
+        else:
+            if self.x is not None and self.x is not x:
+                message = "self.x has been set already, but is not equal to the argument x."
+                raise ValueError(message)
+
         self._set_x(x)
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
@@ -442,14 +452,6 @@ class DensityEstimator(BaseEstimator):
         :return: self - A fitted instance of this estimator.
         :rtype: Object
         """
-        if self.x is not None and self.x is not x:
-            message = "self.x has been set already, but is not equal to the argument x."
-            raise ValueError(message)
-        if self.x is None and x is None:
-            message = "Required argument x is missing and self.x has not been set."
-            raise ValueError(message)
-        if x is None:
-            x = self.x
 
         self.prepare_inference(x)
         self.run_inference()
