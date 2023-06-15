@@ -82,31 +82,6 @@ class FunctionEstimator(BaseEstimator):
     jit : bool, optional
         Use JAX just-in-time compilation for the loss function and its gradient during optimization.
         Defaults to False.
-
-    Attributes
-    ----------
-    n_landmarks : int
-        The number of landmark points.
-    jitter : float
-        A small amount added to the diagonal of the covariance matrix for numerical stability.
-    landmarks : array-like
-        The points used to quantize the data.
-    nn_distances : array-like
-        The nearest neighbor distances for each data point.
-    mu : float
-        The mean of the Gaussian process :math:`\mu`.
-    ls : float
-        The length scale of the Gaussian process covariance function.
-    ls_factor : float
-        Factor used to scale the automatically selected length scale.
-    cov_func : function
-        The Gaussian process covariance function.
-    sigma : float
-        Standard deviation of the white noise.
-    x : array-like
-        The cell states.
-    y : array-like
-        Function values on the cell states.
     """
 
     def __init__(

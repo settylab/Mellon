@@ -47,14 +47,14 @@ def _normal(k):
 
 def _multivariate(mu, L):
     R"""
-    Builds the transformation function from :math:`z \sim \text{Normal}(0, I)
-    \rightarrow f \sim \text{Normal}(\mu, K')`, where :math:`I` is the identity matrix
+    Builds the transformation function from
+    :math:`z \sim \text{Normal}(0, I) \rightarrow f \sim \text{Normal}(\mu, K')`,
+    where :math:`I` is the identity matrix
     and :math:`K \approx K' = L L^\top`.
 
     :param mu: The Gaussian process mean :math:`\mu`.
     :type mu: float
-    :param L: A matrix such that :math:`L L^\top
-    \approx K`.
+    :param L: A matrix such that :math:`L L^\top \approx K`.
     :type L: array-like
     :return: A function :math:`z \rightarrow f`.
     :rtype: function

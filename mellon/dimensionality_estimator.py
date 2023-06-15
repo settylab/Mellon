@@ -136,52 +136,6 @@ class DimensionalityEstimator(BaseEstimator):
 
     jit: bool, optional (default=False)
         If True, use JAX's just-in-time compilation for loss and its gradient during optimization.
-
-    Attributes
-    ----------
-    The attributes of this class correspond to the parameters of the same names,
-    with the following additional attributes:
-
-    x: array-like
-        The training data.
-
-    transform: function
-        Used to map the latent representation to the log-density on the training data.
-
-    loss_func: function
-        The Bayesian loss function.
-
-    pre_transformation: array-like
-        The optimized parameters before transformation, used to map the latent
-        representation to the log-density on the training data.
-
-    opt_state: object
-        The final state of the optimizer.
-
-    losses: list or float
-        The history of losses throughout training with 'adam' or final loss with 'L-BFGS-B'.
-
-    local_dim_x: array-like
-        The local intrinsic dimensionality at the training points.
-
-    log_density_x: array-like
-        The log density with varying units at the training points. Density
-        indicates the number of cells per volume in state space.
-        As the intrinsic dimensionality of the volume changes, the resulting
-        density unit varies.
-
-    local_dim_func: mellon.Predictor
-        An instance of :class:`mellon.Predictor` that computes the local intrinsic dimensionality
-        at arbitrary prediction points. Provides methods for gradient and
-        Hessian computations, and has serialization/deserialization features.
-        Refer to :class:`mellon.Predictor` documentation for more details.
-
-
-    log_density_func: mellon.Predictor
-        An instance of :class:`mellon.Predictor` that computes the log density with varying units
-        at arbitrary prediction points. Provides methods for gradient and
-        Hessian computations, and has serialization/deserialization features.
-        Refer to :class:`mellon.Predictor` documentation for more details.
     """
 
     def __init__(
