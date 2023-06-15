@@ -3,6 +3,7 @@ import mellon
 import jax
 import jax.numpy as jnp
 
+
 @pytest.fixture
 def common_setup_time_sensitive(tmp_path):
     n_per_batch = 10
@@ -62,10 +63,13 @@ def test_time_sensitive_density_estimator_properties(common_setup_time_sensitive
     assert len(str(est)) > 0, "The model should have a string representation."
 
 
-@pytest.mark.parametrize("rank, method, n_landmarks, err_limit", [
-    (1.0, "percent", 10, 2e-1),
-    (0.99, "percent", 80, 5e-1),
-])
+@pytest.mark.parametrize(
+    "rank, method, n_landmarks, err_limit",
+    [
+        (1.0, "percent", 10, 2e-1),
+        (0.99, "percent", 80, 5e-1),
+    ],
+)
 def test_time_sensitive_density_estimator_approximations(
     common_setup_time_sensitive, rank, method, n_landmarks, err_limit
 ):
@@ -81,18 +85,23 @@ def test_time_sensitive_density_estimator_approximations(
     ), "The approximation should be close to the default."
 
 
-@pytest.mark.parametrize("rank, method, n_landmarks, compress", [
-    (1.0, "percent", 10, None),
-    (0.99, "percent", 80, None),
-    (0.99, "percent", 80, "gzip"),
-    (0.99, "percent", 80, "bz2"),
-])
+@pytest.mark.parametrize(
+    "rank, method, n_landmarks, compress",
+    [
+        (1.0, "percent", 10, None),
+        (0.99, "percent", 80, None),
+        (0.99, "percent", 80, "gzip"),
+        (0.99, "percent", 80, "bz2"),
+    ],
+)
 def test_time_sensitive_density_estimator_serialization(
     common_setup_time_sensitive, rank, method, n_landmarks, compress
 ):
     X, times, test_file, logger, _, _, _, _ = common_setup_time_sensitive
 
-    est = mellon.TimeSensitiveDensityEstimator(rank=rank, method=method, n_landmarks=n_landmarks)
+    est = mellon.TimeSensitiveDensityEstimator(
+        rank=rank, method=method, n_landmarks=n_landmarks
+    )
     est.fit(X, times)
     dens_appr = est.predict(X, times)
 

@@ -80,12 +80,17 @@ def test_density_estimator_optimizers(common_setup):
     ), "The adam optimizer should produce similar results to the default."
 
 
-@pytest.mark.parametrize("rank, method, n_landmarks, err_limit", [
-    (1.0, "percent", 0, 1e-1),
-    (1.0, "percent", 10, 2e-1),
-    (0.99, "percent", 80, 2e-1),
-])
-def test_density_estimator_approximations(common_setup, rank, method, n_landmarks, err_limit):
+@pytest.mark.parametrize(
+    "rank, method, n_landmarks, err_limit",
+    [
+        (1.0, "percent", 0, 1e-1),
+        (1.0, "percent", 10, 2e-1),
+        (0.99, "percent", 80, 2e-1),
+    ],
+)
+def test_density_estimator_approximations(
+    common_setup, rank, method, n_landmarks, err_limit
+):
     X, _, _, relative_err, _, _ = common_setup
 
     est = mellon.DensityEstimator(rank=rank, method=method, n_landmarks=n_landmarks)
@@ -96,13 +101,16 @@ def test_density_estimator_approximations(common_setup, rank, method, n_landmark
     ), "The approximation should be close to the default."
 
 
-@pytest.mark.parametrize("rank, n_landmarks, compress", [
-    (1.0, 0, None),
-    (1.0, 10, None),
-    (0.99, 80, None),
-    (0.99, 80, "gzip"),
-    (0.99, 80, "bz2"),
-])
+@pytest.mark.parametrize(
+    "rank, n_landmarks, compress",
+    [
+        (1.0, 0, None),
+        (1.0, 10, None),
+        (0.99, 80, None),
+        (0.99, 80, "gzip"),
+        (0.99, 80, "bz2"),
+    ],
+)
 def test_density_estimator_serialization(common_setup, rank, n_landmarks, compress):
     X, test_file, logger, _, _, _ = common_setup
 
@@ -132,7 +140,7 @@ def test_density_estimator_dictionary_serialization(common_setup):
     # Test dictionay serialization
     data_dict = est.predict.to_dict()
     assert isinstance(data_dict, dict), "Predictor.to_dict() must return a dictionary."
-    logger.info(f"Serialized the predictor to dictionary.")
+    logger.info("Serialized the predictor to dictionary.")
     predictor = mellon.Predictor.from_dict(data_dict)
     logger.info("Deserialized the predictor from the dictionary.")
     reprod = predictor(X)
@@ -158,4 +166,3 @@ def test_density_estimator_single_dimension(common_setup):
     assert (
         jnp.std(d1_pred - d1_pred_full) < 1e-2
     ), "The scalar state function estimations be consistent under approximation."
-

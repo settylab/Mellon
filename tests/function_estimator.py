@@ -3,6 +3,7 @@ import mellon
 import jax
 import jax.numpy as jnp
 
+
 @pytest.fixture
 def function_estimator_setup():
     n = 100
@@ -47,20 +48,24 @@ def test_function_estimator_multi_fit_predict(function_estimator_setup):
 
 
 @pytest.mark.parametrize("n_landmarks, error_limit", [(0, 1e-4), (10, 1e-1)])
-def test_function_estimator_approximations(function_estimator_setup, n_landmarks, error_limit):
+def test_function_estimator_approximations(
+    function_estimator_setup, n_landmarks, error_limit
+):
     X, y, _, _ = function_estimator_setup
     est_default = mellon.FunctionEstimator(sigma=1e-3)
     pred_default = est_default.fit_predict(X, y)
 
     est = mellon.FunctionEstimator(sigma=1e-3, n_landmarks=n_landmarks)
     pred_appr = est.fit_predict(X, y)
-    
+
     err = jnp.std(pred_appr - pred_default)
     assert err < error_limit, "The approximation should be close to the default."
 
 
 @pytest.mark.parametrize("n_landmarks, error_limit", [(0, 1e-5), (10, 3e-1)])
-def test_function_estimator_approximations_1d(function_estimator_setup, n_landmarks, error_limit):
+def test_function_estimator_approximations_1d(
+    function_estimator_setup, n_landmarks, error_limit
+):
     X, y, _, _ = function_estimator_setup
     est_default = mellon.FunctionEstimator(sigma=1e-3)
     d1_pred_default = est_default.fit_predict(X[:, 0], y)
@@ -71,4 +76,3 @@ def test_function_estimator_approximations_1d(function_estimator_setup, n_landma
     assert (
         jnp.std(d1_pred - d1_pred_default) < error_limit
     ), "The scalar state function estimations should be consistent under approximation."
-
