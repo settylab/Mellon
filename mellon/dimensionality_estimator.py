@@ -350,7 +350,7 @@ class DimensionalityEstimator(BaseEstimator):
                 )
                 raise ValueError(message)
 
-        self._set_x(x)
+        x = self._set_x(x)
         self._prepare_attribute("distances")
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")

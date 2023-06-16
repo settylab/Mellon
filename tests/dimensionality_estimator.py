@@ -43,7 +43,7 @@ def test_dimensionality_estimator_properties(common_setup_dim_estimator):
     ), "The gradient should have the same shape as the input."
 
     log_dens = est.predict_density(X)
-    assert log_density.shape == (n,), "There should be one density value per sample."
+    assert log_dens.shape == (n,), "There should be one density value per sample."
     hess = est.predict_density.hessian(X)
     assert hess.shape == (n, d, d), "The hessian should have the correct shape."
 

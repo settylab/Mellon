@@ -137,6 +137,7 @@ class BaseEstimator:
 
     def _set_x(self, x):
         self.x = _validate_array(x, "x")
+        return self.x
 
     def _compute_landmarks(self):
         x = self.x

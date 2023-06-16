@@ -145,7 +145,7 @@ class FunctionEstimator(BaseEstimator):
             initial guess for optimization.
         :rtype: function, array-like
         """
-        self._set_x(x)
+        x = self._set_x(x)
         if self.ls is None:
             self._prepare_attribute("nn_distances")
         self._prepare_attribute("ls")
@@ -233,71 +233,113 @@ class FunctionEstimator(BaseEstimator):
         """
         return self.conditional
 
-    def fit_predict(self, x=None, y=None):
-        R"""
-        Compute the conditional mean and return the smoothed function values
-        at the points x.
-
-        :param x: The training instances to estimate function.
-        :type x: array-like
-        :param y: The training function values on cell states.
-        :type y: array-like
-        :return: condition_mean - The conditional mean function value at each test point in x.
-        :rtype: array-like
+    def fit_predict(self, x=None, Y=None, Xnew=None):
         """
-        x = _validate_array(x, "x")
-        y = _validate_array(y, "y")
-
-        self.fit(x, y)
-        return self.predict(x)
-
-    def multi_fit_predict(self, x=None, Y=None, Xnew=None):
-        R"""
         Compute the conditional mean and return the smoothed function values
         at the points Xnew for each line of values in Y.
 
-        :param x: The training instances to estimate density function.
-        :type x: array-like
-        :param y: The training function values on cell states.
-        :type y: array-like
-        :param Xnew: The new data to predict.
-        :type Xnew: array-like
-        :return: condition_mean - The conditional mean function value at each test point in x.
-        :rtype: array-like
-        """
+        Parameters
+        ----------
+        x : array-like, optional
+            The training instances to estimate density function.
+        Y : array-like, optional
+            The training function values on cell states.
+        Xnew : array-like, optional
+            The new data to predict. If not provided, it defaults to `x`.
 
-        self._set_x(x)
+        Returns
+        -------
+        array-like
+            The conditional mean function value at each test point in `Xnew`.
+
+        Raises
+        ------
+        ValueError
+            If the number of samples in `x` and `Y` don't match, or if the
+            number of features in `x` and `Xnew` don't match.
+        """
+        x = self._set_x(x)
         Y = _validate_array(Y, "Y")
         Xnew = _validate_array(Xnew, "Xnew", optional=True)
-        if self.ls is None:
-            self._prepare_attribute("nn_distances")
-        self._prepare_attribute("ls")
-        self._prepare_attribute("cov_func")
+
+        # If Xnew is not provided, default to x
         if Xnew is None:
             Xnew = x
-            self._prepare_attribute("landmarks")
-            landmarks = self.landmarks
         else:
-            n_landmarks = self.n_landmarks
-            logger.info(f"Computing {n_landmarks:,} landmarks for Xnew.")
-            landmarks = compute_landmarks(Xnew, n_landmarks)
+            # Ensure the number of dimensions in x and Xnew are the same
+            if x.ndim != Xnew.ndim:
+                raise ValueError(
+                    f"The provided arrays, 'x' and 'Xnew', do not have the same number of dimensions. "
+                    f"'x' is {x.ndim}-D and 'Xnew' is {Xnew.ndim}-D. Please provide arrays with consistent dimensionality."
+                )
 
-        mu = self.mu
-        cov_func = self.cov_func
-        sigma = self.sigma
-        jitter = self.jitter
-        jit = self.jit
+            # If both arrays are multi-dimensional, ensure they have the same number of features
+            if x.ndim > 1 and x.shape[1] != Xnew.shape[1]:
+                raise ValueError(
+                    f"The provided arrays, 'x' and 'Xnew', should have the same number of features. "
+                    f"Got Xnew.shape[1] = {Xnew.shape[1]}, but expected it to be equal to x.shape[1] = {x.shape[1]}. "
+                    "Please provide arrays with the same number of features."
+                )
 
-        conditional = compute_conditional_mean_y(
-            x,
-            landmarks,
-            Xnew,
-            mu,
-            cov_func,
-            sigma,
-            jitter=jitter,
+
+        n_samples = x.shape[0]
+        # Check if the number of samples in x and Y match
+        if Y.shape[0] != n_samples:
+            raise ValueError(
+                f"X.shape[0] = {n_samples} (n_samples) should equal "
+                "Y.shape[0] = {Y.shape[0]}."
+            )
+
+        # Fit the model and predict
+        self.fit(x, Y)
+        return self.predict(Xnew)
+
+    def multi_fit_predict(self, x=None, Y=None, Xnew=None):
+        """
+        Compute the conditional mean and return the smoothed function values
+        at the points Xnew for each line of values in Y.
+
+        This method is deprecated. Use FunctionEstimator.fit_reodict instead.
+
+        Parameters
+        ----------
+        x : array-like, optional
+            The training instances to estimate density function.
+        Y : array-like, optional
+            The training function values on cell states.
+        Xnew : array-like, optional
+            The new data to predict.
+
+        Returns
+        -------
+        array-like
+            The conditional mean function value at each test point in `x`.
+
+        Raises
+        ------
+        ValueError
+            If the number of samples in `x` and `Y` don't match, or if the
+            number of features in `x` and `Xnew` don't match.
+        """
+
+        logger.warning(
+            "Deprecation Warning: FunctionEstimator's multi_fit_predict method is deprecated. "
+            "Use FunctionEstimator.fit_reodict instead."
         )
-        def squeezed_conditional(y):
-            return conditional(y).squeeze()
 
-        return vector_map(squeezed_conditional, Y, do_jit=jit)
+        # Set the x and validate inputs
+        x = self._set_x(x)
+        Y = _validate_array(Y, "Y")
+
+        n_samples = x.shape[0]
+
+        # Check for consistency in sample size between x and Y
+        if Y.shape[0] != n_samples:
+            if Y.shape[1] == n_samples:
+                logger.warning(
+                    "Y.shape[0] does not equal X.shape[0] (the number of samples). "
+                    "However, Y.shape[1] == X.shape[0]. Transposing Y. "
+                    "This assumes the columns of Y are the samples. Please verify."
+                )
+                Y = Y.T
+        return self.fit_predict(x, Y, Xnew).T
