@@ -163,8 +163,8 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})` and :math:`d` is the intrinsic
         dimensionality of the data. Defaults to None.
 
-    save_intermediate_ls_times : bool
-        Determines whether the intermediate results obtained during the computation of `ls_time` are retained.
+    _save_intermediate_ls_times : bool
+        Determines whether the intermediate results obtained during the computation of `ls_time` are retained for debugging.
         When set to True, the results will be stored in `self.densities`, `self.predictors`, and `self.numeric_stages`.
         Defaults to False.
 
@@ -197,7 +197,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         cov_func=None,
         L=None,
         initial_value=None,
-        save_intermediate_ls_times=False,
+        _save_intermediate_ls_times=False,
         jit=DEFAULT_JIT,
     ):
         super().__init__(
@@ -229,7 +229,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         self.ls_factor_times = _validate_positive_float(
             ls_factor_times, "ls_factor_times"
         )
-        self.save_intermediate_ls_times = save_intermediate_ls_times
+        self._save_intermediate_ls_times = _save_intermediate_ls_times
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -331,7 +331,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         nn_distances = self.nn_distances
         x = self.x
         cov_func_curry = self.cov_func_curry
-        save_intermediate_ls_times = self.save_intermediate_ls_times
+        _save_intermediate_ls_times = self._save_intermediate_ls_times
         density_estimator_kwargs = {
             "cov_func_curry": self.cov_func_curry,
             "d_method": self.d_method,
@@ -351,10 +351,10 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             nn_distances,
             x,
             cov_func_curry,
-            return_data=save_intermediate_ls_times,
+            return_data=_save_intermediate_ls_times,
             density_estimator_kwargs=density_estimator_kwargs,
         )
-        if save_intermediate_ls_times:
+        if _save_intermediate_ls_times:
             logger.info(
                 "Storing `self.densities`, `self.predictors`, and `self.numeric_stages`."
             )
