@@ -376,7 +376,9 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
                 "computing k-means on a subset of cells and passing "
                 "the results as 'landmarks' to speed up the process."
             )
-        landmarks = compute_landmarks_rescale_time(x, ls, ls_time)
+        landmarks = compute_landmarks_rescale_time(
+            x, ls, ls_time, n_landmarks=n_landmarks
+        )
         return landmarks
 
     def _compute_cov_func(self):

@@ -74,6 +74,7 @@ def test_time_sensitive_density_estimator_approximations(
     common_setup_time_sensitive, rank, method, n_landmarks, err_limit
 ):
     X, times, _, _, relative_err, _, _, _ = common_setup_time_sensitive
+    n = X.shape[0]
 
     est = mellon.TimeSensitiveDensityEstimator(
         rank=rank,
@@ -83,6 +84,13 @@ def test_time_sensitive_density_estimator_approximations(
     )
     est.fit(X, times)
     dens_appr = est.predict(X, times)
+    if n_landmarks < n:
+        assert (
+            est.landmarks is not None
+        ), f"Since n_landmarks ({n_landmarks}) < n ({n}) landmarks should be computed."
+        assert (
+            est.landmarks.shape[0] == n_landmarks
+        ), "The right number of landmarks was not produced."
     assert (
         relative_err(dens_appr) < err_limit
     ), "The approximation should be close to the default."
@@ -101,8 +109,7 @@ def test_time_sensitive_density_estimator_approximations(
     "rank, method, n_landmarks, compress",
     [
         (1.0, "percent", 10, None),
-        (0.99, "percent", 0, None),
-        (0.99, "percent", 5, None),
+        (0.8, "percent", 10, None),
         (0.99, "percent", 80, "gzip"),
         (0.99, "percent", 80, "bz2"),
     ],

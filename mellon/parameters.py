@@ -110,7 +110,7 @@ def compute_landmarks_rescale_time(
         try:
             landmarks = landmarks.at[:, -1].set(landmarks[:, -1] / time_factor)
         except AttributeError:
-            # landmarks os not a jax array
+            # landmarks is not a jax array
             landmarks[:, -1] = landmarks[:, -1] / time_factor
     return landmarks
 
