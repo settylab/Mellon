@@ -404,7 +404,9 @@ class PredictorTime(Predictor):
 
         return self._predict(Xnew)
 
-    def time_derivative(self, x, time, jit=True):
+    def time_derivative(
+        self, x, time, jit=True, time_derivative=True, alternative_implementation=True
+    ):
         R"""
         Computes the time derivative of the prediction function for each line in `x`.
 
@@ -427,6 +429,8 @@ class PredictorTime(Predictor):
             will be computed for all data-points at the corresponding time in the array.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+        alternative_implementation : bool, optional
+            If True, use an alternative implementation that uses less memory. Defaults to True.
 
         Returns
         -------
@@ -435,6 +439,11 @@ class PredictorTime(Predictor):
             The shape of the output array is the same as `x`.
 
         """
+        if alternative_implementation:
+            Xnew = _validate_time_x(
+                x, time, n_features=self.n_input_features, cast_scalar=True
+            )
+            return super().gradient(Xnew)[:, -1]
 
         def dens_at(t):
             return self.__call__(x, t)

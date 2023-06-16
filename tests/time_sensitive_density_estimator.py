@@ -59,6 +59,12 @@ def test_time_sensitive_density_estimator_properties(common_setup_time_sensitive
 
     time_d = est.predict.time_derivative(X, test_time)
     assert time_d.shape == (n,), "The time derivative should have one value per sample."
+    time_d2 = est.predict.time_derivative(
+        X, test_time, alternative_implementation=False
+    )
+    assert jnp.all(
+        jnp.isclose(time_d, time_d2)
+    ), "The alternative implementation of time_derivative should produce equivalent results."
 
     assert len(str(est)) > 0, "The model should have a string representation."
 
