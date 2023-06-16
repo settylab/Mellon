@@ -1,6 +1,7 @@
 import jax
+from jax.numpy import isscalar
 
-from .validation import _validate_1d
+from .validation import _validate_1d, _validate_float
 
 
 def derivative(function, x, jit=True):
@@ -29,14 +30,19 @@ def derivative(function, x, jit=True):
         The shape of the output array is the same as `x`.
 
     """
-    x = _validate_1d(x)
 
     def get_grad(x):
         return jax.jacrev(function)(x)
 
+    if isscalar(x):
+        x = _validate_float(x, "x")
+        return get_grad(x)
+
+    x = _validate_1d(x)
+
     if jit:
         get_grad = jax.jit(get_grad)
-    return jax.vmap(get_grad, in_axes=(0,))(x).squeeze()
+    return jax.vmap(get_grad, in_axes=(0,))(x).T
 
 
 def gradient(function, x, jit=True):
@@ -55,12 +61,13 @@ def gradient(function, x, jit=True):
     :rtype: array-like
     """
 
+
     def get_grad(x):
-        return jax.jacrev(function)(x[None, :]).squeeze()
+        return jax.jacrev(function)(x[None, :])
 
     if jit:
         get_grad = jax.jit(get_grad)
-    return jax.vmap(get_grad, in_axes=(0,))(x)
+    return jax.vmap(get_grad, in_axes=(0,))(x)[:, 0, 0, :]
 
 
 def hessian(function, x, jit=True):
@@ -80,11 +87,11 @@ def hessian(function, x, jit=True):
     """
 
     def get_hess(x):
-        return jax.jacfwd(jax.jacrev(function))(x[None, :]).squeeze()
+        return jax.jacfwd(jax.jacrev(function))(x[None, :])
 
     if jit:
         get_hess = jax.jit(get_hess)
-    return jax.vmap(get_hess, in_axes=(0,))(x)
+    return jax.vmap(get_hess, in_axes=(0,))(x)[:, 0, 0, :, 0, :]
 
 
 def hessian_log_determinant(function, x, jit=True):
@@ -105,7 +112,7 @@ def hessian_log_determinant(function, x, jit=True):
     """
 
     def get_log_det(x):
-        hess = jax.jacfwd(jax.jacrev(function))(x[None, :]).squeeze()
+        hess = jax.jacfwd(jax.jacrev(function))(x[None, :])[0, 0, :, 0, :]
         sign, log_det = jax.numpy.linalg.slogdet(hess)
         return sign, log_det
 
