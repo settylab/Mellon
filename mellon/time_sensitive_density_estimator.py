@@ -327,8 +327,6 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         return nn_distances
 
     def _compute_ls_time(self):
-        if self.cov_func is not None:
-            return None
         nn_distances = self.nn_distances
         x = self.x
         cov_func_curry = self.cov_func_curry
