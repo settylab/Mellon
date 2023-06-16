@@ -15,6 +15,7 @@ from .decomposition import (
     DEFAULT_RANK,
     DEFAULT_METHOD,
 )
+from .validation import _validate_time_x
 
 
 DEFAULT_N_LANDMARKS = 5000
@@ -87,7 +88,7 @@ def compute_nn_distances(x):
     return compute_distances(x, 1)[:, 0]
 
 
-def compute_nn_distances_within_time_points(x):
+def compute_nn_distances_within_time_points(x, times=None):
     R"""
     Computes the distance to the nearest neighbor for each training instance
     within the same time point group. It retains the original order of instances in `x`.
@@ -95,7 +96,14 @@ def compute_nn_distances_within_time_points(x):
     Parameters
     ----------
     x : array-like
-        The training instances where the last column encodes the time point for each instance.
+        The training instances.
+        If 'times' is None, the last column of 'x' is interpreted as the times.
+        Shape must be (n_samples, n_features).
+
+    times : array-like, optional
+        An array encoding the time points associated with each cell/row in 'x'.
+        If provided, it overrides the last column of 'x' as the times.
+        Shape must be either (n_samples,) or (n_samples, 1).
 
     Returns
     -------
@@ -104,6 +112,7 @@ def compute_nn_distances_within_time_points(x):
         preserving the order of instances in `x`.
 
     """
+    x = _validate_time_x(x, times)
     unique_times = unique(x[:, -1])
     nn_distances = empty(x.shape[0])
 

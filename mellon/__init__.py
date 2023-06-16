@@ -12,7 +12,7 @@ from .util import Log
 
 from . import util
 from . import cov
-from . import parameters
+from . import all_parameters as parameters
 from . import inference
 from . import conditional
 from . import decomposition

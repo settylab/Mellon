@@ -142,7 +142,7 @@ class FunctionEstimator(BaseEstimator):
             initial guess for optimization.
         :rtype: function, array-like
         """
-        x = self._set_x(x)
+        x = self.set_x(x)
         if self.ls is None:
             self._prepare_attribute("nn_distances")
         self._prepare_attribute("ls")
@@ -220,7 +220,7 @@ class FunctionEstimator(BaseEstimator):
         self : object
             This method returns self for chaining.
         """
-        x = self._set_x(x)
+        x = self.set_x(x)
         y = _validate_array(y, "y")
 
         n_samples = x.shape[0]
@@ -290,7 +290,7 @@ class FunctionEstimator(BaseEstimator):
             If the number of samples in `x` and `y` don't match, or if the number of features in `x` and
             `Xnew` don't match.
         """
-        x = self._set_x(x)
+        x = self.set_x(x)
         y = _validate_array(y, "y")
         Xnew = _validate_array(Xnew, "Xnew", optional=True)
 
@@ -351,7 +351,7 @@ class FunctionEstimator(BaseEstimator):
         )
 
         # Set the x and validate inputs
-        x = self._set_x(x)
+        x = self.set_x(x)
         Y = _validate_array(Y, "Y")
 
         n_samples = x.shape[0]

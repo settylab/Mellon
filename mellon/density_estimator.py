@@ -317,7 +317,7 @@ class DensityEstimator(BaseEstimator):
                 )
                 raise ValueError(message)
 
-        x = self._set_x(x)
+        x = self.set_x(x)
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
         self._prepare_attribute("mu")

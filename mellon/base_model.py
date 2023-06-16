@@ -135,7 +135,30 @@ class BaseEstimator:
         """
         return self.fit_predict(x=x)
 
-    def _set_x(self, x):
+    def set_x(self, x):
+        """
+        Sets the training instances (x) for the model and validates that they are
+        formatted correctly.
+
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features)
+            The training instances where `n_samples` is the number of samples and `n_features`
+            is the number of features. Each sample is an array of features representing a
+            point in the feature space.
+
+        Returns
+        -------
+        array-like of shape (n_samples, n_features)
+            The validated training instances.
+
+        Raises
+        ------
+        ValueError
+            If the input `x` is not valid. For instance, `x` may not be valid if it is not
+            a numerical array-like object, or if its shape does not match the required shape
+            (n_samples, n_features).
+        """
         self.x = _validate_array(x, "x")
         return self.x
 

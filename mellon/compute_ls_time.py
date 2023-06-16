@@ -4,6 +4,7 @@ from jax.numpy.linalg import norm
 from jaxopt import ScipyMinimize
 from .density_estimator import DensityEstimator
 from .util import Log
+from .validation import _validate_time_x
 
 logger = Log()
 
@@ -12,6 +13,7 @@ def compute_ls_time(
     nn_distances,
     x,
     cov_func_curry,
+    times=None,
     warn_below=500,
     return_data=False,
     density_estimator_kwargs=dict(),
@@ -26,6 +28,12 @@ def compute_ls_time(
         The nearest neighbor distances.
     x : array-like
         The training instances where the last column encodes the time point for each instance.
+        If 'times' is None, the last column of 'x' is interpreted as the times.
+        Shape must be (n_samples, n_features).
+    times : array-like, optional
+        An array encoding the time points associated with each cell/row in 'x'.
+        If provided, it overrides the last column of 'x' as the times.
+        Shape must be either (n_samples,) or (n_samples, 1).
     cov_func_curry : function
         The covariance function curry.
     warn_below : int, optional
@@ -39,7 +47,15 @@ def compute_ls_time(
     -------
     ls : float
         The optimal length scale for time (`ls_time`).
+    densities : array-like, optional
+        The estimated densities for each training instance at each unique time point. Only returned if `return_data` is True.
+    predictors : list of `DensityEstimator` instances, optional
+        The `DensityEstimator` instances used to estimate the densities. Only returned if `return_data` is True.
+    unique_times : array-like, optional
+        The unique time points in the training instances. Only returned if `return_data` is True.
+
     """
+    x = _validate_time_x(x, times)
     times = x[:, -1]
     states = x[:, :-1]
     unique_times = unique(times)
@@ -80,6 +96,6 @@ def compute_ls_time(
     ls = exp(opt.params)
 
     if return_data:
-        return ls, densities, predictors
+        return ls, densities, predictors, unique_times
 
     return ls
