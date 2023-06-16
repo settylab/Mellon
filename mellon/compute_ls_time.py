@@ -96,7 +96,7 @@ def compute_ls_time(
         return norm(covs - corrs)
 
     opt = ScipyMinimize(fun=ls_loss, method="L-BFGS-B", jit=False).run(0.0)
-    ls = exp(opt.params)
+    ls = exp(opt.params).item()
 
     if return_data:
         return ls, densities, predictors, unique_times

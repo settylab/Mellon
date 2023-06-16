@@ -15,7 +15,7 @@ from .decomposition import (
     DEFAULT_RANK,
     DEFAULT_METHOD,
 )
-from .validation import _validate_time_x
+from .validation import _validate_time_x, _validate_positive_float
 
 
 DEFAULT_N_LANDMARKS = 5000
@@ -25,15 +25,29 @@ logger = Log()
 
 def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     R"""
-    Computes the landmark points as k-means centroids. If n_landmarks is less
-    than 1 or greater than or equal to the number of training instances, returns None.
+    Computes the landmark points as k-means centroids.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param n_landmarks: The number of landmark points.
-    :type n_landmarks: int
-    :return: landmark_points - k-means centroids.
-    :rtype: array-like
+    Landmark points are used to approximate the underlying structure of the
+    input space. If the number of landmarks (`n_landmarks`) is zero or
+    exceeds the number of available data points, the function will return None.
+
+    Parameters
+    ----------
+    x : array-like
+        The input data for which landmarks should be computed.
+        Shape must be (n_samples, n_features).
+    n_landmarks : int, optional
+        The desired number of landmark points. If less than 2 or greater
+        than the number of data points, the function will return None.
+        Defaults to DEFAULT_N_LANDMARKS.
+
+    Returns
+    -------
+    landmark_points : array-like or None
+        The coordinates of the computed landmark points, represented as
+        k-means centroids. If no landmarks are computed, the function
+        returns None. Shape is (n_landmarks, n_features).
+
     """
     if n_landmarks == 0:
         return None
@@ -44,6 +58,57 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
         return None
     logger.info(f"Computing {n_landmarks:,} landmarks with k-means clustering.")
     return k_means(x, n_landmarks, n_init=1)[0]
+
+
+def compute_landmarks_rescale_time(
+    x, ls, ls_time, times=None, n_landmarks=DEFAULT_N_LANDMARKS
+):
+    R"""
+    Computes landmark points for time-rescaled input data using k-means centroids.
+
+    This function first rescales the temporal dimension of the input data by
+    a factor derived from the spatial and temporal length scales (`ls` and `ls_time`).
+    It then computes landmark points from the rescaled data. The last dimension
+    of the landmarks is re-scaled back to the original time scale before being returned.
+
+    Parameters
+    ----------
+    x : array-like
+        The input data for which landmarks should be computed. If 'times' is
+        None, the last column of 'x' is interpreted as the times.
+        Shape must be (n_samples, n_features).
+    ls : float
+        Length scale of the spatial covariance kernel. Must be positive.
+    ls_time : float
+        Length scale of the temporal covariance kernel. Must be positive.
+    times : array-like, optional
+        An array encoding the time points associated with each sample in 'x'.
+        If provided, it overrides the last column of 'x' as the times.
+        Shape must be either (n_samples,) or (n_samples, 1).
+    n_landmarks : int, optional
+        The desired number of landmark points. Defaults to DEFAULT_N_LANDMARKS.
+
+    Returns
+    -------
+    landmark_points : array-like or None
+        The coordinates of the computed landmark points, represented as
+        k-means centroids in the original space, including the re-scaled
+        temporal dimension. If no landmarks are computed, the function
+        returns None. Shape is (n_landmarks, n_features).
+
+    """
+    if n_landmarks == 0:
+        return None
+
+    ls = _validate_positive_float(ls, "ls")
+    ls_time = _validate_positive_float(ls_time, "ls_time")
+    x = _validate_time_x(x, times)
+    time_factor = ls / ls_time
+    x = x.at[:, -1].set(x[:, -1] * time_factor)
+    landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
+    if landmarks is not None:
+        landmarks = landmarks.at[:, -1].set(landmarks[:, -1] / time_factor)
+    return landmarks
 
 
 def compute_distances(x, k):

@@ -12,6 +12,7 @@ from .inference import (
 )
 from .parameters import (
     compute_nn_distances_within_time_points,
+    compute_landmarks_rescale_time,
     compute_cov_func,
     compute_d,
     compute_d_factal,
@@ -361,6 +362,22 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             ls, self.densities, self.predictors, self.numeric_stages = ls
         ls *= self.ls_factor_times
         return ls
+
+    def _compute_landmarks(self):
+        x = self.x
+        ls = self.ls
+        ls_time = self.ls_time
+        n_landmarks = self.n_landmarks
+        n_samples = x.shape[0]
+        if n_samples > 100 * n_landmarks and n_samples > 1e6:
+            logger.info(
+                f"Large number of {n_samples:,} cells and "
+                f"small number of {n_landmarks:,} landmarks. Consider "
+                "computing k-means on a subset of cells and passing "
+                "the results as 'landmarks' to speed up the process."
+            )
+        landmarks = compute_landmarks_rescale_time(x, ls, ls_time)
+        return landmarks
 
     def _compute_cov_func(self):
         cov_func_curry = self.cov_func_curry
