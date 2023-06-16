@@ -1,3 +1,7 @@
+import functools
+import inspect
+from inspect import Parameter
+
 from jax import jit, vmap
 
 from jax.numpy import (
@@ -7,6 +11,8 @@ from jax.numpy import (
     isscalar,
     exp,
 )
+
+from .validation import _validate_array
 
 
 def Exp(func):
@@ -70,27 +76,6 @@ def deserialize(serializable_x):
         return serializable_x
 
 
-def vector_map(fun, X, in_axis=0, do_jit=True):
-    """
-    Applies jax just in time compilation and vmap to quickly evaluate a
-    function for multiple input arrays.
-
-    :param fun: The function to evaluate.
-    :type fun: function
-    :param X: Array of intput arrays.
-    :type X: array-like
-    :param in_axis: An integer, None, or (nested) standard Python container
-        (tuple/list/dict) thereof specifying which input array axes to map over.
-        S. documantation of jax.vmap.
-    :return: Stacked results of the function calls.
-    :rtype: array-like
-    """
-    if do_jit:
-        fun = jit(fun)
-    vfun = vmap(fun, in_axis)
-    return vfun(X)
-
-
 def ensure_2d(X):
     """
     Ensures that the input JAX array, X, is at least 2-dimensional.
@@ -128,3 +113,64 @@ def select_active_dims(x, active_dims):
             active_dims = [active_dims]
         x = x[:, active_dims]
     return x
+
+
+def make_multi_time_argument(func):
+    """
+    Decorator to modify a method to optionally take a multi-time argument.
+
+    This decorator modifies the method it wraps to take an optional `multi_time` keyword argument.
+    If `multi_time` is provided, the decorated method will be called once for each value in `multi_time`
+    with that value passed as the `time` argument to the method.
+
+    The original method's signature and docstring are preserved.
+
+    Parameters
+    ----------
+    func : callable
+        The method to be modified. This method must take a `time` keyword argument.
+
+    Returns
+    -------
+    callable
+        The modified method.
+
+    Examples
+    --------
+    class MyClass:
+        @make_multi_time_argument
+        def method(self, x, time=None):
+            return x + time
+
+    my_object = MyClass()
+    print(my_object.method(1, multi_time=np.array([1, 2, 3])))
+    # Output: array([2, 3, 4])
+    """
+    sig = inspect.signature(func)
+    new_params = list(sig.parameters.values()) + [
+        Parameter("multi_time", Parameter.POSITIONAL_OR_KEYWORD, default=None)
+    ]
+    new_sig = sig.replace(parameters=new_params)
+
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        multi_time = kwargs.pop("multi_time", None)
+        do_jit = kwargs.get("jit", False)
+        if multi_time is not None:
+            if kwargs.get("time", None) is not None:
+                raise ValueError(
+                    "Cannot specify both 'time' and 'multi_time' arguments"
+                )
+            multi_time = _validate_array(multi_time, "multi_time")
+
+            def at_time(t):
+                return func(self, *args, **kwargs, time=t)
+
+            if do_jit:
+                at_time = jit(at_time)
+            vfun = vmap(at_time, in_axes=0, out_axes=1)
+            return vfun(multi_time)
+        return func(self, *args, **kwargs)
+
+    wrapper.__signature__ = new_sig
+    return wrapper

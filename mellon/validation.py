@@ -1,8 +1,7 @@
 from collections.abc import Iterable
 
-from jax.numpy import asarray, concatenate, isscalar, full
-
-from .base_cov import Covariance
+from jax.numpy import asarray, concatenate, isscalar, full, ndarray, array
+from jax.errors import ConcretizationTypeError
 
 
 def _validate_time_x(x, times=None, n_features=None, cast_scalar=False):
@@ -105,17 +104,48 @@ def _validate_positive_float(value, param_name, optional=False):
 
 
 def _validate_float(value, param_name, optional=False):
-    def __init__(self):
-        pass
+    """
+    Validates if the input is a float or can be converted to a float.
 
-    def k(self):
-        pass
+    Parameters
+    ----------
+    value : object
+        Input to be checked.
+    param_name : str
+        Name of the input parameter, used for error messaging.
+    optional : bool, optional
+        If True and the input is None, None will be returned. Otherwise, if the input is None,
+        it raises an error. By default, False.
 
-    if value is None and optional:
-        return None
+    Returns
+    -------
+    float
+        The input converted to float.
+
+    Raises
+    ------
+    ValueError
+        If the input is not a float, integer, or a one-element array, or if the input is None and
+        optional=False.
+    """
+    if value is None:
+        if optional:
+            return None
+        else:
+            raise ValueError(
+                f"'{param_name}' is None, but is required to be a float number"
+            )
+
+    if isinstance(value, ndarray) and value.size == 1:
+        try:
+            value = value.item()
+        except ConcretizationTypeError:
+            # this must be a JAX tracer
+            return value
 
     if not isinstance(value, (float, int)):
         raise ValueError(f"'{param_name}' should be a float number")
+
     return float(value)
 
 
@@ -172,9 +202,7 @@ def _validate_array(iterable, name, optional=False, ndim=None):
     if isinstance(iterable, Iterable):
         array = asarray(iterable, dtype=float)
     else:
-        raise TypeError(
-            f"'{name}' should be iterable or a JVPTracer, got {type(iterable)} instead."
-        )
+        raise TypeError(f"'{name}' should be iterable, got {type(iterable)} instead.")
 
     if ndim is not None:
         if isinstance(ndim, int):
@@ -228,6 +256,8 @@ def _validate_cov_func_curry(cov_func_curry, cov_func, param_name):
             "At least one of 'cov_func_curry' and 'cov_func' must not be None"
         )
 
+    from .base_cov import Covariance
+
     if cov_func_curry is not None:
         if not isinstance(cov_func_curry, type) or not issubclass(
             cov_func_curry, Covariance
@@ -239,6 +269,8 @@ def _validate_cov_func_curry(cov_func_curry, cov_func, param_name):
 def _validate_cov_func(cov_func, param_name, optional=False):
     if cov_func is None and optional:
         return None
+    from .base_cov import Covariance
+
     if not isinstance(cov_func, Covariance):
         raise ValueError(
             f"'{param_name}' must be an instance of a subclass of mellon.Covariance"

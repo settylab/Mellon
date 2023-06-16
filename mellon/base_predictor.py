@@ -10,7 +10,7 @@ import json
 
 from .base_cov import Covariance
 from .util import Log
-from .helper import deserialize, ensure_2d
+from .helper import deserialize, ensure_2d, make_multi_time_argument
 from .derivatives import (
     derivative,
     gradient,
@@ -372,6 +372,7 @@ class PredictorTime(Predictor):
         The prediction is usually array-like with as many entries as `x.shape[0]`.
     """
 
+    @make_multi_time_argument
     def __call__(self, Xnew, time=None):
         """
         Call method to use the class instance as a function. This method
@@ -385,6 +386,8 @@ class PredictorTime(Predictor):
         time : scalar or array-like, optional
             The time points associated with each cell/row in 'Xnew'.
             If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction will be made for each row.
 
         Returns
         -------
@@ -396,7 +399,6 @@ class PredictorTime(Predictor):
         ValueError
             If 'time' is an array and its size does not match 'Xnew'.
         """
-
         # if time is a scalar, convert it into a 1D array of the same size as Xnew
         Xnew = _validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
@@ -404,13 +406,18 @@ class PredictorTime(Predictor):
 
         return self._predict(Xnew)
 
+    @make_multi_time_argument
     def time_derivative(
-        self, x, time, jit=True, time_derivative=True, alternative_implementation=True
+        self,
+        x,
+        time,
+        jit=True,
     ):
         R"""
         Computes the time derivative of the prediction function for each line in `x`.
 
-        This function applies a jax-based gradient operation to the density function evaluated at a specific time.
+        This function applies a jax-based gradient operation to the density
+        function evaluated at a specific time.
         The derivative is with respect to time and not the inputs in `x`.
 
         Parameters
@@ -419,18 +426,14 @@ class PredictorTime(Predictor):
             Data points where the derivative is to be evaluated.
         time : array-like or scalar
             Time point or points at which to evaluate the derivative.
-            If time is an array then the time derivative will be computed for
-            all data-points and all times in the array. It must be 1-d.
-        time : array-like or scalar
-            Time point or points at which to evaluate the derivative.
             If `time` is a scalar, the derivative will be computed at this
             specific time point for all data points in `x`.
             If `time` is an array, it should be 1-D and the time derivative
             will be computed for all data-points at the corresponding time in the array.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction will be made for each row.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
-        alternative_implementation : bool, optional
-            If True, use an alternative implementation that uses less memory. Defaults to True.
 
         Returns
         -------
@@ -439,17 +442,12 @@ class PredictorTime(Predictor):
             The shape of the output array is the same as `x`.
 
         """
-        if alternative_implementation:
-            Xnew = _validate_time_x(
-                x, time, n_features=self.n_input_features, cast_scalar=True
-            )
-            return super().gradient(Xnew)[:, -1]
+        Xnew = _validate_time_x(
+            x, time, n_features=self.n_input_features, cast_scalar=True
+        )
+        return super().gradient(Xnew)[:, -1]
 
-        def dens_at(t):
-            return self.__call__(x, t)
-
-        return derivative(dens_at, time, jit=jit)
-
+    @make_multi_time_argument
     def gradient(self, x, time, jit=True):
         """
         Computes the gradient of the prediction function for each point in `x` at a given time.
@@ -460,6 +458,8 @@ class PredictorTime(Predictor):
             Data points at which the gradient is to be computed.
         time : float
             Specific time point at which to compute the gradient.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then the computation will be made for each row.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
 
@@ -476,6 +476,7 @@ class PredictorTime(Predictor):
 
         return gradient(dens_at, x, jit=jit)
 
+    @make_multi_time_argument
     def hessian(self, x, time, jit=True):
         """
         Computes the Hessian matrix of the prediction function for each point in `x` at a given time.
@@ -486,6 +487,8 @@ class PredictorTime(Predictor):
             Data points at which the Hessian matrix is to be computed.
         time : float
             Specific time point at which to compute the Hessian matrix.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then the computation will be made for each row.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
 
@@ -502,6 +505,7 @@ class PredictorTime(Predictor):
 
         return hessian(dens_at, x, jit=jit)
 
+    @make_multi_time_argument
     def hessian_log_determinant(self, x, time, jit=True):
         """
         Computes the logarithm of the determinant of the Hessian of the prediction function
@@ -513,6 +517,8 @@ class PredictorTime(Predictor):
             Data points at which the log determinant is to be computed.
         time : float
             Specific time point at which to compute the log determinant.
+                multi_time : array-like, optional
+                        If 'multi_time' is specified then the computation will be made for each row.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
 
