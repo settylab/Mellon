@@ -2,20 +2,17 @@ from .decomposition import DEFAULT_METHOD
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
     compute_conditional_mean,
-    compute_conditional_mean_y,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_OPTIMIZER,
 )
 from .parameters import (
-    compute_landmarks,
     DEFAULT_N_LANDMARKS,
 )
 from .util import (
     DEFAULT_JITTER,
     Log,
 )
-from .helper import vector_map
 from .validation import (
     _validate_positive_float,
     _validate_float,
@@ -280,7 +277,6 @@ class FunctionEstimator(BaseEstimator):
                     f"Got Xnew.shape[1] = {Xnew.shape[1]}, but expected it to be equal to x.shape[1] = {x.shape[1]}. "
                     "Please provide arrays with the same number of features."
                 )
-
 
         n_samples = x.shape[0]
         # Check if the number of samples in x and Y match

@@ -11,12 +11,10 @@ from jaxopt import ScipyMinimize
 from .conditional import (
     FullConditionalMean,
     FullConditionalMeanTime,
-    FullConditionalMeanY,
     LandmarksConditionalMean,
     LandmarksConditionalMeanTime,
     LandmarksConditionalMeanCholesky,
     LandmarksConditionalMeanCholeskyTime,
-    LandmarksConditionalMeanY,
 )
 from .util import DEFAULT_JITTER
 from .helper import ensure_2d, Exp
@@ -507,59 +505,6 @@ def compute_conditional_mean_explog(
                 sigma=sigma,
                 jitter=jitter,
             )
-        )
-
-
-def compute_conditional_mean_y(
-    x,
-    landmarks,
-    Xnew,
-    mu,
-    cov_func,
-    sigma=0,
-    jitter=DEFAULT_JITTER,
-):
-    R"""
-    Builds the mean function of the Gaussian process, conditioned on the
-    function values (e.g., log-density) on x, and for fixed
-    output locations Xnew and therefor flexible output values y.
-
-    :param x: The training instances.
-    :type x: array-like
-    :param landmarks: The landmark points for fast sparse computation.
-        Landmarks can be None if not using landmark points.
-    :type landmarks: array-like
-    :param Xnew: The output locations.
-    :type Xnew: array-like
-    :param mu: The original Gaussian process mean :math:`\mu`.
-    :type mu: float
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param sigma: White moise veriance. Defaults to 0.
-    :type sigma: float
-    :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
-    :type jitter: float
-    :return: conditional_mean - The conditioned Gaussian process mean function.
-    :rtype: function
-    """
-    if landmarks is None:
-        return FullConditionalMeanY(
-            x,
-            Xnew,
-            mu,
-            cov_func,
-            jitter=jitter,
-        )
-    else:
-        landmarks = ensure_2d(landmarks)
-        return LandmarksConditionalMeanY(
-            x,
-            landmarks,
-            Xnew,
-            mu,
-            cov_func,
-            sigma=sigma,
-            jitter=jitter,
         )
 
 
