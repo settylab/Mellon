@@ -106,8 +106,8 @@ class Predictor(ABC):
             If the number of features in 'x' does not match the
             number of features the predictor was trained on.
         """
-        x = ensure_2d(x)
         x = _validate_array(x, "x")
+        x = ensure_2d(x)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
                 f"The predictor was trained on data with {self.n_input_features} features. "
@@ -142,6 +142,8 @@ class Predictor(ABC):
             gradients.shape == x.shape
         :rtype: array-like
         """
+        x = _validate_array(x, "x")
+        x = ensure_2d(x)
         return gradient(self.__call__, x, jit=jit)
 
     def hessian(self, x, jit=True):
@@ -156,6 +158,8 @@ class Predictor(ABC):
             hessians.shape == X.shape + X.shape[1:]
         :rtype: array-like
         """
+        x = _validate_array(x, "x")
+        x = ensure_2d(x)
         return hessian(self.__call__, x, jit=jit)
 
     def hessian_log_determinant(self, x, jit=True):
@@ -172,6 +176,8 @@ class Predictor(ABC):
             signs.shape == log_determinants.shape == x.shape[0]
         :rtype: array-like, array-like
         """
+        x = _validate_array(x, "x")
+        x = ensure_2d(x)
         return hessian_log_determinant(self.__call__, x, jit=jit)
 
     def __getstate__(self):
