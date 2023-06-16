@@ -76,13 +76,22 @@ def test_time_sensitive_density_estimator_approximations(
     X, times, _, _, relative_err, _, _, _ = common_setup_time_sensitive
 
     est = mellon.TimeSensitiveDensityEstimator(
-        rank=rank, method=method, n_landmarks=n_landmarks
+        rank=rank, method=method, n_landmarks=n_landmarks, save_intermediate_ls_times=True,
     )
     est.fit(X, times)
     dens_appr = est.predict(X, times)
     assert (
         relative_err(dens_appr) < err_limit
     ), "The approximation should be close to the default."
+    assert (
+        hasattr(est, "densities")
+    ), "est.densities should be stored since save_intermediate_ls_times=True was passed."
+    assert (
+        hasattr(est, "predictors")
+    ), "est.predictors should be stored since save_intermediate_ls_times=True was passed."
+    assert (
+        hasattr(est, "numeric_stages")
+    ), "est.numeric_stages should be stored since save_intermediate_ls_times=True was passed."
 
 
 @pytest.mark.parametrize(
