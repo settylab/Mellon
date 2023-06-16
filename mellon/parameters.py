@@ -107,7 +107,11 @@ def compute_landmarks_rescale_time(
     x = x.at[:, -1].set(x[:, -1] * time_factor)
     landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
     if landmarks is not None:
-        landmarks = landmarks.at[:, -1].set(landmarks[:, -1] / time_factor)
+        try:
+            landmarks = landmarks.at[:, -1].set(landmarks[:, -1] / time_factor)
+        except AttributeError:
+            # landmarks os not a jax array
+            landmarks[:, -1] = landmarks[:, -1] / time_factor
     return landmarks
 
 

@@ -101,7 +101,8 @@ def test_time_sensitive_density_estimator_approximations(
     "rank, method, n_landmarks, compress",
     [
         (1.0, "percent", 10, None),
-        (0.99, "percent", 80, None),
+        (0.99, "percent", 0, None),
+        (0.99, "percent", 5, None),
         (0.99, "percent", 80, "gzip"),
         (0.99, "percent", 80, "bz2"),
     ],
