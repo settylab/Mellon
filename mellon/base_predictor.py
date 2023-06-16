@@ -442,17 +442,23 @@ class PredictorTime(Predictor):
         return derivative(dens_at, time, jit=jit)
 
     def gradient(self, x, time, jit=True):
-        R"""
-        Conputes the gradient of the predict function for each cell state in x
-        and one fixed time.
+        """
+        Computes the gradient of the prediction function for each point in `x` at a given time.
 
-        :param x: Data points.
-        :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: gradiants - The gradient of function at each point in x.
-            gradients.shape == x.shape
-        :rtype: array-like
+        Parameters
+        ----------
+        x : array-like
+            Data points at which the gradient is to be computed.
+        time : float
+            Specific time point at which to compute the gradient.
+        jit : bool, optional
+            If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+
+        Returns
+        -------
+        array-like
+            The gradient of the prediction function at each point in `x`.
+            The shape of the output array is the same as `x`.
         """
         time = _validate_float(time, "time", optional=True)
 
@@ -462,16 +468,23 @@ class PredictorTime(Predictor):
         return gradient(dens_at, x, jit=jit)
 
     def hessian(self, x, time, jit=True):
-        R"""
-        Conputes the hessian of the predict function for each line in x.
+        """
+        Computes the Hessian matrix of the prediction function for each point in `x` at a given time.
 
-        :param x: Data points.
-        :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: hessians - The hessian matrix of function at each point in x.
-            hessians.shape == X.shape + X.shape[1:]
-        :rtype: array-like
+        Parameters
+        ----------
+        x : array-like
+            Data points at which the Hessian matrix is to be computed.
+        time : float
+            Specific time point at which to compute the Hessian matrix.
+        jit : bool, optional
+            If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+
+        Returns
+        -------
+        array-like
+            The Hessian matrix of the prediction function at each point in `x`.
+            The shape of the output array is `x.shape + x.shape[1:]`.
         """
         time = _validate_float(time, "time", optional=True)
 
@@ -481,18 +494,24 @@ class PredictorTime(Predictor):
         return hessian(dens_at, x, jit=jit)
 
     def hessian_log_determinant(self, x, time, jit=True):
-        R"""
-        Conputes the logarirhm of the determinat of the predict function for
-        each line in x.
+        """
+        Computes the logarithm of the determinant of the Hessian of the prediction function
+        for each point in `x` at a given time.
 
-        :param x: Data points.
-        :type x: array-like
-        :param jit: Use jax just in time compilation. Defaults to True.
-        :type jit: bool
-        :return: signs, log_determinants - The sign of the determinant
-            at each point x and the logarithm of its absolute value.
-            signs.shape == log_determinants.shape == x.shape[0]
-        :rtype: array-like, array-like
+        Parameters
+        ----------
+        x : array-like
+            Data points at which the log determinant is to be computed.
+        time : float
+            Specific time point at which to compute the log determinant.
+        jit : bool, optional
+            If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+
+        Returns
+        -------
+        array-like
+            The sign of the determinant at each point in `x` and the logarithm of its absolute value.
+            `signs.shape == log_determinants.shape == x.shape[0]`.
         """
         time = _validate_float(time, "time", optional=True)
 
