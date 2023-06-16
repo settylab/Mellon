@@ -76,7 +76,10 @@ def compute_ls_time(
             )
 
         x_at_time = x[mask, :-1]
-        est = DensityEstimator(**density_estimator_kwargs)
+
+        est = DensityEstimator(
+            nn_distances=nn_distances[mask], **density_estimator_kwargs
+        )
         est.fit(x_at_time)
         densities.append(est.predict(states))
         predictors.append(est)

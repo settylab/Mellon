@@ -4,18 +4,14 @@ import jax.numpy as jnp
 
 def test_compute_mu():
     mu = mellon.parameters.compute_mu(jnp.arange(100), 4)
-    assert hasattr(mu, "dtype")
-    assert mu.dtype.kind == "f", "mu should be a floating point number."
+    assert isinstance(mu, float)
     assert jnp.isfinite(mu), "mu should be finite."
-    assert len(mu.shape) == 0, "mu should be scalar."
 
 
 def test_compute_ls():
     ls = mellon.parameters.compute_ls(jnp.arange(1, 100))
-    assert hasattr(ls, "dtype")
-    assert ls.dtype.kind == "f", "ls should be a floating point number."
+    assert isinstance(ls, float)
     assert jnp.isfinite(ls), "ls should be finite."
-    assert len(ls.shape) == 0, "ls should be scalar."
 
 
 def test_compute_cov_func():

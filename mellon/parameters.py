@@ -183,7 +183,7 @@ def compute_mu(nn_distances, d):
     :return: mu - The 1th percentile of :math:`mle(nn\text{_}distances, d) - 10`.
     :rtype: float
     """
-    return quantile(mle(nn_distances, d), 0.01) - 10
+    return quantile(mle(nn_distances, d), 0.01).item() - 10
 
 
 def compute_ls(nn_distances):
@@ -195,7 +195,7 @@ def compute_ls(nn_distances):
     :return: ls - The geometric mean of the nearest neighbor distances times a constant.
     :rtype: float
     """
-    return exp(log(nn_distances).mean() + 3.0)
+    return exp(log(nn_distances).mean() + 3.0).item()
 
 
 def compute_cov_func(cov_func_curry, ls, ls_time=None):
