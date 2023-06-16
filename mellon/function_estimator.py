@@ -196,19 +196,40 @@ class FunctionEstimator(BaseEstimator):
         return conditional
 
     def fit(self, x=None, y=None):
-        R"""
-        Fit the model from end to end.
-
-        :param x: The training cell states.
-        :type x: array-like
-        :param y: The training function values on cell states.
-        :type y: array-like
-        :param build_predict: Whether or not to build the prediction function.
-            Defaults to True.
-        :type build_predict: bool
-        :return: self - A fitted instance of this estimator.
-        :rtype: Object
         """
+        Trains the model using the provided training data and function values. This includes preparing
+        the model for inference and computing the conditional distribution for the given data.
+
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features), default=None
+            The training instances where `n_samples` is the number of samples and `n_features` is the
+            number of features. Each sample is an array of features representing a point in the feature space.
+
+        y : array-like of shape (n_samples, n_output_features), default=None
+            The function values of the training instances. `n_samples` is the number of samples and
+            `n_output_features` is the number of function values at each sample.
+
+        Raises
+        ------
+        ValueError
+            If the number of samples in `x` and `y` doesn't match.
+
+        Returns
+        -------
+        self : object
+            This method returns self for chaining.
+        """
+        x = self._set_x(x)
+        y = _validate_array(y, "y")
+
+        n_samples = x.shape[0]
+        # Check if the number of samples in x and y match
+        if y.shape[0] != n_samples:
+            raise ValueError(
+                f"X.shape[0] = {n_samples} (n_samples) should equal "
+                "y.shape[0] = {y.shape[0]}."
+            )
 
         self.prepare_inference(x)
         self.compute_conditional(x, y)
@@ -216,47 +237,61 @@ class FunctionEstimator(BaseEstimator):
 
     @property
     def predict(self):
-        R"""
-        An instance of the :class:`mellon.Predictor` that predicts the function values at each point in x.
-
-        It contains a __call__ method which can be used to predict the function values
-        The instance also supports serialization features which allows for saving
-        and loading the predictor state. Refer to :class:`mellon.Predictor` documentation for more details.
-
-        :param x: The new data to predict.
-        :type x: array-like
-        :return: condition_mean - The conditional mean function value at each test point in x.
-        :rtype: array-like
         """
-        return self.conditional
+        A property that returns an instance of the :class:`mellon.Predictor` class. This predictor can be used
+        to predict the function values for new data points by calling the instance like a function.
 
-    def fit_predict(self, x=None, Y=None, Xnew=None):
-        """
-        Compute the conditional mean and return the smoothed function values
-        at the points Xnew for each line of values in Y.
-
-        Parameters
-        ----------
-        x : array-like, optional
-            The training instances to estimate density function.
-        Y : array-like, optional
-            The training function values on cell states.
-        Xnew : array-like, optional
-            The new data to predict. If not provided, it defaults to `x`.
+        The predictor instance also supports serialization features, allowing for saving and loading the
+        predictor's state. For more details, refer to the :class:`mellon.Predictor` documentation.
 
         Returns
         -------
-        array-like
-            The conditional mean function value at each test point in `Xnew`.
+        mellon.Predictor
+            A predictor instance that computes the conditional mean function value at each new data point.
+
+        Example
+        -------
+
+        >>> y_pred = model.predict(Xnew)
+
+        """
+        return self.conditional
+
+    def fit_predict(self, x=None, y=None, Xnew=None):
+        """
+        Trains the model using the provided training data and function values, then makes predictions
+        for new data points. The function computes the conditional mean and returns the smoothed function
+        values at the points `Xnew` for each column of values in `y`.
+
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features), default=None
+            The training instances where `n_samples` is the number of samples and `n_features` is the number
+            of features. Each sample is an array of features representing a point in the feature space.
+
+        y : array-like of shape (n_samples, n_output_features), default=None
+            The function values of the training instances. `n_samples` is the number of samples and
+            `n_output_features` is the number of function values at each sample.
+
+        Xnew : array-like of shape (n_predict_samples, n_features), default=None
+            The new data points to make predictions on where `n_predict_samples` is the number of samples
+            to predict and `n_features` is the number of features. If not provided, the predictions will
+            be made on the training instances `x`.
+
+        Returns
+        -------
+        array-like of shape (n_predict_samples, n_output_features)
+            The conditional mean function value at each new data point in `Xnew`. The number of predicted
+            function values at each sample will match the number of output features in `y`.
 
         Raises
         ------
         ValueError
-            If the number of samples in `x` and `Y` don't match, or if the
-            number of features in `x` and `Xnew` don't match.
+            If the number of samples in `x` and `y` don't match, or if the number of features in `x` and
+            `Xnew` don't match.
         """
         x = self._set_x(x)
-        Y = _validate_array(Y, "Y")
+        y = _validate_array(y, "y")
         Xnew = _validate_array(Xnew, "Xnew", optional=True)
 
         # If Xnew is not provided, default to x
@@ -278,16 +313,8 @@ class FunctionEstimator(BaseEstimator):
                     "Please provide arrays with the same number of features."
                 )
 
-        n_samples = x.shape[0]
-        # Check if the number of samples in x and Y match
-        if Y.shape[0] != n_samples:
-            raise ValueError(
-                f"X.shape[0] = {n_samples} (n_samples) should equal "
-                "Y.shape[0] = {Y.shape[0]}."
-            )
-
         # Fit the model and predict
-        self.fit(x, Y)
+        self.fit(x, y)
         return self.predict(Xnew)
 
     def multi_fit_predict(self, x=None, Y=None, Xnew=None):

@@ -523,6 +523,11 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         log_density : array-like
             The log density at each test point in `x`.
 
+        Example
+        -------
+
+        >>> log_density = model.predict(Xnew)
+
         """
         if self.log_density_func is None:
             self._set_log_density_func()

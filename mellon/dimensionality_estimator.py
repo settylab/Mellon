@@ -412,16 +412,23 @@ class DimensionalityEstimator(BaseEstimator):
         return self.local_dim_x, self.log_density_x
 
     def fit(self, x=None, build_predict=True):
-        R"""
-        Fit the model from end to end.
+        """
+        Trains the model from start to finish. This includes preparing for inference, running inference,
+        and processing the inference results.
 
-        :param x: The training instances to estimate dimensionality function.
-        :type x: array-like
-        :param build_predict: Whether or not to build the prediction function.
-            Defaults to True.
-        :type build_predict: bool
-        :return: self - A fitted instance of this estimator.
-        :rtype: Object
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features), default=None
+            The training instances where `n_samples` is the number of samples and `n_features`
+            is the number of features.
+
+        build_predict : bool, default=True
+            Whether or not to construct the prediction function after training.
+
+        Returns
+        -------
+        self
+            A fitted instance of this estimator.
         """
 
         self.prepare_inference(x)
@@ -431,15 +438,25 @@ class DimensionalityEstimator(BaseEstimator):
 
     @property
     def predict_density(self):
-        R"""
-        Predict the log density with adaptive unit at each point in x.
-        Note that the unit of denity depends on the dimensionality of the
-        volume.
+        """
+        Predicts the log density with an adaptive unit for each data point in `x`.
+        The unit of density depends on the dimensionality of the data.
 
-        :param x: The new data to predict.
-        :type x: array-like
-        :return: log_density - The log density at each test point in x.
-        :rtype: array-like
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features)
+            The new data for which to predict the log density.
+
+        Returns
+        -------
+        array-like
+            The predicted log density for each test point in `x`.
+
+        Example
+        -------
+
+        >>> log_density = model.predict_density(Xnew)
+
         """
         if self.log_density_func is None:
             self._set_log_density_func()
@@ -447,29 +464,60 @@ class DimensionalityEstimator(BaseEstimator):
 
     @property
     def predict(self):
-        R"""
-        An instance of the :class:`mellon.Predictor` that predicts the dimensionality at each point in x.
+        """
+        Returns an instance of the :class:`mellon.Predictor` class, which predicts the dimensionality
+        at each point in `x`.
 
-        It contains a __call__ method which can be used to predict the dimensionality.
-        The instance also supports serialization features which allows for saving
-        and loading the predictor state. Refer to mellon.Predictor documentation for more details.
+        This instance includes a __call__ method, which can be used to predict the dimensionality.
+        The instance also supports serialization features, allowing for saving and loading the predictor's
+        state. For more details, refer to :class:`mellon.Predictor`.
 
-        :param x: The new data to predict.
-        :type x: array-like
-        :return: dimensionality - The dimensionality at each test point in x.
-        :rtype: array-like
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features)
+            The new data for which to predict the dimensionality.
+
+        Returns
+        -------
+        array-like
+            The predicted dimensionality for each test point in `x`.
+
+        Example
+        -------
+
+        >>> log_density = model.predict(Xnew)
+
         """
         if self.local_dim_func is None:
             self._set_local_dim_func()
         return self.local_dim_func
 
     def fit_predict(self, x=None, build_predict=False):
-        R"""
-        Perform Bayesian inference and return the local dimensionality at training points.
+        """
+        Trains the model using the provided training data, and then makes predictions
+        on the trained data points. This function performs Bayesian inference to compute
+        the local dimensionality and returns the computed local dimensionality at each
+        training point.
 
-        :param x: The training instances to estimate the local dimensionality function.
-        :type x: array-like
-        :return: local_dim_x - The local dimensionality at each training point in x.
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features), default=None
+            The training instances to estimate the local dimensionality function, where
+            `n_samples` is the number of samples and `n_features` is the number of features.
+            Each sample is an array of features representing a point in the feature space.
+
+        build_predict : bool, default=False
+            Whether or not to build the prediction function after training.
+
+        Returns
+        -------
+        array-like of shape (n_samples,)
+            The local dimensionality at each training point in `x`.
+
+        Raises
+        ------
+        ValueError
+            If the argument `x` does not match `self.x` which was already set in a previous operation.
         """
         if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."

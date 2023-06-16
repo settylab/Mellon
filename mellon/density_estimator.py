@@ -379,18 +379,24 @@ class DensityEstimator(BaseEstimator):
         return self.log_density_x
 
     def fit(self, x=None, build_predict=True):
-        R"""
-        Fit the model from end to end.
-
-        :param x: The training instances to estimate density function.
-        :type x: array-like
-        :param build_predict: Whether or not to build the prediction function.
-            Defaults to True.
-        :type build_predict: bool
-        :return: self - A fitted instance of this estimator.
-        :rtype: Object
         """
+        Trains the model from end to end. This includes preparing the model for inference,
+        running the inference, and post-processing the inference results.
 
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features), default=None
+            The training instances where `n_samples` is the number of samples and `n_features`
+            is the number of features.
+
+        build_predict : bool, default=True
+            Whether to build the prediction function after training.
+
+        Returns
+        -------
+        self : object
+            This method returns self for chaining.
+        """
         self.prepare_inference(x)
         self.run_inference()
         self.process_inference(build_predict=build_predict)
@@ -398,29 +404,50 @@ class DensityEstimator(BaseEstimator):
 
     @property
     def predict(self):
-        R"""
-        An instance of the :class:`mellon.Predictor` that predicts the log density at each point in x.
+        """
+        A property that returns an instance of the :class:`mellon.Predictor` class. This predictor can
+        be used to predict the log density for new data points by calling the instance like a function.
 
-        It contains a __call__ method which can be used to predict the log density.
-        The instance also supports serialization features which allows for saving
-        and loading the predictor state. Refer to mellon.Predictor documentation for more details.
+        The predictor instance also supports serialization features, which allow for saving and loading
+        the predictor's state. For more details, refer to the :class:`mellon.Predictor` documentation.
 
-        :param x: The new data to predict.
-        :type x: array-like
-        :return: log_density - The log density at each test point in x.
-        :rtype: array-like
+        Returns
+        -------
+        mellon.Predictor
+            A predictor instance that computes the log density at each new data point.
+
+        Example
+        -------
+
+        >>> log_density = model.predict(Xnew)
+
         """
         if self.log_density_func is None:
             self._set_log_density_func()
         return self.log_density_func
 
     def fit_predict(self, x=None, build_predict=False):
-        R"""
-        Perform Bayesian inference and return the log density at training points.
+        """
+        Trains the model and predicts the log density at the training points.
 
-        :param x: The training instances to estimate density function.
-        :type x: array-like
-        :return: log_density_x - The log density at each training point in x.
+        Parameters
+        ----------
+        x : array-like of shape (n_samples, n_features), default=None
+            The training instances where `n_samples` is the number of samples and `n_features`
+            is the number of features.
+
+        build_predict : bool, default=False
+            Whether to build the prediction function after training.
+
+        Raises
+        ------
+        ValueError
+            If the input `x` is not consistent with the training data used before.
+
+        Returns
+        -------
+        array-like
+            The log density at each training point in `x`.
         """
         if self.x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
