@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from jax.numpy import asarray, concatenate, isscalar, full, ndarray, array
+from jax.numpy import asarray, concatenate, isscalar, full, ndarray
 from jax.errors import ConcretizationTypeError
 
 

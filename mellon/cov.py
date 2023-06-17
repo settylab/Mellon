@@ -1,7 +1,6 @@
 from jax.numpy import sqrt, exp, square
 from .base_cov import Covariance
-from .helper import select_active_dims
-from .util import distance
+from .util import distance, select_active_dims
 
 
 class Matern32(Covariance):

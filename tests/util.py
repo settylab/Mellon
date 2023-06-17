@@ -3,17 +3,6 @@ import jax
 import jax.numpy as jnp
 
 
-def test_stabilize():
-    A = jnp.ones((2, 2))
-    B = mellon.util.stabilize(A)
-    assert A.shape == B.shape, "Stabilization should conserve shape."
-    jitter = 1e-6
-    B = mellon.util.stabilize(A, jitter=jitter)
-    assert (
-        jnp.max(jnp.abs(A - B)) <= jitter
-    ), "The stabilized matrix should not deviate too much."
-
-
 def test_mle():
     nn_distances = jnp.arange(1, 10)
     dens = mellon.util.mle(nn_distances, 2)

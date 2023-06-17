@@ -9,10 +9,8 @@ import bz2
 import json
 
 from .base_cov import Covariance
-from .util import Log
-from .helper import deserialize, ensure_2d, make_multi_time_argument
+from .util import Log, deserialize, ensure_2d, make_multi_time_argument
 from .derivatives import (
-    derivative,
     gradient,
     hessian,
     hessian_log_determinant,

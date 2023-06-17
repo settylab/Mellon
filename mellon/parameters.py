@@ -4,8 +4,7 @@ from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle, local_dimensionality, Log, DEFAULT_JITTER
-from .helper import ensure_2d
+from .util import mle, local_dimensionality, Log, ensure_2d, DEFAULT_JITTER
 from .decomposition import (
     _check_method,
     _full_rank,
@@ -157,7 +156,7 @@ def compute_nn_distances(x):
     return compute_distances(x, 1)[:, 0]
 
 
-def compute_nn_distances_within_time_points(x, times=None):
+def compute_nn_distances_within_time_points(x, times=None, normalize=False):
     R"""
     Computes the distance to the nearest neighbor for each training instance
     within the same time point group. It retains the original order of instances in `x`.
@@ -174,6 +173,11 @@ def compute_nn_distances_within_time_points(x, times=None):
         If provided, it overrides the last column of 'x' as the times.
         Shape must be either (n_samples,) or (n_samples, 1).
 
+    normalize : bool, optional
+        If True, distances are normalized by the number of samples within the same time point group.
+        This normalization reduces potential bias in the density estimation arising from uneven
+        sampling across different time points. Defaults to False.
+
     Returns
     -------
     nn_distances : array-like
@@ -184,6 +188,8 @@ def compute_nn_distances_within_time_points(x, times=None):
     x = _validate_time_x(x, times)
     unique_times = unique(x[:, -1])
     nn_distances = empty(x.shape[0])
+    n_cells = x.shape[0]
+    av_cells_per_tp = n_cells / len(unique_times)
 
     for time in unique_times:
         mask = x[:, -1] == time
@@ -198,6 +204,8 @@ def compute_nn_distances_within_time_points(x, times=None):
             )
         x_at_time = x[mask, :-1]
         nn_distances_at_time = compute_nn_distances(x_at_time)
+        if normalize:
+            nn_distances_at_time = nn_distances_at_time * n_samples / av_cells_per_tp
         nn_distances = nn_distances.at[mask].set(nn_distances_at_time)
 
     return nn_distances

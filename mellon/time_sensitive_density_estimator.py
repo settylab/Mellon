@@ -30,6 +30,7 @@ from .validation import (
     _validate_positive_float,
     _validate_string,
     _validate_array,
+    _validate_bool,
 )
 
 
@@ -106,6 +107,14 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         If None, the nearest neighbor
         distances are computed automatically, using a KDTree if the dimensionality of the data
         is less than 20, or a BallTree otherwise. Defaults to None.
+
+    normalize_per_time_point : bool, optional
+        If True, the computation of nearest neighbor distances incorporates a normalization step
+        based on the number of samples within each time point group. This process mitigates potential
+        bias in the density estimation due to unequal sample distribution across different time points.
+        Note that if `nn_distance` is provided, this parameter is ignored as the provided distances
+        are used directly.
+        Defaults to False.
 
     d : int, array-like or None
         The intrinsic dimensionality of the data, i.e., the dimensionality of the embedded
@@ -188,6 +197,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         init_learn_rate=DEFAULT_INIT_LEARN_RATE,
         landmarks=None,
         nn_distances=None,
+        normalize_per_time_point=False,
         d=None,
         mu=None,
         ls=None,
@@ -231,6 +241,9 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             ls_factor_times, "ls_factor_times"
         )
         self._save_intermediate_ls_times = _save_intermediate_ls_times
+        self.normalize_per_time_point = _validate_bool(
+            normalize_per_time_point, "normalize_per_time_point"
+        )
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -322,8 +335,12 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
 
     def _compute_nn_distances(self):
         x = self.x
+        normalize_per_time_point = self.normalize_per_time_point
         logger.info("Computing nearest neighbor distances within time points.")
-        nn_distances = compute_nn_distances_within_time_points(x)
+        nn_distances = compute_nn_distances_within_time_points(
+            x,
+            normalize=normalize_per_time_point,
+        )
         return nn_distances
 
     def _compute_ls_time(self):

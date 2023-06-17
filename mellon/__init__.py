@@ -10,13 +10,12 @@ from .base_predictor import Predictor
 from .cov import Covariance
 from .util import Log
 
-from . import util
-from . import cov
-from . import all_parameters as parameters
-from . import inference
-from . import conditional
-from . import decomposition
-from . import derivatives
+from . import _util as util
+from . import _cov as cov
+from . import _parameters as parameters
+from . import _inference as inference
+from . import _conditional as conditional
+from . import _derivatives as derivatives
 
 __version__ = "1.3.0rc"
 

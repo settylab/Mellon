@@ -91,6 +91,7 @@ def test_time_sensitive_density_estimator_approximations(
         method=method,
         n_landmarks=n_landmarks,
         _save_intermediate_ls_times=True,
+        normalize_per_time_point=True,
     )
     est.fit(X, times)
     dens_appr = est.predict(X, times)
