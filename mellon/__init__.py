@@ -36,6 +36,7 @@ __all__ = [
     "conditional",
     "decomposition",
     "derivatives",
+    "__version__",
 ]
 
 # Set default configuration at import time
