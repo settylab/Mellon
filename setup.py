@@ -21,7 +21,7 @@ setup(
     description="Non-parametric density estimator.",
     url="https://github.com/settylab/mellon",
     author="Setty Lab",
-    author_email="msetty@fredhutch.org",
+    author_email="dominik.otto@gmail.com",
     license="GNU General Public License v3.0",
     packages=["mellon"],
     install_requires=[
