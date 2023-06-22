@@ -83,8 +83,10 @@ class Covariance(ABC):
                 f'but of the module "{module_name}". Make sure the module '
                 "is available for deserialization."
             )
+        metamodule = import_module(module_name.split('.')[0])
         module = import_module(module_name)
-        version = getattr(module, "__version__", "NA")
+        metaversion = getattr(metamodule, "__version__", "NA")
+        version = getattr(module, "__version__", metaversion)
         state = {
             "type": "mellon.Covariance",
             "data": self._data_dict(),

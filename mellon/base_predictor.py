@@ -189,8 +189,10 @@ class Predictor(ABC):
         :rtype: dict
         """
         module_name = self.__class__.__module__
+        metamodule = import_module(module_name.split('.')[0])
         module = import_module(module_name)
-        version = getattr(module, "__version__", "NA")
+        metaversion = getattr(metamodule, "__version__", "NA")
+        version = getattr(module, "__version__", metaversion)
         data = self._data_dict()
         data.update({"n_input_features": self.n_input_features})
 
