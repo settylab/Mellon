@@ -199,10 +199,12 @@ def _validate_array(iterable, name, optional=False, ndim=None):
         else:
             raise TypeError(f"'{name}' can't be None.")
 
-    if isinstance(iterable, Iterable):
+    if hasattr(iterable, 'todense'):
+        array = asarray(iterable.todense(), dtype=float)
+    elif isinstance(iterable, Iterable):
         array = asarray(iterable, dtype=float)
     else:
-        raise TypeError(f"'{name}' should be iterable, got {type(iterable)} instead.")
+        raise TypeError(f"'{name}' should be iterable or sparse, got {type(iterable)} instead.")
 
     if ndim is not None:
         if isinstance(ndim, int):
