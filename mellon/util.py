@@ -65,7 +65,7 @@ def make_serializable(x):
     if isinstance(x, ndarray):
         return {"type": "jax.numpy", "data": x.tolist()}
     elif isinstance(x, slice):
-        return {"type": "slice", "data": (x.start, x.stop, x.step)}
+        return {"type": "slice", "data": [x.start, x.stop, x.step]}
     elif isinstance(x, dict):
         return {"type": "dict", "data": {k: make_serializable(v) for k, v in x.items()}}
     else:
