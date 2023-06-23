@@ -9,3 +9,5 @@ notebooks/data
 dist/
 __pycache__/
 .coverage
+*.h5ad
+*.json
