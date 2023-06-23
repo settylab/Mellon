@@ -89,18 +89,27 @@ def _validate_float_or_int(value, param_name, optional=False):
     if value is None and optional:
         return None
 
-    if not isinstance(value, (float, int)):
-        raise ValueError(f"'{param_name}' should be a positive integer or float number")
-    return value
+    if isinstance(value, (float, int)):
+        return value
+    try:
+        return float(value)
+    except TypeError:
+        its_type = type(value)
+        raise ValueError(f"'{param_name}' should be a positive integer or float number but is {its_type}")
 
 
 def _validate_positive_float(value, param_name, optional=False):
     if value is None and optional:
         return None
 
-    if not isinstance(value, (float, int)) or value < 0:
+    try:
+        value =  float(value)
+    except TypeError:
+        its_type = type(value)
+        raise ValueError(f"'{param_name}' should be a float number but is {its_type}")
+    if value < 0:
         raise ValueError(f"'{param_name}' should be a positive float number")
-    return float(value)
+    return value
 
 
 def _validate_float(value, param_name, optional=False):
@@ -143,10 +152,13 @@ def _validate_float(value, param_name, optional=False):
             # this must be a JAX tracer
             return value
 
-    if not isinstance(value, (float, int)):
-        raise ValueError(f"'{param_name}' should be a float number")
-
-    return float(value)
+    if isinstance(value, (float, int)):
+        return value
+    try:
+        return float(value)
+    except TypeError:
+        its_type = type(value)
+        raise ValueError(f"'{param_name}' should be a float number but is {its_type}")
 
 
 def _validate_positive_int(value, param_name, optional=False):
