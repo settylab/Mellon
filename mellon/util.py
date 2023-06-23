@@ -48,6 +48,11 @@ def Exp(func):
     return new_func
 
 
+def _None_to_str(v):
+    if v is None:
+        return "None"
+    return v
+
 def make_serializable(x):
     """
     Convert the input into a serializable format.
@@ -65,12 +70,18 @@ def make_serializable(x):
     if isinstance(x, ndarray):
         return {"type": "jax.numpy", "data": x.tolist()}
     elif isinstance(x, slice):
-        return {"type": "slice", "data": [x.start, x.stop, x.step]}
+        dat = [_None_to_str(v) for v in (x.start, x.stop, x.step)]
+        return {"type": "slice", "data": dat}
     elif isinstance(x, dict):
         return {"type": "dict", "data": {k: make_serializable(v) for k, v in x.items()}}
     else:
         return x
 
+
+def _str_to_None(v):
+    if v == "None":
+        return None
+    return v
 
 def deserialize(serializable_x):
     """
@@ -91,7 +102,8 @@ def deserialize(serializable_x):
         if data_type == "jax.numpy":
             return array(serializable_x["data"])
         elif data_type == "slice":
-            return slice(*serializable_x["data"])
+            dat = [_str_to_None(v) for v in serializable_x["data"]]
+            return slice(*dat)
         elif data_type == "dict":
             return {k: deserialize(v) for k, v in serializable_x["data"].items()}
     else:
