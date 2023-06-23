@@ -83,7 +83,7 @@ class Covariance(ABC):
                 f'but of the module "{module_name}". Make sure the module '
                 "is available for deserialization."
             )
-        metamodule = import_module(module_name.split('.')[0])
+        metamodule = import_module(module_name.split(".")[0])
         module = import_module(module_name)
         metaversion = getattr(metamodule, "__version__", "NA")
         version = getattr(module, "__version__", metaversion)

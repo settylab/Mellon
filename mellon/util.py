@@ -25,6 +25,7 @@ from jax.numpy import (
     isscalar,
     exp,
 )
+from numpy import integer, floating
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm, lstsq, matrix_rank
 from jax.scipy.special import gammaln
@@ -53,6 +54,7 @@ def _None_to_str(v):
         return "None"
     return v
 
+
 def make_serializable(x):
     """
     Convert the input into a serializable format.
@@ -69,19 +71,24 @@ def make_serializable(x):
     """
     if isinstance(x, ndarray):
         return {"type": "jax.numpy", "data": x.tolist()}
+    if isinstance(x, integer):
+        return int(x)
+    if isinstance(x, floating):
+        return float(x)
     elif isinstance(x, slice):
         dat = [_None_to_str(v) for v in (x.start, x.stop, x.step)]
         return {"type": "slice", "data": dat}
     elif isinstance(x, dict):
         return {"type": "dict", "data": {k: make_serializable(v) for k, v in x.items()}}
     else:
-        return x
+        return _None_to_str(x)
 
 
 def _str_to_None(v):
     if v == "None":
         return None
     return v
+
 
 def deserialize(serializable_x):
     """
@@ -107,7 +114,7 @@ def deserialize(serializable_x):
         elif data_type == "dict":
             return {k: deserialize(v) for k, v in serializable_x["data"].items()}
     else:
-        return serializable_x
+        return _str_to_None(serializable_x)
 
 
 def ensure_2d(X):

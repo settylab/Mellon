@@ -1,7 +1,7 @@
 from jax.numpy import dot, square, isnan, any
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-from .util import ensure_2d, make_serializable, stabilize, DEFAULT_JITTER, Log
+from .util import ensure_2d, stabilize, DEFAULT_JITTER, Log
 from .base_predictor import Predictor, PredictorTime
 
 
@@ -59,9 +59,9 @@ class _FullConditionalMean:
 
     def _data_dict(self):
         return {
-            "x": make_serializable(self.x),
-            "weights": make_serializable(self.weights),
-            "mu": make_serializable(self.mu),
+            "x": self.x,
+            "weights": self.weights,
+            "mu": self.mu,
         }
 
     def _predict(self, Xnew):
@@ -143,9 +143,9 @@ class _LandmarksConditionalMean:
 
     def _data_dict(self):
         return {
-            "landmarks": make_serializable(self.landmarks),
-            "weights": make_serializable(self.weights),
-            "mu": make_serializable(self.mu),
+            "landmarks": self.landmarks,
+            "weights": self.weights,
+            "mu": self.mu,
         }
 
     def _predict(self, Xnew):
@@ -217,9 +217,9 @@ class _LandmarksConditionalMeanCholesky:
 
     def _data_dict(self):
         return {
-            "landmarks": make_serializable(self.landmarks),
-            "weights": make_serializable(self.weights),
-            "mu": make_serializable(self.mu),
+            "landmarks": self.landmarks,
+            "weights": self.weights,
+            "mu": self.mu,
         }
 
     def _predict(self, Xnew):
@@ -232,9 +232,7 @@ class _LandmarksConditionalMeanCholesky:
         return mu + dot(Kus, weights)
 
 
-class LandmarksConditionalMeanCholesky(
-    _LandmarksConditionalMeanCholesky, PredictorTime
-):
+class LandmarksConditionalMeanCholesky(_LandmarksConditionalMeanCholesky, Predictor):
     pass
 
 

@@ -9,7 +9,13 @@ import bz2
 import json
 
 from .base_cov import Covariance
-from .util import Log, deserialize, ensure_2d, make_multi_time_argument
+from .util import (
+    Log,
+    make_serializable,
+    deserialize,
+    ensure_2d,
+    make_multi_time_argument,
+)
 from .derivatives import (
     gradient,
     hessian,
@@ -117,7 +123,7 @@ class Predictor(ABC):
     @abstractmethod
     def _data_dict(self):
         """Return a dictionary containing the predictor's state data.
-        All arrays nee to be numpy arrays for serialization.
+        All arrays nee to be (jax) numpy arrays for serialization.
 
         This method must be implemented by subclasses. It should return a
         dictionary where each key-value pair corresponds to an attribute of
@@ -189,12 +195,13 @@ class Predictor(ABC):
         :rtype: dict
         """
         module_name = self.__class__.__module__
-        metamodule = import_module(module_name.split('.')[0])
+        metamodule = import_module(module_name.split(".")[0])
         module = import_module(module_name)
         metaversion = getattr(metamodule, "__version__", "NA")
         version = getattr(module, "__version__", metaversion)
         data = self._data_dict()
         data.update({"n_input_features": self.n_input_features})
+        data = {k: make_serializable(v) for k, v in data.items()}
 
         state = {
             "data": data,
@@ -316,7 +323,15 @@ class Predictor(ABC):
         :return: An instance of the predictor.
         :rtype: Predictor subclass instance
         """
-        return cls.from_json_str(json.dumps(data_dict))
+        clsname = data_dict["metadata"]["classname"]
+        module_name = data_dict["metadata"]["module_name"]
+
+        module = import_module(module_name)
+        Subclass = getattr(module, clsname)
+        instance = Subclass.__new__(Subclass)
+        instance.__setstate__(data_dict)
+
+        return instance
 
     @classmethod
     def from_json_str(cls, json_str):
@@ -329,16 +344,8 @@ class Predictor(ABC):
         :return: An instance of the predictor.
         :rtype: Predictor subclass instance
         """
-        state = json.loads(json_str)
-        clsname = state["metadata"]["classname"]
-        module_name = state["metadata"]["module_name"]
-
-        module = import_module(module_name)
-        Subclass = getattr(module, clsname)
-        instance = Subclass.__new__(Subclass)
-        instance.__setstate__(state)
-
-        return instance
+        data_dict = json.loads(json_str)
+        return cls.from_dict(data_dict)
 
 
 class PredictorTime(Predictor):
