@@ -18,6 +18,7 @@
    :caption: Tutorials:
 
    notebooks/basic_tutorial.ipynb
+   notebooks/time-series_tutorial.ipynb
 
 .. include:: ../../README.rst
 
