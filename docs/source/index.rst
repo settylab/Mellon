@@ -19,6 +19,7 @@
 
    notebooks/basic_tutorial.ipynb
    notebooks/time-series_tutorial.ipynb
+   notebooks/trajectory-trends_tutorial.ipynb
 
 .. include:: ../../README.rst
 
