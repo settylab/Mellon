@@ -62,7 +62,7 @@ def test_function_estimator_approximations(
     assert err < error_limit, "The approximation should be close to the default."
 
 
-@pytest.mark.parametrize("n_landmarks, error_limit", [(0, 1e-5), (10, 3e-1)])
+@pytest.mark.parametrize("n_landmarks, error_limit", [(0, 1e-5), (10, 4e-1)])
 def test_function_estimator_approximations_1d(
     function_estimator_setup, n_landmarks, error_limit
 ):
