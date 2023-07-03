@@ -18,9 +18,10 @@
    :caption: Tutorials:
 
    notebooks/basic_tutorial.ipynb
-   notebooks/time-series_tutorial.ipynb
    notebooks/trajectory-trends_tutorial.ipynb
-
+   notebooks/gene_change_analysis_tutorial.ipynb
+   notebooks/time-series_tutorial.ipynb
+   
 .. include:: ../../README.rst
 
 .. toctree::
