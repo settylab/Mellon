@@ -67,3 +67,24 @@ Basic Usage
     log_density_x = model.fit_predict(X)
     log_density_y = model.predict(Y)
 
+Citations
+=========
+
+The Mellon manuscript is available on
+`bioRxiv <https://www.biorxiv.org/content/10.1101/2023.07.09.548272v1>`_
+If you use Mellon for your work, please cite our paper.
+
+.. code-block:: bibtex
+
+    @article {Otto2023.07.09.548272,
+        author = {Dominik Jenz Otto and Cailin Jordan and Brennan Dury and Christine Dien and Manu Setty},
+        title = {Quantifying Cell-State Densities in Single-Cell Phenotypic Landscapes using Mellon},
+        elocation-id = {2023.07.09.548272},
+        year = {2023},
+        doi = {10.1101/2023.07.09.548272},
+        publisher = {Cold Spring Harbor Laboratory},
+        URL = {https://www.biorxiv.org/content/early/2023/07/10/2023.07.09.548272},
+        eprint = {https://www.biorxiv.org/content/early/2023/07/10/2023.07.09.548272.full.pdf},
+        journal = {bioRxiv}
+    }
+
