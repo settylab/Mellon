@@ -22,12 +22,6 @@ url: "https://github.com/settylab/Mellon"
 preferred-citation:
   type: article
   authors:
-  - family-names: "Lisa"
-    given-names: "Mona"
-    orcid: "https://orcid.org/0000-0000-0000-0000"
-  - family-names: "Bot"
-    given-names: "Hew"
-    orcid: "https://orcid.org/0000-0000-0000-0000"
   - family-names: "Otto"
     given-names: "Dominik J."
     orcid: "https://orcid.org/0000-0002-6116-053X"
