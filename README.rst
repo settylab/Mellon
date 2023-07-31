@@ -40,6 +40,9 @@ or to install using **mamba** you can run:
 
    mamba install -c conda-forge mellon
 
+Any of these calls should install Mellon and its dependencies within less than 1 minute.
+If the dependency jax is not autimatically installed, please refer to https://github.com/google/jax.
+
 Documentation
 =============
 
