@@ -345,6 +345,7 @@ def compute_conditional_mean(
             y,
             mu,
             cov_func,
+            sigma=sigma,
             jitter=jitter,
         )
     elif (
@@ -422,6 +423,7 @@ def compute_conditional_mean_times(
             y,
             mu,
             cov_func,
+            sigma=sigma,
             jitter=jitter,
         )
     elif (
@@ -489,6 +491,7 @@ def compute_conditional_mean_explog(
                 log(y),
                 mu,
                 cov_func,
+                sigma=sigma,
                 jitter=jitter,
             )
         )
