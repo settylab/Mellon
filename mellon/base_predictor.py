@@ -1,6 +1,7 @@
 import sys
 from importlib import import_module
 from abc import ABC, abstractmethod
+from typing import Union, Set, List
 from datetime import datetime
 
 import gzip
@@ -57,6 +58,9 @@ class Predictor(ABC):
 
     # number of features of input data (x.shape[1]) to be specified in __init__
     n_input_features: int
+
+    # a set of attribute names that should be saved to reconstruct the object
+    _state_variables: Union[Set, List]
 
     @abstractmethod
     def __init__(self):
@@ -120,19 +124,35 @@ class Predictor(ABC):
             )
         return self._predict(x)
 
-    @abstractmethod
-    def _data_dict(self):
-        """Return a dictionary containing the predictor's state data.
-        All arrays nee to be (jax) numpy arrays for serialization.
+    def uncertainy(self, X_new, diag=True):
+        """
+        Computes the total uncertainty of the predicted values quantified by their variance
+        or covariance.
 
-        This method must be implemented by subclasses. It should return a
-        dictionary where each key-value pair corresponds to an attribute of
-        the predictor and its current state.
+        Parameters
+        ----------
+        X_new : array-like, shape (n_samples, n_features)
+            The new data points for which to compute the uncertainty.
+        diag : bool, optional (default=True)
+            Whether to compute the variance (True) or the full covariance matrix (False).
+
+        Returns
+        -------
+        var : array-like, shape (n_samples,) if diag=True
+            The variances for each sample in the new data points.
+        cov : array-like, shape (n_samples, n_samples) if diag=False
+            The full covariance matrix between the samples in the new data points.
+        """
+        return self.covariance(X_new, diag) + self.mean_covariance(X_new, diag)
+
+    def _data_dict(self):
+        """Returns a dictionary containing the predictor's state data.
+        All arrays nee to be (jax) numpy arrays for serialization.
 
         :return: A dictionary containing the predictor's state data.
         :rtype: dict
         """
-        pass
+        return {key: getattr(self, key) for key in self._state_variables}
 
     def gradient(self, x, jit=True):
         R"""

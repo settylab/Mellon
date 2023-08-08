@@ -130,6 +130,22 @@ class DensityEstimator(BaseEstimator):
         - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})` and :math:`d` is the intrinsic
         dimensionality of the data. Defaults to None.
 
+    predictor_with_uncertainty : bool
+        If set to True, computes the predictor instance `.predict` with its predictive uncertainty.
+        The uncertainty comes from two sources:
+
+        1) `.predict.mean_covariance`:
+            Uncertainty arising from the posterior distribution of the Bayesian inference.
+            This component quantifies uncertainties inherent in the model's parameters and structure.
+            Available only if `.pre_transformation_std` is defined (e.g., using `optimizer="advi"`),
+            which reflects the standard deviation of the latent variables before transformation.
+
+        2) `.predict.covariance`:
+            Uncertainty for out-of-bag states originating from the compressed function representation
+            in the Gaussian Process. Specifically, this uncertainty corresponds to locations that are
+            not inducing points of the Gaussian Process and represents the covariance of the
+            conditional normal distribution.
+
     jit : bool
         Use jax just-in-time compilation for loss and its gradient during optimization.
         Defaults to False.
@@ -155,6 +171,7 @@ class DensityEstimator(BaseEstimator):
         cov_func=None,
         L=None,
         initial_value=None,
+        predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
     ):
         super().__init__(
@@ -174,6 +191,7 @@ class DensityEstimator(BaseEstimator):
             cov_func=cov_func,
             L=L,
             initial_value=initial_value,
+            predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
         )
         self.d_method = _validate_string(
@@ -184,6 +202,7 @@ class DensityEstimator(BaseEstimator):
         self.opt_state = None
         self.losses = None
         self.pre_transformation = None
+        self.pre_transformation_std = None
         self.log_density_x = None
         self.log_density_func = None
 
@@ -277,19 +296,25 @@ class DensityEstimator(BaseEstimator):
         x = self.x
         landmarks = self.landmarks
         pre_transformation = self.pre_transformation
+        pre_transformation_std = self.pre_transformation_std
         log_density_x = self.log_density_x
         mu = self.mu
         cov_func = self.cov_func
+        L = self.L
         jitter = self.jitter
+        with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive function.")
         log_density_func = compute_conditional_mean(
             x,
             landmarks,
             pre_transformation,
+            pre_transformation_std,
             log_density_x,
             mu,
             cov_func,
+            L,
             jitter=jitter,
+            with_uncertainty=with_uncertainty,
         )
         self.log_density_func = log_density_func
 

@@ -190,6 +190,7 @@ class DimensionalityEstimator(BaseEstimator):
         self.opt_state = None
         self.losses = None
         self.pre_transformation = None
+        self.pre_transformation_std = None
         self.local_dim_x = None
         self.log_density_x = None
         self.local_dim_func = None
@@ -310,18 +311,22 @@ class DimensionalityEstimator(BaseEstimator):
         x = self.x
         landmarks = self.landmarks
         pre_transformation = self.pre_transformation
+        pre_transformation_std = self.pre_transformation_std
         log_density_x = self.log_density_x
         mu = self.mu_dens
         cov_func = self.cov_func
+        L = self.L
         jitter = self.jitter
         logger.info("Computing predictive density function.")
         log_density_func = compute_conditional_mean(
             x,
             landmarks,
             pre_transformation,
+            pre_transformation_std,
             log_density_x,
             mu,
             cov_func,
+            L,
             jitter=jitter,
         )
         self.log_density_func = log_density_func

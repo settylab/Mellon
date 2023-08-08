@@ -67,6 +67,7 @@ class BaseEstimator:
         cov_func=None,
         L=None,
         initial_value=None,
+        predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
     ):
         self.cov_func_curry = _validate_cov_func_curry(
@@ -96,6 +97,9 @@ class BaseEstimator:
         self.init_learn_rate = _validate_positive_float(
             init_learn_rate, "init_learn_rate"
         )
+        self.predictor_with_uncertainty = _validate_bool(
+            predictor_with_uncertainty, "predictor_with_uncertainty"
+        )
         self.jit = _validate_bool(jit, "jit")
         self.x = None
         self.pre_transformation = None
@@ -110,6 +114,7 @@ class BaseEstimator:
             f"cov_func_curry={self.cov_func_curry}, "
             f"n_landmarks={self.n_landmarks}, "
             f"rank={self.rank}, "
+            f"predictor_with_uncertainty={self.predictor_with_uncertainty}, "
             f"jitter={self.jitter}, "
             f"landmarks={self.landmarks}, "
         )
@@ -237,6 +242,7 @@ class BaseEstimator:
                 landmarks=landmarks,
                 rank=rank,
                 method=method,
+                sigma=0,
                 jitter=jitter,
             )
         except Exception as e:
@@ -288,6 +294,7 @@ class BaseEstimator:
                 jit=self.jit,
             )
             self.pre_transformation = results.pre_transformation
+            self.pre_transformation_std = None
             self.opt_state = results.opt_state
             self.losses = results.losses
         elif optimizer == "advi":
@@ -308,6 +315,7 @@ class BaseEstimator:
                 jit=self.jit,
             )
             self.pre_transformation = results.pre_transformation
+            self.pre_transformation_std = None
             self.opt_state = results.opt_state
             self.losses = [
                 results.loss,

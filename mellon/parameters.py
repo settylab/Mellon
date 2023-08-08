@@ -13,6 +13,7 @@ from .decomposition import (
     _modified_low_rank,
     DEFAULT_RANK,
     DEFAULT_METHOD,
+    DEFAULT_SIGMA,
 )
 from .validation import _validate_time_x, _validate_positive_float
 
@@ -313,6 +314,7 @@ def compute_L(
     landmarks=None,
     rank=DEFAULT_RANK,
     method=DEFAULT_METHOD,
+    sigma=DEFAULT_SIGMA,
     jitter=DEFAULT_JITTER,
 ):
     R"""
@@ -342,6 +344,8 @@ def compute_L(
         an int and interprets rank as a percent of eigenvalues if it is a float.
         Defaults to 'auto'.
     :type method: str
+    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
+    :type sigma: float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
     :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
@@ -357,13 +361,13 @@ def compute_L(
             logger.info(
                 f"Doing full-rank Cholesky decomposition for {n_samples:,} samples."
             )
-            return _full_rank(x, cov_func, jitter=jitter)
+            return _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
         else:
             logger.info(
                 f"Doing full-rank singular value decomposition for {n_samples:,} samples."
             )
             return _full_decomposition_low_rank(
-                x, cov_func, rank=rank, method=method, jitter=jitter
+                x, cov_func, rank=rank, method=method, sigma=sigma, jitter=jitter
             )
     else:
         landmarks = ensure_2d(landmarks)
@@ -381,14 +385,22 @@ def compute_L(
                 "Doing low-rank Cholesky decomposition for "
                 f"{n_samples:,} samples and {n_landmarks:,} landmarks."
             )
-            return _standard_low_rank(x, cov_func, landmarks, jitter=jitter)
+            return _standard_low_rank(
+                x, cov_func, landmarks, sigma=sigma, jitter=jitter
+            )
         else:
             logger.info(
                 "Doing low-rank improved Nyström decomposition for "
                 f"{n_samples:,} samples and {n_landmarks:,} landmarks."
             )
             return _modified_low_rank(
-                x, cov_func, landmarks, rank=rank, method=method, jitter=jitter
+                x,
+                cov_func,
+                landmarks,
+                rank=rank,
+                method=method,
+                sigma=sigma,
+                jitter=jitter,
             )
 
 

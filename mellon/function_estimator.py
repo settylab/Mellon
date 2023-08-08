@@ -76,6 +76,19 @@ class FunctionEstimator(BaseEstimator):
     sigma : float, optional
         The standard deviation of the white noise. Defaults to 0.
 
+    predictor_with_uncertainty : bool
+        If set to True, computes the predictor instance `.predict` with its predictive uncertainty.
+        The uncertainty comes from two sources:
+
+        1) `.predict.mean_covariance`:
+            Uncertainty arising from the input noise `sigma`.
+
+        2) `.predict.covariance`:
+            Uncertainty for out-of-bag states originating from the compressed function representation
+            in the Gaussian Process. Specifically, this uncertainty corresponds to locations that are
+            not inducing points of the Gaussian Process and represents the covariance of the
+            conditional normal distribution.
+
     jit : bool, optional
         Use JAX just-in-time compilation for the loss function and its gradient during optimization.
         Defaults to False.
@@ -97,6 +110,7 @@ class FunctionEstimator(BaseEstimator):
         ls_factor=1,
         cov_func=None,
         sigma=0,
+        predictor_with_uncertainty=False,
         jit=True,
     ):
         super().__init__(
@@ -110,6 +124,7 @@ class FunctionEstimator(BaseEstimator):
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
+            predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
         )
         self.mu = _validate_float(mu, "mu")
@@ -182,15 +197,19 @@ class FunctionEstimator(BaseEstimator):
         cov_func = self.cov_func
         sigma = self.sigma
         jitter = self.jitter
+        with_uncertainty = self.predictor_with_uncertainty
         conditional = compute_conditional_mean(
             x,
             landmarks,
             None,
+            None,
             y,
             mu,
             cov_func,
+            None,
             sigma,
             jitter=jitter,
+            with_uncertainty=with_uncertainty,
         )
         self.conditional = conditional
         return conditional
