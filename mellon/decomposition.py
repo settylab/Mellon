@@ -1,4 +1,13 @@
-from jax.numpy import cumsum, searchsorted, count_nonzero, sqrt, isnan, any
+from jax.numpy import (
+    cumsum,
+    searchsorted,
+    count_nonzero,
+    sqrt,
+    isnan,
+    any,
+    where,
+    square,
+)
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
@@ -6,6 +15,7 @@ from .util import stabilize, DEFAULT_JITTER, Log
 
 DEFAULT_RANK = 1.0
 DEFAULT_METHOD = "auto"
+DEFAULT_SIGMA = 0
 
 logger = Log()
 
@@ -99,7 +109,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
     return s_, v_
 
 
-def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
+def _full_rank(x, cov_func, sigma=DEFAULT_SIGMA, jitter=DEFAULT_JITTER):
     R"""
     Compute :math:`L` such that :math:`L L^\top = K`, where :math:`K`
     is the full rank covariance matrix.
@@ -108,12 +118,17 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
     :type x: array-like
     :param cov_func: The Gaussian process covariance function.
     :type cov_func: function
+    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
+    :type sigma: float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
     :return: :math:`L` - A matrix such that :math:`L L^\top = K`.
     :rtype: array-like
     """
-    W = stabilize(cov_func(x, x), jitter)
+    sigma2 = square(sigma)
+    sigma2 = where(sigma2 < jitter, jitter, sigma2)
+
+    W = stabilize(cov_func(x, x), sigma2)
     L = cholesky(W)
     if any(isnan(L)):
         message = (
@@ -126,7 +141,12 @@ def _full_rank(x, cov_func, jitter=DEFAULT_JITTER):
 
 
 def _full_decomposition_low_rank(
-    x, cov_func, rank=DEFAULT_RANK, method=DEFAULT_METHOD, jitter=DEFAULT_JITTER
+    x,
+    cov_func,
+    rank=DEFAULT_RANK,
+    method=DEFAULT_METHOD,
+    sigma=DEFAULT_SIGMA,
+    jitter=DEFAULT_JITTER,
 ):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^\top ~= K`, where :math:`K` is the
@@ -142,6 +162,8 @@ def _full_decomposition_low_rank(
         account for the specified percentage of the total eigenvalues.
         Defaults to 0.999.
     :type rank: int or float
+    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
+    :type sigma: float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
     :param method: Explicitly specifies whether rank is to be interpreted as a
@@ -154,13 +176,16 @@ def _full_decomposition_low_rank(
     :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
-    W = cov_func(x, x)
+    sigma2 = square(sigma)
+    sigma2 = where(sigma2 < jitter, jitter, sigma2)
+
+    W = stabilize(cov_func(x, x), sigma2)
     s, v = _eigendecomposition(W, rank=rank, method=method)
     L = v * sqrt(s)
     return L
 
 
-def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
+def _standard_low_rank(x, cov_func, xu, sigma=DEFAULT_SIGMA, jitter=DEFAULT_JITTER):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^\top \approx K`, where :math:`K`
     is the full rank covariance matrix. The rank is equal to the number of
@@ -172,12 +197,17 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
     :type cov_func: function
     :param xu: The landmark points.
     :type xu: array-like
+    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
+    :type sigma: float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
     :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
-    W = stabilize(cov_func(xu, xu), jitter)
+    sigma2 = square(sigma)
+    sigma2 = where(sigma2 < jitter, jitter, sigma2)
+
+    W = stabilize(cov_func(xu, xu), sigma2)
     C = cov_func(x, xu)
     U = cholesky(W)
     if any(isnan(U)):
@@ -192,7 +222,13 @@ def _standard_low_rank(x, cov_func, xu, jitter=DEFAULT_JITTER):
 
 
 def _modified_low_rank(
-    x, cov_func, xu, rank=DEFAULT_RANK, method=DEFAULT_METHOD, jitter=DEFAULT_JITTER
+    x,
+    cov_func,
+    xu,
+    rank=DEFAULT_RANK,
+    method=DEFAULT_METHOD,
+    sigma=DEFAULT_SIGMA,
+    jitter=DEFAULT_JITTER,
 ):
     R"""
     Compute a low rank :math:`L` such that :math:`L L^\top ~= K`, where :math:`K` is the
@@ -210,6 +246,8 @@ def _modified_low_rank(
         the QR decomposition such that the eigenvalues of the included eigenvectors
         account for the specified percentage of the total eigenvalues. Defaults to 0.999.
     :type rank: int or float
+    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
+    :type sigma: float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
     :param method: Explicitly specifies whether rank is to be interpreted as a
@@ -222,7 +260,10 @@ def _modified_low_rank(
     :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
     :rtype: array-like
     """
-    W = stabilize(cov_func(xu, xu), jitter)
+    sigma2 = square(sigma)
+    sigma2 = where(sigma2 < jitter, jitter, sigma2)
+
+    W = stabilize(cov_func(xu, xu), sigma2)
     C = cov_func(x, xu)
     Q, R = qr(C, mode="reduced")
     s, v = _eigendecomposition(W, rank=xu.shape[0], method="fixed")
