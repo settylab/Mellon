@@ -169,7 +169,7 @@ def test_density_estimator_serialization_with_uncertainty(
     )
     est.fit(X, times)
     dens_appr = est.predict(X, times)
-    uncertainty_pred = est.predict.uncertainy(X, times)
+    uncertainty_pred = est.predict.uncertainty(X, times)
 
     # Test serialization
     est.predict.to_json(test_file, compress=compress)
@@ -181,7 +181,7 @@ def test_density_estimator_serialization_with_uncertainty(
     is_close = jnp.all(jnp.isclose(dens_appr, reprod))
     assert_msg = "Serialized + deserialized predictor should produce the same results."
     assert is_close, assert_msg
-    reprod_uncertainty = predictor.uncertainy(X, times)
+    reprod_uncertainty = predictor.uncertainty(X, times)
     logger.info("Made a uncertainty prediction with the deserialized predictor.")
     is_close = jnp.all(jnp.isclose(uncertainty_pred, reprod_uncertainty))
     assert_msg = "Serialized + deserialized predictor should produce the same uncertainty results."

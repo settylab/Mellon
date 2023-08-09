@@ -192,7 +192,7 @@ class Predictor(ABC):
             )
         return self._mean_covariance(x, diag)
 
-    def uncertainy(self, x, diag=True):
+    def uncertainty(self, x, diag=True):
         """
         Computes the total uncertainty of the predicted values quantified by their variance
         or covariance.
@@ -503,12 +503,12 @@ class ExpPredictor(Predictor):
         )
         return super().mean_covariance(*args, **kwargs)
 
-    @wraps(Predictor.uncertainy)
-    def uncertainy(self, *args, **kwargs):
+    @wraps(Predictor.uncertainty)
+    def uncertainty(self, *args, **kwargs):
         logger.warning(
-            "The uncertainy will be computed for the log of the predicted value."
+            "The uncertainty will be computed for the log of the predicted value."
         )
-        return super().uncertainy(*args, **kwargs)
+        return super().uncertainty(*args, **kwargs)
 
 
 class PredictorTime(Predictor):
@@ -635,7 +635,7 @@ class PredictorTime(Predictor):
         return self._mean_covariance(Xnew, diag)
 
     @make_multi_time_argument
-    def uncertainy(self, Xnew, time=None, diag=True):
+    def uncertainty(self, Xnew, time=None, diag=True):
         """
         Computes the total uncertainty of the predicted values quantified by their variance
         or covariance.

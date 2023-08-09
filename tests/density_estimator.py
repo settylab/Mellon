@@ -146,7 +146,7 @@ def test_density_estimator_serialization_with_uncertainty(common_setup, rank, n_
     est = mellon.DensityEstimator(rank=rank, n_landmarks=n_landmarks, optimizer="advi", predictor_with_uncertainty=True)
     est.fit(X)
     dens_appr = est.predict(X)
-    uncertainty_pred = est.predict.uncertainy(X)
+    uncertainty_pred = est.predict.uncertainty(X)
 
     # Test serialization
     est.predict.to_json(test_file, compress=compress)
@@ -158,7 +158,7 @@ def test_density_estimator_serialization_with_uncertainty(common_setup, rank, n_
     is_close = jnp.all(jnp.isclose(dens_appr, reprod))
     assert_msg = "Serialized + deserialized predictor should produce the same results."
     assert is_close, assert_msg
-    reprod_uncertainty = predictor.uncertainy(X)
+    reprod_uncertainty = predictor.uncertainty(X)
     logger.info("Made a uncertainty prediction with the deserialized predictor.")
     is_close = jnp.all(jnp.isclose(uncertainty_pred, reprod_uncertainty))
     assert_msg = "Serialized + deserialized predictor should produce the same uncertainty results."
