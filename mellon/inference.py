@@ -605,13 +605,12 @@ def compute_conditional_mean_explog(
         The conditioned Gaussian process mean function.
     """
 
-    y = log(y)
-
     if landmarks is None:
         if with_uncertainty and pre_transformation_std is not None:
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
             y_cov_factor = None
+        y = log(y)
         return ExpFullConditionalMean(
             x,
             y,
@@ -651,6 +650,7 @@ def compute_conditional_mean_explog(
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
             y_cov_factor = None
+        y = log(y)
         return ExpLandmarksConditionalMean(
             x,
             landmarks,
@@ -768,7 +768,8 @@ def run_advi(
         opt_state, elbo = update(t, opt_state)
         elbos.append(elbo.item())
 
-    params, stds = get_params(opt_state)
+    params, log_stds = get_params(opt_state)
+    stds = exp(log_stds)
 
     Results = namedtuple("Results", "pre_transformation pre_transformation_std losses")
     return Results(params, stds, elbos)
