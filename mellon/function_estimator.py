@@ -207,6 +207,7 @@ class FunctionEstimator(BaseEstimator):
             mu,
             cov_func,
             None,
+            None,
             sigma,
             jitter=jitter,
             with_uncertainty=with_uncertainty,

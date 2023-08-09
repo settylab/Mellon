@@ -124,14 +124,80 @@ class Predictor(ABC):
             )
         return self._predict(x)
 
-    def uncertainy(self, X_new, diag=True):
+    @abstractmethod
+    def _covariance(self, *args, **kwars):
+        """Compute the covariance. Must be overridden by subclasses."""
+
+    def covariance(self, x, diag=True):
+        """
+        Computes the covariance of the Gaussian Process distribution of functions
+        over new data points or cell states.
+
+        Parameters
+        ----------
+        x : array-like, shape (n_samples, n_features)
+            The new data points for which to compute the covariance.
+        diag : boolean, optional (default=True)
+            Whether to return the variance (True) or the full covariance matrix (False).
+
+        Returns
+        -------
+        var : array-like, shape (n_samples,)
+            If diag=True, returns the variances for each sample.
+        cov : array-like, shape (n_samples, n_samples)
+            If diag=False, returns the full covariance matrix between samples.
+        """
+        x = _validate_array(x, "x")
+        x = ensure_2d(x)
+        if x.shape[1] != self.n_input_features:
+            raise ValueError(
+                f"The predictor was trained on data with {self.n_input_features} features. "
+                f"However, the provided input data has {x.shape[1]} features. "
+                "Please ensure that the input data has the same number of features as the training data."
+            )
+        return self._covariance(x, diag)
+
+    @abstractmethod
+    def _mean_covariance(self, *args, **kwars):
+        """Compute the covariance of the mean. Must be overridden by subclasses."""
+
+    def mean_covariance(self, x, diag=True):
+        """
+        Computes the uncertainty of the mean of the Gaussian process induced by
+        the uncertainty of the latent representation of the mean function.
+
+        Parameters
+        ----------
+        x : array-like, shape (n_samples, n_features)
+            The new data points for which to compute the uncertainty.
+        diag : boolean, optional (default=True)
+            Whether to compute the variance (True) or the full covariance matrix (False).
+
+        Returns
+        -------
+        var : array-like, shape (n_samples,)
+            If diag=True, returns the variances for each sample.
+        cov : array-like, shape (n_samples, n_samples)
+            If diag=False, returns the full covariance matrix between samples.
+        """
+        x = _validate_array(x, "x")
+        x = ensure_2d(x)
+        if x.shape[1] != self.n_input_features:
+            raise ValueError(
+                f"The predictor was trained on data with {self.n_input_features} features. "
+                f"However, the provided input data has {x.shape[1]} features. "
+                "Please ensure that the input data has the same number of features as the training data."
+            )
+        return self._mean_covariance(x, diag)
+
+    def uncertainy(self, x, diag=True):
         """
         Computes the total uncertainty of the predicted values quantified by their variance
         or covariance.
 
         Parameters
         ----------
-        X_new : array-like, shape (n_samples, n_features)
+        x : array-like, shape (n_samples, n_features)
             The new data points for which to compute the uncertainty.
         diag : bool, optional (default=True)
             Whether to compute the variance (True) or the full covariance matrix (False).
@@ -143,7 +209,15 @@ class Predictor(ABC):
         cov : array-like, shape (n_samples, n_samples) if diag=False
             The full covariance matrix between the samples in the new data points.
         """
-        return self.covariance(X_new, diag) + self.mean_covariance(X_new, diag)
+        x = _validate_array(x, "x")
+        x = ensure_2d(x)
+        if x.shape[1] != self.n_input_features:
+            raise ValueError(
+                f"The predictor was trained on data with {self.n_input_features} features. "
+                f"However, the provided input data has {x.shape[1]} features. "
+                "Please ensure that the input data has the same number of features as the training data."
+            )
+        return self._covariance(x, diag) + self._mean_covariance(x, diag)
 
     def _data_dict(self):
         """Returns a dictionary containing the predictor's state data.
@@ -432,6 +506,92 @@ class PredictorTime(Predictor):
         )
 
         return self._predict(Xnew)
+
+    @make_multi_time_argument
+    def covariance(self, Xnew, time=None, diag=True):
+        """
+        Computes the covariance of the Gaussian Process distribution of functions
+        over new data points or cell states.
+
+        Parameters
+        ----------
+        Xnew : array-like, shape (n_samples, n_features)
+            The new data points for which to compute the covariance.
+        time : scalar or array-like, optional
+            The time points associated with each cell/row in 'Xnew'.
+            If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
+        diag : boolean, optional (default=True)
+            Whether to return the variance (True) or the full covariance matrix (False).
+
+        Returns
+        -------
+        var : array-like, shape (n_samples,)
+            If diag=True, returns the variances for each sample.
+        cov : array-like, shape (n_samples, n_samples)
+            If diag=False, returns the full covariance matrix between samples.
+        """
+        # if time is a scalar, convert it into a 1D array of the same size as Xnew
+        Xnew = _validate_time_x(
+            Xnew, time, n_features=self.n_input_features, cast_scalar=True
+        )
+        return self._covariance(Xnew, diag)
+
+    @make_multi_time_argument
+    def mean_covariance(self, Xnew, time=None, diag=True):
+        """
+        Computes the uncertainty of the mean of the Gaussian process induced by
+        the uncertainty of the latent representation of the mean function.
+
+        Parameters
+        ----------
+        Xnew : array-like, shape (n_samples, n_features)
+            The new data points for which to compute the uncertainty.
+        time : scalar or array-like, optional
+            The time points associated with each cell/row in 'Xnew'.
+            If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
+        diag : boolean, optional (default=True)
+            Whether to compute the variance (True) or the full covariance matrix (False).
+
+        Returns
+        -------
+        var : array-like, shape (n_samples,)
+            If diag=True, returns the variances for each sample.
+        cov : array-like, shape (n_samples, n_samples)
+            If diag=False, returns the full covariance matrix between samples.
+        """
+        # if time is a scalar, convert it into a 1D array of the same size as Xnew
+        Xnew = _validate_time_x(
+            Xnew, time, n_features=self.n_input_features, cast_scalar=True
+        )
+        return self._mean_covariance(Xnew, diag)
+
+    @make_multi_time_argument
+    def uncertainy(self, Xnew, time=None, diag=True):
+        """
+        Computes the total uncertainty of the predicted values quantified by their variance
+        or covariance.
+
+        Parameters
+        ----------
+        Xnew : array-like, shape (n_samples, n_features)
+            The new data points for which to compute the uncertainty.
+        time : scalar or array-like, optional
+            The time points associated with each cell/row in 'Xnew'.
+            If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
+        diag : bool, optional (default=True)
+            Whether to compute the variance (True) or the full covariance matrix (False).
+
+        Returns
+        -------
+        var : array-like, shape (n_samples,) if diag=True
+            The variances for each sample in the new data points.
+        cov : array-like, shape (n_samples, n_samples) if diag=False
+            The full covariance matrix between the samples in the new data points.
+        """
+        Xnew = _validate_time_x(
+            Xnew, time, n_features=self.n_input_features, cast_scalar=True
+        )
+        return self._covariance(Xnew, diag) + self._mean_covariance(Xnew, diag)
 
     @make_multi_time_argument
     def time_derivative(

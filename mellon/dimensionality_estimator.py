@@ -295,6 +295,7 @@ class DimensionalityEstimator(BaseEstimator):
         local_dim_x = self.local_dim_x
         mu = self.mu_dim
         cov_func = self.cov_func
+        Lp = self.Lp
         jitter = self.jitter
         logger.info("Computing predictive dimensionality function.")
         log_dim_func = compute_conditional_mean_explog(
@@ -303,6 +304,7 @@ class DimensionalityEstimator(BaseEstimator):
             local_dim_x,
             mu,
             cov_func,
+            Lp,
             jitter=jitter,
         )
         self.local_dim_func = log_dim_func
@@ -316,6 +318,7 @@ class DimensionalityEstimator(BaseEstimator):
         mu = self.mu_dens
         cov_func = self.cov_func
         L = self.L
+        Lp = self.Lp
         jitter = self.jitter
         logger.info("Computing predictive density function.")
         log_density_func = compute_conditional_mean(
@@ -327,6 +330,7 @@ class DimensionalityEstimator(BaseEstimator):
             mu,
             cov_func,
             L,
+            Lp,
             jitter=jitter,
         )
         self.log_density_func = log_density_func

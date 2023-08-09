@@ -34,19 +34,24 @@ def test_compute_L():
     n = 2
     d = 2
     X = jnp.ones((n, d))
-    L = mellon.parameters.compute_L(X, cov)
+    L, Lp = mellon.parameters.compute_L(X, cov)
     assert L.shape[0] == n, "L should have as many rows as there are samples."
-    L = mellon.parameters.compute_L(X, cov, rank=1.0)
+    assert Lp.shape[0] == n, "Lp should have as many rows as there are samples."
+    L, Lp = mellon.parameters.compute_L(X, cov, rank=1.0)
     assert L.shape == (n, n), "L should have full rank."
-    L = mellon.parameters.compute_L(X, cov, rank=1)
+    assert Lp.shape[0] == n, "Lp should have full rank."
+    L, Lp = mellon.parameters.compute_L(X, cov, rank=1)
     assert L.shape == (n, 1), "L should be reduced to rank == 1."
     mellon.parameters.compute_L(X, cov, rank=0.5)
     mellon.parameters.compute_L(X, cov, landmarks=X)
-    L = mellon.parameters.compute_L(X, cov, landmarks=X, rank=1.0)
+    L, Lp = mellon.parameters.compute_L(X, cov, landmarks=X, rank=1.0)
     assert L.shape == (n, n), "L should have full rank."
-    L = mellon.parameters.compute_L(X, cov, landmarks=X, rank=1)
+    assert Lp.shape[0] == n, "Lp should have full rank."
+    L, Lp = mellon.parameters.compute_L(X, cov, landmarks=X, rank=1)
     assert L.shape == (n, 1), "L should be reduced to rank == 1."
     mellon.parameters.compute_L(X, cov, landmarks=X, rank=0.5)
+    L, Lp = mellon.parameters.compute_L(X, cov, landmarks=X[:-1, :])
+    assert L.shape[0] == n, "L should have as many rows as there are samples."
 
 
 def test_compute_initial_value():

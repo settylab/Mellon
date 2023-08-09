@@ -318,8 +318,10 @@ def compute_L(
     jitter=DEFAULT_JITTER,
 ):
     R"""
-    Compute an :math:`L` such that :math:`L L^\top \approx K`, where
-    :math:`K` is the covariance matrix.
+    Compute a low rank :math:`L` and :math:`L_p` such that :math:`L L^\top \approx K`,
+    where :math:`K` is the full rank covariance matrix on `x`, and
+    :math:`L_p L_p^\top = \Sigma_p` where :math:`\Sigma_p` is the full rank
+    covariance matrix on `landmarks`. If there are no landmarks then :math:`L_p=L`.
 
     :param x: The training instances.
     :type x: array-like
@@ -348,8 +350,8 @@ def compute_L(
     :type sigma: float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
-    :rtype: array-like
+    :return: :math:`L`, :math:`L_p` - A matrix such that :math:`L L^\top \approx K`.
+    :rtype: array-like, array-like
     """
     x = ensure_2d(x)
     n_samples = x.shape[0]
@@ -361,14 +363,16 @@ def compute_L(
             logger.info(
                 f"Doing full-rank Cholesky decomposition for {n_samples:,} samples."
             )
-            return _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
+            L = _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
+            return L, L
         else:
             logger.info(
                 f"Doing full-rank singular value decomposition for {n_samples:,} samples."
             )
-            return _full_decomposition_low_rank(
+            L = _full_decomposition_low_rank(
                 x, cov_func, rank=rank, method=method, sigma=sigma, jitter=jitter
             )
+            return L, None
     else:
         landmarks = ensure_2d(landmarks)
 
@@ -393,14 +397,17 @@ def compute_L(
                 "Doing low-rank improved Nyström decomposition for "
                 f"{n_samples:,} samples and {n_landmarks:,} landmarks."
             )
-            return _modified_low_rank(
-                x,
-                cov_func,
-                landmarks,
-                rank=rank,
-                method=method,
-                sigma=sigma,
-                jitter=jitter,
+            return (
+                _modified_low_rank(
+                    x,
+                    cov_func,
+                    landmarks,
+                    rank=rank,
+                    method=method,
+                    sigma=sigma,
+                    jitter=jitter,
+                ),
+                None,
             )
 
 

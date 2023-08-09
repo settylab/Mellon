@@ -200,9 +200,9 @@ class BaseEstimator:
         logger.info("Using covariance function %s.", str(cov_func))
         return cov_func
 
-    def _compute_L(self):
+    def _compute_L_and_Lp(self):
         """
-        This function calculates the lower triangular matrix L that is needed for
+        This function calculates the lower triangular matrices L and Lp that are needed for
         computations involving the covariance matrix of the Gaussian Process model.
         """
 
@@ -236,7 +236,7 @@ class BaseEstimator:
 
         try:
             # Compute the lower triangular matrix L
-            L = compute_L(
+            L, Lp = compute_L(
                 x,
                 cov_func,
                 landmarks=landmarks,
@@ -276,7 +276,29 @@ class BaseEstimator:
             )
             test_rank(L, threshold=RANK_FRACTION_THRESHOLD)
         logger.info(f"Using rank {new_rank:,} covariance representation.")
+        return L, Lp
+
+    def _compute_L(self):
+        """
+        This function calculates the lower triangular matrix L that is needed for
+        computations involving the covariance matrix of the Gaussian Process model.
+
+        It has the side effect of settling self.Lp
+        """
+        L, Lp = self._compute_L_and_Lp()
+        self.Lp = Lp
         return L
+
+    def _compute_Lp(self):
+        """
+        This function calculates the lower triangular matrix L that is needed for
+        computations involving the predictive of the Gaussian Process model.
+
+        It has the side effect of settling self.L
+        """
+        L, Lp = self._compute_L_and_Lp()
+        self.L = L
+        return Lp
 
     def _run_inference(self):
         function = self.loss_func

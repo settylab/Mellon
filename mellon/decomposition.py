@@ -187,9 +187,10 @@ def _full_decomposition_low_rank(
 
 def _standard_low_rank(x, cov_func, xu, sigma=DEFAULT_SIGMA, jitter=DEFAULT_JITTER):
     R"""
-    Compute a low rank :math:`L` such that :math:`L L^\top \approx K`, where :math:`K`
-    is the full rank covariance matrix. The rank is equal to the number of
-    landmark points.
+    Compute a low rank :math:`L` and :math:`L_p` such that :math:`L L^\top \approx K`,
+    where :math:`K` is the full rank covariance matrix on `x`, and
+    :math:`L_p L_p^\top = \Sigma_p` where :math:`\Sigma_p` is the full rank
+    covariance matrix on `xu`. The rank is equal to the number of landmark points.
 
     :param x: The training instances.
     :type x: array-like
@@ -201,24 +202,24 @@ def _standard_low_rank(x, cov_func, xu, sigma=DEFAULT_SIGMA, jitter=DEFAULT_JITT
     :type sigma: float
     :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
     :type jitter: float
-    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
-    :rtype: array-like
+    :return: :math:`L`, :math:`L_p` - A matrix such that :math:`L L^\top \approx K`.
+    :rtype: array-like, array-like
     """
     sigma2 = square(sigma)
     sigma2 = where(sigma2 < jitter, jitter, sigma2)
 
     W = stabilize(cov_func(xu, xu), sigma2)
     C = cov_func(x, xu)
-    U = cholesky(W)
-    if any(isnan(U)):
+    Lp = cholesky(W)
+    if any(isnan(Lp)):
         message = (
             f"Covariance of landmarks not positively definite with jitter={jitter}. "
             "Consider increasing the jitter for numerical stabilization."
         )
         logger.error(message)
         raise ValueError(message)
-    L = solve_triangular(U, C.T, lower=True).T
-    return L
+    L = solve_triangular(Lp, C.T, lower=True).T
+    return L, Lp
 
 
 def _modified_low_rank(
@@ -231,9 +232,9 @@ def _modified_low_rank(
     jitter=DEFAULT_JITTER,
 ):
     R"""
-    Compute a low rank :math:`L` such that :math:`L L^\top ~= K`, where :math:`K` is the
-    full rank covariance matrix. The rank is less than or equal to the number of
-    landmark points.
+    Compute a low rank :math:`L` and :math:`L_p` such that :math:`L L^\top \approx K`,
+    where :math:`K` is the full rank covariance matrix on `x`.
+    The rank is equal to the number of landmark points.
 
     :param x: The training instances.
     :type x: array-like

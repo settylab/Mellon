@@ -131,6 +131,41 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     logger.info(
         "Assertion passed: the deserialized predictor produced the expected results."
     )
+    
+@pytest.mark.parametrize(
+    "rank, n_landmarks, compress",
+    [
+        (1.0, 0, None),
+        (1.0, 10, None),
+        (0.99, 80, None),
+    ],
+)
+def test_density_estimator_serialization_with_uncertainty(common_setup, rank, n_landmarks, compress):
+    X, test_file, logger, _, _, _ = common_setup
+
+    est = mellon.DensityEstimator(rank=rank, n_landmarks=n_landmarks, optimizer="advi", predictor_with_uncertainty=True)
+    est.fit(X)
+    dens_appr = est.predict(X)
+    uncertainty_pred = est.predict.uncertainy(X)
+
+    # Test serialization
+    est.predict.to_json(test_file, compress=compress)
+    logger.info(f"Serialized the predictor with uncertainty and saved it to {test_file}.")
+    predictor = mellon.Predictor.from_json(test_file, compress=compress)
+    logger.info("Deserialized the predictor with uncertainty from the JSON file.")
+    reprod = predictor(X)
+    logger.info("Made a prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(dens_appr, reprod))
+    assert_msg = "Serialized + deserialized predictor should produce the same results."
+    assert is_close, assert_msg
+    reprod_uncertainty = predictor.uncertainy(X)
+    logger.info("Made a uncertainty prediction with the deserialized predictor.")
+    is_close = jnp.all(jnp.isclose(uncertainty_pred, reprod_uncertainty))
+    assert_msg = "Serialized + deserialized predictor should produce the same uncertainty results."
+    assert is_close, assert_msg
+    logger.info(
+        "Assertion passed: the deserialized predictor produced the expected results."
+    )
 
 
 def test_density_estimator_dictionary_serialization(common_setup):

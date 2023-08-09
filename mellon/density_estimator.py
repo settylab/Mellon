@@ -301,6 +301,7 @@ class DensityEstimator(BaseEstimator):
         mu = self.mu
         cov_func = self.cov_func
         L = self.L
+        Lp = self.Lp
         jitter = self.jitter
         with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive function.")
@@ -313,6 +314,7 @@ class DensityEstimator(BaseEstimator):
             mu,
             cov_func,
             L,
+            Lp,
             jitter=jitter,
             with_uncertainty=with_uncertainty,
         )

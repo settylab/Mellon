@@ -48,6 +48,7 @@ class _FullConditionalMean:
         y,
         mu,
         cov_func,
+        L=None,
         sigma=DEFAULT_SIGMA,
         jitter=DEFAULT_JITTER,
         y_cov_factor=None,
@@ -64,6 +65,9 @@ class _FullConditionalMean:
         :type mu: float
         :param cov_func: The Gaussian process covariance function.
         :type cov_func: function
+        :param L : A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
+            covariance matrix of the Gaussian Process.
+        :type L : array-like or None
         :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
         :type sigma: float
         :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
@@ -80,7 +84,9 @@ class _FullConditionalMean:
         """
         x = ensure_2d(x)
 
-        L = _get_L(x, cov_func, jitter)
+        if L is None:
+            logger.info("Recomputing covariance decomposition for predictive function.")
+            L = _get_L(x, cov_func, jitter)
         r = y - mu
         weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
 
@@ -124,23 +130,7 @@ class _FullConditionalMean:
         Kus = cov_func(Xnew, x)
         return mu + dot(Kus, weights)
 
-    def covariance(self, Xnew, diag=True):
-        """
-        Computes the covariance of the Gaussian Process distribution of functions
-        over new data points or cell states.
-
-        Parameters:
-        Xnew : array-like, shape (n_samples, n_features)
-            The new data points for which to compute the covariance.
-        diag : boolean, optional (default=True)
-            Whether to return the variance (True) or the full covariance matrix (False).
-
-        Returns:
-        var : array-like, shape (n_samples,)
-            If diag=True, returns the variances for each sample.
-        cov : array-like, shape (n_samples, n_samples)
-            If diag=False, returns the full covariance matrix between samples.
-        """
+    def _covariance(self, Xnew, diag=True):
         _check_covariance(self)
         x = self.x
         cov_func = self.cov_func
@@ -157,36 +147,20 @@ class _FullConditionalMean:
             cov = Kss - dot(A.T, A)
             return cov
 
-    def mean_covariance(self, Xnew, diag=True):
-        """
-        Computes the uncertainty of the mean of the Gaussian process induced by
-        the uncertainty of the latent representation of the mean function.
-
-        Parameters:
-        Xnew : array-like, shape (n_samples, n_features)
-            The new data points for which to compute the uncertainty.
-        diag : boolean, optional (default=True)
-            Whether to compute the variance (True) or the full covariance matrix (False).
-
-        Returns:
-        var : array-like, shape (n_samples,)
-            If diag=True, returns the variances for each sample.
-        cov : array-like, shape (n_samples, n_samples)
-            If diag=False, returns the full covariance matrix between samples.
-        """
+    def _mean_covariance(self, Xnew, diag=True):
         _check_uncertainty(self)
         cov_func = self.cov_func
         x = self.x
         W = self.W
 
         Kus = cov_func(Xnew, x)
-        cov_L = dot(Kus, W)
+        cov_L = Kus @ W
 
         if diag:
             var = arraysum(cov_L * cov_L, axis=1)
             return var
         else:
-            cov = dot(cov_L, cov_L.T)
+            cov = cov_L @ cov_L.T
             return cov
 
 
@@ -292,23 +266,7 @@ class _LandmarksConditionalMean:
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
 
-    def covariance(self, Xnew, diag=False):
-        """
-        Computes the covariance of the Gaussian Process distribution of functions
-        over new data points or cell states.
-
-        Parameters:
-        Xnew : array-like, shape (n_samples, n_features)
-            The new data points for which to compute the covariance.
-        diag : boolean, optional (default=True)
-            Whether to return the variance (True) or the full covariance matrix (False).
-
-        Returns:
-        var : array-like, shape (n_samples,)
-            If diag=True, returns the variances for each sample.
-        cov : array-like, shape (n_samples, n_samples)
-            If diag=False, returns the full covariance matrix between samples.
-        """
+    def _covariance(self, Xnew, diag=False):
         _check_covariance(self)
         cov_func = self.cov_func
         landmarks = self.landmarks
@@ -325,36 +283,20 @@ class _LandmarksConditionalMean:
             cov = cov_func(Xnew, Xnew) - dot(A.T, A)
             return cov
 
-    def mean_covariance(self, Xnew, diag=True):
-        """
-        Computes the uncertainty of the mean of the Gaussian process induced by
-        the uncertainty of the latent representation of the mean function.
-
-        Parameters:
-        Xnew : array-like, shape (n_samples, n_features)
-            The new data points for which to compute the uncertainty.
-        diag : boolean, optional (default=True)
-            Whether to compute the variance (True) or the full covariance matrix (False).
-
-        Returns:
-        var : array-like, shape (n_samples,)
-            If diag=True, returns the variances for each sample.
-        cov : array-like, shape (n_samples, n_samples)
-            If diag=False, returns the full covariance matrix between samples.
-        """
+    def _mean_covariance(self, Xnew, diag=True):
         _check_uncertainty(self)
         cov_func = self.cov_func
         xu = self.landmarks
         W = self.W
 
         Kus = cov_func(Xnew, xu)
-        cov_L = dot(Kus, W)
+        cov_L = Kus @ W
 
         if diag:
             var = arraysum(cov_L * cov_L, axis=1)
             return var
         else:
-            cov = dot(cov_L, cov_L.T)
+            cov = cov_L @ cov_L.T
             return cov
 
 
@@ -373,9 +315,9 @@ class _LandmarksConditionalMeanCholesky:
         pre_transformation,
         mu,
         cov_func,
+        L=None,
         sigma=DEFAULT_SIGMA,
         jitter=DEFAULT_JITTER,
-        pre_transformation_std=None,
         with_uncertainty=False,
     ):
         """
@@ -390,13 +332,13 @@ class _LandmarksConditionalMeanCholesky:
         :type mu: float
         :param cov_func: The Gaussian process covariance function.
         :type cov_func: function
-        :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
+        :param L : A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
+            covariance matrix of the Gaussian Process.
+        :type L : array-like or None
+        :param sigma: Standard deviation of `pre_transformation`. Defaults to 0.
         :type sigma: float
         :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
         :type jitter: float
-        :param pre_transformation_std: Standard deviation of `pre_transformation`.
-            Only required if `with_uncertainty=True`. Defaults to None.
-        :type pre_transformation_std: array-like
         :param with_uncertainty: Wether to compute predictive uncertainty and
             intermediate covariance functions. Defaults to False.
         :type with_uncertainty: bool
@@ -404,7 +346,9 @@ class _LandmarksConditionalMeanCholesky:
         :rtype: function
         """
         xu = ensure_2d(xu)
-        L = _get_L(xu, cov_func, jitter)
+        if L is None:
+            logger.info("Recomputing covariance decomposition for predictive function.")
+            L = _get_L(xu, cov_func, jitter)
         weights = solve_triangular(L.T, pre_transformation)
 
         self.cov_func = cov_func
@@ -423,22 +367,11 @@ class _LandmarksConditionalMeanCholesky:
         self.L = L
         self._state_variables.add("L")
 
-        if pre_transformation_std is not None and sigma > 0:
-            raise ValueError(
-                "One can specify either `sigma` or `pre_transformation_std` "
-                "to describe input noise, but not both."
-            )
-        if pre_transformation_std is None:
-            logger.warning(
-                "`sigma` is interpreted as standard deviation of `pre_transform`."
-            )
-            try:
-                Stds = diagonal(sigma)
-            except ValueError:
-                # sigma seems to be scalar
-                Stds = eye(xu.shape[0]) * sigma
-        else:
-            Stds = diagonal(pre_transformation_std)
+        try:
+            Stds = diagonal(sigma)
+        except ValueError:
+            # sigma seems to be scalar
+            Stds = eye(xu.shape[0]) * sigma
 
         W = solve_triangular(L.T, Stds)
         self.W = W
@@ -453,23 +386,7 @@ class _LandmarksConditionalMeanCholesky:
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
 
-    def covariance(self, Xnew, diag=True):
-        """
-        Computes the covariance of the Gaussian Process distribution of functions
-        over new data points or cell states.
-
-        Parameters:
-        Xnew : array-like, shape (n_samples, n_features)
-            The new data points for which to compute the covariance.
-        diag : boolean, optional (default=True)
-            Whether to return the variance (True) or the full covariance matrix (False).
-
-        Returns:
-        var : array-like, shape (n_samples,)
-            If diag=True, returns the variances for each sample.
-        cov : array-like, shape (n_samples, n_samples)
-            If diag=False, returns the full covariance matrix between samples.
-        """
+    def _covariance(self, Xnew, diag=True):
         _check_covariance(self)
 
         cov_func = self.cov_func
@@ -487,36 +404,21 @@ class _LandmarksConditionalMeanCholesky:
             cov = cov_func(Xnew, Xnew) - dot(A.T, A)
             return cov
 
-    def mean_covariance(self, Xnew, diag=True):
-        """
-        Computes the uncertainty of the mean of the Gaussian process induced by
-        the uncertainty of the latent representation of the mean function.
-
-        Parameters:
-        Xnew : array-like, shape (n_samples, n_features)
-            The new data points for which to compute the uncertainty.
-        diag : boolean, optional (default=True)
-            Whether to compute the variance (True) or the full covariance matrix (False).
-
-        Returns:
-        var : array-like, shape (n_samples,)
-            If diag=True, returns the variances for each sample.
-        cov : array-like, shape (n_samples, n_samples)
-            If diag=False, returns the full covariance matrix between samples.
-        """
+    def _mean_covariance(self, Xnew, diag=True):
         _check_uncertainty(self)
+
         cov_func = self.cov_func
         xu = self.landmarks
         W = self.W
 
         Kus = cov_func(Xnew, xu)
-        cov_L = dot(Kus, W)
+        cov_L = Kus @ W
 
         if diag:
             var = arraysum(cov_L * cov_L, axis=1)
             return var
         else:
-            cov = dot(cov_L, cov_L.T)
+            cov = cov_L @ cov_L.T
             return cov
 
 
