@@ -134,6 +134,22 @@ class DimensionalityEstimator(BaseEstimator):
         for density initialization and the neighborhood-based local intrinsic
         dimensionality for dimensionality initialization.
 
+    predictor_with_uncertainty : bool
+        If set to True, computes the predictor instances `.predict` and `.predict_density`
+        with its predictive uncertainty. The uncertainty comes from two sources:
+
+        1) `.predict.mean_covariance`:
+            Uncertainty arising from the posterior distribution of the Bayesian inference.
+            This component quantifies uncertainties inherent in the model's parameters and structure.
+            Available only if `.pre_transformation_std` is defined (e.g., using `optimizer="advi"`),
+            which reflects the standard deviation of the latent variables before transformation.
+
+        2) `.predict.covariance`:
+            Uncertainty for out-of-bag states originating from the compressed function representation
+            in the Gaussian Process. Specifically, this uncertainty corresponds to locations that are
+            not inducing points of the Gaussian Process and represents the covariance of the
+            conditional normal distribution.
+
     jit: bool, optional (default=False)
         If True, use JAX's just-in-time compilation for loss and its gradient during optimization.
     """
@@ -159,6 +175,7 @@ class DimensionalityEstimator(BaseEstimator):
         cov_func=None,
         L=None,
         initial_value=None,
+        predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
     ):
         super().__init__(
@@ -179,6 +196,7 @@ class DimensionalityEstimator(BaseEstimator):
             cov_func=cov_func,
             L=L,
             initial_value=initial_value,
+            predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
         )
         self.k = _validate_positive_int(k, "k")
@@ -292,34 +310,47 @@ class DimensionalityEstimator(BaseEstimator):
     def _set_local_dim_func(self):
         x = self.x
         landmarks = self.landmarks
+        pre_transformation = self.pre_transformation[0, :]
+        pre_transformation_std = self.pre_transformation_std
+        if pre_transformation_std is not None:
+            pre_transformation_std = pre_transformation_std[0, :]
         local_dim_x = self.local_dim_x
         mu = self.mu_dim
         cov_func = self.cov_func
+        L = self.L
         Lp = self.Lp
         jitter = self.jitter
+        with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive dimensionality function.")
         log_dim_func = compute_conditional_mean_explog(
             x,
             landmarks,
+            pre_transformation,
+            pre_transformation_std,
             local_dim_x,
             mu,
             cov_func,
+            L,
             Lp,
             jitter=jitter,
+            with_uncertainty=with_uncertainty,
         )
         self.local_dim_func = log_dim_func
 
     def _set_log_density_func(self):
         x = self.x
         landmarks = self.landmarks
-        pre_transformation = self.pre_transformation
+        pre_transformation = self.pre_transformation[1, :]
         pre_transformation_std = self.pre_transformation_std
+        if pre_transformation_std is not None:
+            pre_transformation_std = pre_transformation_std[1, :]
         log_density_x = self.log_density_x
         mu = self.mu_dens
         cov_func = self.cov_func
         L = self.L
         Lp = self.Lp
         jitter = self.jitter
+        with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive density function.")
         log_density_func = compute_conditional_mean(
             x,
@@ -332,6 +363,7 @@ class DimensionalityEstimator(BaseEstimator):
             L,
             Lp,
             jitter=jitter,
+            with_uncertainty=with_uncertainty,
         )
         self.log_density_func = log_density_func
 

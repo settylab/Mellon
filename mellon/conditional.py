@@ -4,7 +4,7 @@ from jax.numpy import diag as diagonal
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
 from .util import ensure_2d, stabilize, DEFAULT_JITTER, Log
-from .base_predictor import Predictor, PredictorTime
+from .base_predictor import Predictor, ExpPredictor, PredictorTime
 from .decomposition import DEFAULT_SIGMA
 
 
@@ -168,6 +168,10 @@ class FullConditionalMean(_FullConditionalMean, Predictor):
     pass
 
 
+class ExpFullConditionalMean(_FullConditionalMean, ExpPredictor):
+    pass
+
+
 class FullConditionalMeanTime(_FullConditionalMean, PredictorTime):
     pass
 
@@ -304,6 +308,10 @@ class LandmarksConditionalMean(_LandmarksConditionalMean, Predictor):
     pass
 
 
+class ExpLandmarksConditionalMean(_LandmarksConditionalMean, ExpPredictor):
+    pass
+
+
 class LandmarksConditionalMeanTime(_LandmarksConditionalMean, PredictorTime):
     pass
 
@@ -423,6 +431,12 @@ class _LandmarksConditionalMeanCholesky:
 
 
 class LandmarksConditionalMeanCholesky(_LandmarksConditionalMeanCholesky, Predictor):
+    pass
+
+
+class ExpLandmarksConditionalMeanCholesky(
+    _LandmarksConditionalMeanCholesky, ExpPredictor
+):
     pass
 
 
