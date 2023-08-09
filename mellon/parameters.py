@@ -1,5 +1,8 @@
-from jax.numpy import exp, log, quantile, stack, unique, empty
+from jax.numpy import exp, log, quantile, stack, unique, empty, where
 from jax.numpy import sum as arraysum
+from jax.numpy import any as arrayany
+from jax.numpy import all as arrayall
+from jax.numpy import min as arraymin
 from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
@@ -134,17 +137,19 @@ def compute_distances(x, k):
     return distances
 
 
-def compute_nn_distances(x):
+def compute_nn_distances(x, save=True):
     """
     Compute the distance to the nearest neighbor for each instance in the provided training dataset.
 
     This function calculates the Euclidean distance between each instance in the dataset and its closest neighbor.
-    It returns an array of these distances, ordered in the same way as the input instances.
+    If save=True, any non-positive distances will be replaced with the minimum positive distance.
 
     Parameters
     ----------
     x : array-like of shape (n_samples, n_features)
         An array-like object representing the training instances.
+    save : bool, optional
+        Whether to replace non-positive distances with the minimum positive distance. Default is True.
 
     Returns
     -------
@@ -153,8 +158,26 @@ def compute_nn_distances(x):
         the input dataset. The ordering of the distances in this array corresponds to the
         ordering of the instances in the input data.
 
+    Raises
+    ------
+    ValueError : if all distances are non-positive and save=True.
     """
-    return compute_distances(x, 1)[:, 0]
+    nn_distances = compute_distances(x, 1)[:, 0]
+
+    if save and arrayany(nn_distances <= 0):
+        good_idx = nn_distances > 0
+        if arrayall(~good_idx):
+            message = "All instances seem to be identical."
+            logger.error(message)
+            raise ValueError(message)
+        min_positive = arraymin(nn_distances[good_idx])
+        n_identical = arraysum(~good_idx)
+        logger.warning(
+            f"Found {n_identical:,} identical cells. Adding {min_positive} to their pairwise distance."
+        )
+        nn_distances = where(good_idx, nn_distances, min_positive)
+
+    return nn_distances
 
 
 def compute_nn_distances_within_time_points(x, times=None, normalize=False):
@@ -266,13 +289,15 @@ def compute_mu(nn_distances, d):
 
 def compute_ls(nn_distances):
     R"""
-    Computes ls equal to the geometric mean of the nearest neighbor distances times a constant.
+    Computes a length scale (ls) equal to the geometric mean of the positive nearest neighbor distances
+    times a constant.
 
-    :param nn_distances: The observed nearest neighbor distances.
+    :param nn_distances: The observed nearest neighbor distances. Must be non-empty.
     :type nn_distances: array-like
-    :return: ls - The geometric mean of the nearest neighbor distances times a constant.
+    :return: ls - The geometric mean of the nearest neighbor distances (after adjustment) times a constant.
     :rtype: float
     """
+
     return exp(log(nn_distances).mean() + 3.0).item()
 
 
