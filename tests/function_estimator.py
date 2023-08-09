@@ -16,7 +16,7 @@ def function_estimator_setup():
     noise = 1e-2 * jnp.sum(jnp.sin(X * 1e16), axis=1)
     noiseless_y = jnp.sum(jnp.sin(X / 2), axis=1)
     y = noiseless_y + noise
-    Y = jnp.stack([y, noiseless_y])
+    Y = jnp.stack([y, noiseless_y], axis=1)
 
     return X, y, Y, noiseless_y
 
@@ -40,10 +40,10 @@ def test_function_estimator_multi_fit_predict(function_estimator_setup):
     n = X.shape[0]
     est = mellon.FunctionEstimator(sigma=1e-3)
 
-    m_pred = est.multi_fit_predict(X, Y, X)
+    m_pred = est.fit_predict(X, Y, X)
     assert m_pred.shape == (
-        2,
         n,
+        2,
     ), "There should be a value for each sample and location."
 
 
