@@ -1,4 +1,3 @@
-from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
     compute_transform,
@@ -18,7 +17,6 @@ from .parameters import (
     compute_d_factal,
     compute_mu,
     compute_initial_value,
-    DEFAULT_N_LANDMARKS,
 )
 from .compute_ls_time import compute_ls_time
 from .util import (
@@ -56,24 +54,35 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         Defaults to Matern52.
 
     n_landmarks : int
-        The number of landmark points. If less than 1 or greater than or equal to the
-        number of training points, inducing points will not be computed or used.
-        Defaults to 5000.
+        The number of landmark/inducing points. Only used if a sparse GP is indicated
+        through gp_type. If 0 or equal to the number of training points, inducing points
+        will not be computed or used. Defaults to 5000.
 
     rank : int or float
-        The rank of the approximate covariance matrix. If rank is an int, an :math:`n \times`
+        The rank of the approximate covariance matrix for the Nyström rank reduction.
+        If rank is an int, an :math:`n \times`
         rank matrix :math:`L` is computed such that :math:`L L^\top \approx K`, where `K` is the
         exact :math:`n \times n` covariance matrix. If rank is a float 0.0 :math:`\le` rank
         :math:`\le` 1.0, the rank/size of :math:`L` is selected such that the included eigenvalues
         of the covariance between landmark points account for the specified percentage of the sum
-        of eigenvalues. Defaults to 0.99.
+        of eigenvalues. It is ignored if gp_type does not indicate a Nyström rank reduction.
+        Defaults to 0.99.
 
-    method : str
-        Determines how the rank is interpreted: as a fixed number of eigenvectors ('fixed'), a
-        percent of eigenvalues ('percent'), or automatically ('auto'). If 'auto', the rank is
-        interpreted as a fixed number of eigenvectors if it is an int and as a percent of
-        eigenvalues if it is a float. This parameter is provided for clarity in the ambiguous case
-        of 1 vs 1.0. Defaults to 'auto'.
+    gp_type : str or GaussianProcessType
+        The type of sparcification used for the Gaussian Process:
+         - 'full' None-sparse Gaussian Process
+         - 'full_nystroem' Sparse GP with Nyström rank reduction without landmarks,
+            which lowers the computational complexity.
+         - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
+            typically employed to enable scalable GP models.
+         - 'sparse_nystroem' Sparse GP using landmarks or inducing points,
+            along with an improved Nyström rank reduction method that balances
+            accuracy with efficiency.
+
+        The value can be either a string matching one of the above options or an instance of
+        the `mellon.parameters.GaussianProcessType` Enum. If a partial match is found with the
+        Enum, a warning will be logged, and the closest match will be used.
+        Defaults to 'sparse_cholesky'.
 
     d_method : str
         The method to compute the intrinsic dimensionality of the data. Implemented options are
@@ -163,6 +172,11 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         `cov_func_curry(ls, active_dims=slice(None, -1)) * cov_func_curry(ls_time, active_dims=-1)`.
         Defaults to None.
 
+    Lp : array-like or None
+        A matrix such that :math:`L_p L_p^\top = \Sigma_p`, where :math:`\Sigma_p` is the
+        covariance matrix of the inducing points (all cells in non-sparse GP).
+        Not used when Nyström rank reduction is employed. Defaults to None.
+
     L : array-like or None
         A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
         If None, `L` is computed automatically. Defaults to None.
@@ -202,9 +216,9 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
     def __init__(
         self,
         cov_func_curry=DEFAULT_COV_FUNC,
-        n_landmarks=DEFAULT_N_LANDMARKS,
-        rank=DEFAULT_RANK,
-        method=DEFAULT_METHOD,
+        n_landmarks=None,
+        rank=None,
+        gp_type=None,
         d_method=DEFAULT_D_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
@@ -221,6 +235,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         ls_factor_times=1,
         density_estimator_kwargs=dict(),
         cov_func=None,
+        Lp=None,
         L=None,
         initial_value=None,
         predictor_with_uncertainty=False,
@@ -232,6 +247,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             n_landmarks=n_landmarks,
             rank=rank,
             jitter=jitter,
+            gp_type=gp_type,
             optimizer=optimizer,
             n_iter=n_iter,
             init_learn_rate=init_learn_rate,
@@ -242,6 +258,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
+            Lp=Lp,
             L=L,
             initial_value=initial_value,
             predictor_with_uncertainty=predictor_with_uncertainty,
@@ -277,7 +294,6 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             f"cov_func_curry={self.cov_func_curry}, "
             f"n_landmarks={self.n_landmarks}, "
             f"rank={self.rank}, "
-            f"method='{self.method}', "
             f"jitter={self.jitter}, "
             f"optimizer='{self.optimizer}', "
             f"n_iter={self.n_iter}, "
@@ -497,6 +513,10 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
                 raise ValueError(message)
 
         x = self.set_x(x)
+        self._prepare_attribute("n_landmarks")
+        self._prepare_attribute("rank")
+        self._prepare_attribute("gp_type")
+        self._validate_parameter()
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
         self._prepare_attribute("mu")
@@ -504,6 +524,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         self._prepare_attribute("ls_time")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
+        self._prepare_attribute("Lp")
         self._prepare_attribute("L")
         self._prepare_attribute("initial_value")
         self._prepare_attribute("transform")

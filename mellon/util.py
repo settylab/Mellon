@@ -178,14 +178,16 @@ def make_multi_time_argument(func):
 
     Examples
     --------
-    class MyClass:
-        @make_multi_time_argument
-        def method(self, x, time=None):
-            return x + time
+    .. code-block:: python
 
-    my_object = MyClass()
-    print(my_object.method(1, multi_time=np.array([1, 2, 3])))
-    # Output: array([2, 3, 4])
+        class MyClass:
+            @make_multi_time_argument
+            def method(self, x, time=None):
+                return x + time
+
+        my_object = MyClass()
+        print(my_object.method(1, multi_time=np.array([1, 2, 3])))
+        # Output: array([2, 3, 4])
     """
     sig = inspect.signature(func)
     new_params = list(sig.parameters.values()) + [

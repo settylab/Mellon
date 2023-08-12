@@ -13,71 +13,37 @@ from jax.scipy.linalg import solve_triangular
 from .util import stabilize, DEFAULT_JITTER, Log
 
 
-DEFAULT_RANK = 1.0
-DEFAULT_METHOD = "auto"
+DEFAULT_RANK = 0.99
 DEFAULT_SIGMA = 0
 
 logger = Log()
 
 
-def _check_method(rank, full, method):
-    R"""
-    Checks if rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0 or an int
-    1 :math:`\le` rank :math:`\le` full. Raises an error if neither is true
-    or if method doesn't match the detected method.
-
-    :param rank: The rank of the decomposition, or if rank is a float greater
-    than 0 and less than 1, the rank is reduced further using the QR decomposition
-    such that the eigenvalues of the included eigenvectors account for the
-    specified percentage of the total eigenvalues. Defaults to 0.999.
-    :type rank: int or float
-    :param full: The size of the exact matrix.
-    :type full: int
-    :param method: The method to interpret the rank.
-    :type method: str
-    :return: method - The detected method.
-    :rtype: str
-    """
-
-    percent = isinstance(rank, float) and (0 < rank) and (rank <= 1)
-    fixed = isinstance(rank, int) and (1 <= rank) and (rank <= full)
-    if not (percent or fixed):
-        message = """rank must be a float 0.0 <=rank <= 1.0 or
-    an int 1 <= rank <= q. q equals the number of landmarks
-    or the number of data points if there are no landmarks."""
-        raise ValueError(message)
-    elif percent and not (method == "percent" or method == "auto"):
-        message = f"""The argument method={method} does not match the rank={rank}.
-    The detected method from the rank is 'percent'."""
-        raise ValueError(message)
-    elif fixed and not (method == "fixed" or method == "auto"):
-        message = f"""The argument method={method} does not match the rank={rank}.
-    The detected method from the rank is 'fixed'."""
-        raise ValueError(message)
-    if percent:
-        return "percent"
-    else:
-        return "fixed"
-
-
-def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
+def _eigendecomposition(A, rank=DEFAULT_RANK):
     R"""
     Decompose :math:`A` into its largest positive `rank` and
     at least one eigenvector(s) and eigenvalue(s).
 
-    :param A: A square matrix.
-    :type A: array-like
-    :param rank: The rank of the decomposition, or if rank is a float
+    Parameters
+    ----------
+    A : array-like
+        A square matrix.
+    rank : int or float, optional
+        The rank of the decomposition, or if rank is a float
         0.0 :math:`\le` rank :math:`\le` 1.0, the rank is reduced further using the QR
         decomposition such that the eigenvalues of the included eigenvectors account for
-        the specified percentage of the total eigenvalues. Defaults to 0.999.
-    :type rank: int or float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation.
-    :type method: str
-    :return: :math:`s, v` - The top eigenvalues and eigenvectors.
-    :rtype: array-like, array-like
+        the specified percentage of the total eigenvalues. Defaults to 0.99.
+
+    Returns
+    -------
+    array-like, array-like
+        :math:`s, v` - The top eigenvalues and eigenvectors.
+
+    Notes
+    -----
+    If any eigenvalues are less than or equal to 0, a warning message will be logged,
+    indicating a singularity in the covariance matrix. Consider raising the jitter
+    value to address this issue.
     """
 
     s, v = eigh(A)
@@ -89,7 +55,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
         logger.warning(message)
     p = count_nonzero(s > 0)  # stability
     summed = cumsum(s[: -p - 1 : -1])
-    if method == "percent":
+    if isinstance(rank, float):
         # automatically choose rank to capture some percent of the eigenvalues
         target = summed[-1] * rank
         p = searchsorted(summed, target)
@@ -101,7 +67,7 @@ def _eigendecomposition(A, rank=DEFAULT_RANK, method=DEFAULT_METHOD):
             p = 1
     else:
         p = min(rank, p)
-    if (method == "percent" and rank < 1) or rank < len(summed):
+    if (isinstance(rank, float) and rank < 1) or rank < len(summed):
         frac = summed[p] / summed[-1]
         logger.info(f"Recovering {frac:%} variance in eigendecomposition.")
     s_ = s[-p:]
@@ -114,16 +80,32 @@ def _full_rank(x, cov_func, sigma=DEFAULT_SIGMA, jitter=DEFAULT_JITTER):
     Compute :math:`L` such that :math:`L L^\top = K`, where :math:`K`
     is the full rank covariance matrix.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
-    :type sigma: float
-    :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
-    :type jitter: float
-    :return: :math:`L` - A matrix such that :math:`L L^\top = K`.
-    :rtype: array-like
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    cov_func : function
+        The Gaussian process covariance function.
+    sigma : float, optional
+        Noise standard deviation of the data we condition on. Defaults to 0.
+    jitter : float, optional
+        A small amount to add to the diagonal. Defaults to 1e-6.
+
+    Returns
+    -------
+    array-like
+        :math:`L` - A matrix such that :math:`L L^\top = K`.
+
+    Raises
+    ------
+    ValueError
+        If the covariance is not positively definite even with jitter, this error will be raised.
+        Consider increasing the jitter for numerical stabilization.
+
+    Notes
+    -----
+    If any NaN values are detected in `L`, an error message is logged, and a ValueError is raised,
+    indicating that the covariance is not positively definite with the given jitter value.
     """
     sigma2 = square(sigma)
     sigma2 = where(sigma2 < jitter, jitter, sigma2)
@@ -144,82 +126,87 @@ def _full_decomposition_low_rank(
     x,
     cov_func,
     rank=DEFAULT_RANK,
-    method=DEFAULT_METHOD,
     sigma=DEFAULT_SIGMA,
     jitter=DEFAULT_JITTER,
 ):
     R"""
-    Compute a low rank :math:`L` such that :math:`L L^\top ~= K`, where :math:`K` is the
+    Compute a low rank :math:`L` such that :math:`L L^\top \approx K`, where :math:`K` is the
     full rank covariance matrix. The rank is less than or equal to the number of
     landmark points.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param rank: The rank of the decomposition, or if rank is a float greater
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    cov_func : function
+        The Gaussian process covariance function.
+    rank : int or float, optional
+        The rank of the decomposition, or if rank is a float greater
         than 0 and less than 1, the eigenvalues of the included eigenvectors
         account for the specified percentage of the total eigenvalues.
-        Defaults to 0.999.
-    :type rank: int or float
-    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
-    :type sigma: float
-    :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
-    :type jitter: float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Defaults to 'auto'.
-    :type method: str
-    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
-    :rtype: array-like
+        Defaults to 0.99.
+    sigma : float, optional
+        Noise standard deviation of the data we condition on. Defaults to 0.
+    jitter : float, optional
+        A small amount to add to the diagonal. Defaults to 1e-6.
+
+    Returns
+    -------
+    array-like
+        :math:`L` - A matrix such that :math:`L L^\top \approx K`.
+
+    Notes
+    -----
+    The rank of the decomposition is determined by either the integer value provided or
+    automatically selected to capture the specified percentage of total eigenvalues if a float is
+    provided. This function computes the low-rank approximation of the full covariance matrix.
     """
     sigma2 = square(sigma)
     sigma2 = where(sigma2 < jitter, jitter, sigma2)
 
     W = stabilize(cov_func(x, x), sigma2)
-    s, v = _eigendecomposition(W, rank=rank, method=method)
+    s, v = _eigendecomposition(W, rank=rank)
     L = v * sqrt(s)
     return L
 
 
-def _standard_low_rank(x, cov_func, xu, sigma=DEFAULT_SIGMA, jitter=DEFAULT_JITTER):
+def _standard_low_rank(
+    x, cov_func, xu, Lp=None, sigma=DEFAULT_SIGMA, jitter=DEFAULT_JITTER
+):
     R"""
-    Compute a low rank :math:`L` and :math:`L_p` such that :math:`L L^\top \approx K`,
+    Compute a low rank :math:`L` such that :math:`L L^\top \approx K`,
     where :math:`K` is the full rank covariance matrix on `x`, and
     :math:`L_p L_p^\top = \Sigma_p` where :math:`\Sigma_p` is the full rank
     covariance matrix on `xu`. The rank is equal to the number of landmark points.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param xu: The landmark points.
-    :type xu: array-like
-    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
-    :type sigma: float
-    :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
-    :type jitter: float
-    :return: :math:`L`, :math:`L_p` - A matrix such that :math:`L L^\top \approx K`.
-    :rtype: array-like, array-like
-    """
-    sigma2 = square(sigma)
-    sigma2 = where(sigma2 < jitter, jitter, sigma2)
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    cov_func : function
+        The Gaussian process covariance function.
+    xu : array-like
+        The landmark points.
+    Lp : array-like, optional
+        A matrix :math:`L_p L_p^\top = \Sigma_p` where :math:`\Sigma_p` is
+        the full rank covariance matrix on the landmarks `xu`.
+        Pass to avoid recomputing, by default None.
+    sigma : float, optional
+        Noise standard deviation of the data we condition on, by default 0.
+    jitter : float, optional
+        A small amount to add to the diagonal, by default 1e-6.
 
-    W = stabilize(cov_func(xu, xu), sigma2)
+    Returns
+    -------
+    array-like, array-like
+        :math:`L` - A matrix such that :math:`L L^\top \approx K`.
+    """
     C = cov_func(x, xu)
-    Lp = cholesky(W)
-    if any(isnan(Lp)):
-        message = (
-            f"Covariance of landmarks not positively definite with jitter={jitter}. "
-            "Consider increasing the jitter for numerical stabilization."
-        )
-        logger.error(message)
-        raise ValueError(message)
+
+    if Lp is None:
+        Lp = _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
     L = solve_triangular(Lp, C.T, lower=True).T
-    return L, Lp
+    return L
 
 
 def _modified_low_rank(
@@ -227,39 +214,43 @@ def _modified_low_rank(
     cov_func,
     xu,
     rank=DEFAULT_RANK,
-    method=DEFAULT_METHOD,
     sigma=DEFAULT_SIGMA,
     jitter=DEFAULT_JITTER,
 ):
     R"""
     Compute a low rank :math:`L` and :math:`L_p` such that :math:`L L^\top \approx K`,
     where :math:`K` is the full rank covariance matrix on `x`.
-    The rank is equal to the number of landmark points.
+    The rank is equal to the number of landmark points. This is the improved
+    Nyström rank reduction method.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param xu: The landmark points.
-    :type xu: array-like
-    :param rank: The rank of the decomposition, or if rank is a float
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    cov_func : function
+        The Gaussian process covariance function.
+    xu : array-like
+        The landmark points.
+    rank : int or float, optional
+        The rank of the decomposition, or if rank is a float
         0.0 :math:`\le` rank :math:`\le` 1.0, the rank is reduced further using
         the QR decomposition such that the eigenvalues of the included eigenvectors
-        account for the specified percentage of the total eigenvalues. Defaults to 0.999.
-    :type rank: int or float
-    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
-    :type sigma: float
-    :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
-    :type jitter: float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Defaults to 'auto'.
-    :type method: str
-    :return: :math:`L` - A matrix such that :math:`L L^\top \approx K`.
-    :rtype: array-like
+        account for the specified percentage of the total eigenvalues. Defaults to 0.99.
+    sigma : float, optional
+        Noise standard deviation of the data we condition on. Defaults to 0.
+    jitter : float, optional
+        A small amount to add to the diagonal. Defaults to 1e-6.
+
+    Returns
+    -------
+    array-like
+        :math:`L` - A matrix such that :math:`L L^\top \approx K`.
+
+    Notes
+    -----
+    This function computes a low-rank approximation of the full covariance matrix using
+    an improved Nyström method. The rank reduction is controlled either by an integer value or
+    a floating-point value that specifies the percentage of total eigenvalues.
     """
     sigma2 = square(sigma)
     sigma2 = where(sigma2 < jitter, jitter, sigma2)
@@ -267,8 +258,8 @@ def _modified_low_rank(
     W = stabilize(cov_func(xu, xu), sigma2)
     C = cov_func(x, xu)
     Q, R = qr(C, mode="reduced")
-    s, v = _eigendecomposition(W, rank=xu.shape[0], method="fixed")
+    s, v = _eigendecomposition(W, rank=xu.shape[0])
     T = R @ v
-    S, V = _eigendecomposition(T / s @ T.T, rank=rank, method=method)
+    S, V = _eigendecomposition(T / s @ T.T, rank=rank)
     L = Q @ V * sqrt(S)
     return L

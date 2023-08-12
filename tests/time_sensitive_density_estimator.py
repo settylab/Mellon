@@ -34,7 +34,7 @@ def common_setup_time_sensitive(tmp_path):
 def test_time_sensitive_density_estimator_properties(common_setup_time_sensitive):
     X, times, _, _, relative_err, est, _, test_time = common_setup_time_sensitive
     n, d = X.shape
-    multi_time = [test_time, test_time, test_time+1]
+    multi_time = [test_time, test_time, test_time + 1]
     n_times = len(multi_time)
 
     pred_log_dens = est.predict(X, times)
@@ -51,12 +51,17 @@ def test_time_sensitive_density_estimator_properties(common_setup_time_sensitive
     hess = est.predict.hessian(X, test_time)
     assert hess.shape == (n, d, d), "The hessian should have the correct shape."
     hess = est.predict.hessian(X, multi_time=multi_time)
-    assert hess.shape == (n, n_times, d, d), "The hessians should have the correct shape."
-    assert (
-        jnp.all(hess[:, 0, :, :] == hess[:, 1, :, :])
+    assert hess.shape == (
+        n,
+        n_times,
+        d,
+        d,
+    ), "The hessians should have the correct shape."
+    assert jnp.all(
+        hess[:, 0, :, :] == hess[:, 1, :, :]
     ), "Equal time points should produce equal results."
-    assert (
-        jnp.any(hess[:, 0, :, :] != hess[:, 2, :, :])
+    assert jnp.any(
+        hess[:, 0, :, :] != hess[:, 2, :, :]
     ), "Different time points should produce differnt results."
 
     result = est.predict.hessian_log_determinant(X, test_time)
@@ -74,21 +79,20 @@ def test_time_sensitive_density_estimator_properties(common_setup_time_sensitive
 
 
 @pytest.mark.parametrize(
-    "rank, method, n_landmarks, err_limit",
+    "rank, n_landmarks, err_limit",
     [
-        (1.0, "percent", 10, 2e-1),
-        (0.99, "percent", 80, 5e-1),
+        (1.0, 10, 2e-1),
+        (0.99, 80, 5e-1),
     ],
 )
 def test_time_sensitive_density_estimator_approximations(
-    common_setup_time_sensitive, rank, method, n_landmarks, err_limit
+    common_setup_time_sensitive, rank, n_landmarks, err_limit
 ):
     X, times, _, _, relative_err, _, _, _ = common_setup_time_sensitive
     n = X.shape[0]
 
     est = mellon.TimeSensitiveDensityEstimator(
         rank=rank,
-        method=method,
         n_landmarks=n_landmarks,
         _save_intermediate_ls_times=True,
         normalize_per_time_point=True,
@@ -117,22 +121,20 @@ def test_time_sensitive_density_estimator_approximations(
 
 
 @pytest.mark.parametrize(
-    "rank, method, n_landmarks, compress",
+    "rank, n_landmarks, compress",
     [
-        (1.0, "percent", 10, None),
-        (0.8, "percent", 10, None),
-        (0.99, "percent", 80, "gzip"),
-        (0.99, "percent", 80, "bz2"),
+        (1.0, 10, None),
+        (0.8, 10, None),
+        (0.99, 80, "gzip"),
+        (0.99, 80, "bz2"),
     ],
 )
 def test_time_sensitive_density_estimator_serialization(
-    common_setup_time_sensitive, rank, method, n_landmarks, compress
+    common_setup_time_sensitive, rank, n_landmarks, compress
 ):
     X, times, test_file, logger, _, _, _, _ = common_setup_time_sensitive
 
-    est = mellon.TimeSensitiveDensityEstimator(
-        rank=rank, method=method, n_landmarks=n_landmarks
-    )
+    est = mellon.TimeSensitiveDensityEstimator(rank=rank, n_landmarks=n_landmarks)
     est.fit(X, times)
     dens_appr = est.predict(X, times)
 
@@ -149,23 +151,27 @@ def test_time_sensitive_density_estimator_serialization(
     logger.info(
         "Assertion passed: the deserialized predictor produced the expected results."
     )
-    
+
+
 @pytest.mark.parametrize(
-    "rank, method, n_landmarks, compress",
+    "rank, n_landmarks, compress",
     [
-        (1.0, "percent", 10, None),
-        (0.8, "percent", 10, None),
-        (0.99, "percent", 80, "gzip"),
-        (0.99, "percent", 80, "bz2"),
+        (1.0, 10, None),
+        (0.8, 10, None),
+        (0.99, 80, "gzip"),
+        (0.99, 80, "bz2"),
     ],
 )
 def test_density_estimator_serialization_with_uncertainty(
-    common_setup_time_sensitive, rank, method, n_landmarks, compress
+    common_setup_time_sensitive, rank, n_landmarks, compress
 ):
     X, times, test_file, logger, _, _, _, _ = common_setup_time_sensitive
 
     est = mellon.TimeSensitiveDensityEstimator(
-        rank=rank, method=method, n_landmarks=n_landmarks, optimizer="advi", predictor_with_uncertainty=True
+        rank=rank,
+        n_landmarks=n_landmarks,
+        optimizer="advi",
+        predictor_with_uncertainty=True,
     )
     est.fit(X, times)
     dens_appr = est.predict(X, times)
@@ -173,7 +179,9 @@ def test_density_estimator_serialization_with_uncertainty(
 
     # Test serialization
     est.predict.to_json(test_file, compress=compress)
-    logger.info(f"Serialized the predictor with uncertainty and saved it to {test_file}.")
+    logger.info(
+        f"Serialized the predictor with uncertainty and saved it to {test_file}."
+    )
     predictor = mellon.Predictor.from_json(test_file, compress=compress)
     logger.info("Deserialized the predictor with uncertainty from the JSON file.")
     reprod = predictor(X, times)

@@ -1,3 +1,4 @@
+from enum import Enum
 from jax.numpy import exp, log, quantile, stack, unique, empty, where
 from jax.numpy import sum as arraysum
 from jax.numpy import any as arrayany
@@ -9,21 +10,200 @@ from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
 from .util import mle, local_dimensionality, Log, ensure_2d, DEFAULT_JITTER
 from .decomposition import (
-    _check_method,
     _full_rank,
     _full_decomposition_low_rank,
     _standard_low_rank,
     _modified_low_rank,
     DEFAULT_RANK,
-    DEFAULT_METHOD,
     DEFAULT_SIGMA,
 )
-from .validation import _validate_time_x, _validate_positive_float
+from .validation import (
+    _validate_time_x,
+    _validate_positive_float,
+    _validate_float_or_int,
+    _validate_positive_int,
+)
 
 
 DEFAULT_N_LANDMARKS = 5000
 
 logger = Log()
+
+
+class GaussianProcessType(Enum):
+    FULL = "full"
+    FULL_NYSTROEM = "full_nystroem"
+    SPARSE_CHOLESKY = "sparse_cholesky"
+    SPARSE_NYSTROEM = "sparse_nystroem"
+
+    @staticmethod
+    def from_string(s: str, optional: bool = False):
+        if s is None:
+            if optional:
+                return None
+            else:
+                logger.error("Gaussian process type must be specified but is None.")
+                raise ValueError("Gaussian process type must be specified but is None.")
+
+        if isinstance(s, GaussianProcessType):
+            return s
+
+        normalized_input = s.lower().replace(" ", "_")
+
+        # Try to match the exact Enum value
+        for gp_type in GaussianProcessType:
+            if gp_type.value == normalized_input:
+                logger.info(f"Gaussian Process type: {gp_type.value}")
+                return gp_type
+
+        # If no exact match, try partial matching by finding the closest match
+        for gp_type in GaussianProcessType:
+            if normalized_input in gp_type.value:
+                logger.warning(
+                    f"Partial match found for Gaussian Process type: {gp_type.value}. Input was: {s}"
+                )
+                return gp_type
+
+        message = f"Unknown Gaussian Process type: {s}"
+        logger.error(message)
+        raise ValueError(message)
+
+
+def compute_rank(gp_type):
+    """
+    Compute the appropriate rank reduction based on the given Gaussian Process type.
+
+    Parameters
+    ----------
+    gp_type : GaussianProcessType
+        The type of the Gaussian Process. It helps to decide the rank.
+
+    Returns
+    -------
+    computed_rank : float or int or None
+        The computed rank value based on the `gp_type`, `rank`, and shape of `x`.
+
+    Raises
+    ------
+    ValueError
+        If the given rank and Gaussian Process type conflict with each other.
+    """
+
+    if gp_type is None:
+        return 1.0
+    elif (gp_type == GaussianProcessType.FULL_NYSTROEM) or (
+        gp_type == GaussianProcessType.SPARSE_NYSTROEM
+    ):
+        return 0.99
+    else:
+        return 1.0
+
+
+def compute_n_landmarks(gp_type, n_samples, landmarks):
+    """
+    Compute the number of landmarks based on the given Gaussian Process type and landmarks.
+
+    Parameters
+    ----------
+    gp_type : GaussianProcessType
+        The type of the Gaussian Process. It helps to decide the number of landmarks.
+    n_samples : array-like
+        The number of samples/cells.
+    landmarks : array-like or None
+        The given landmarks. If specified, its shape determines the number of landmarks, unless conflicting with `n_landmarks`.
+
+    Returns
+    -------
+    computed_n_landmarks : int
+        The computed number of landmarks based on the `gp_type`, `n_landmarks`, shape of `x`, and `landmarks`.
+
+    Raises
+    ------
+    ValueError
+        If the given number of landmarks, Gaussian Process type, and landmarks conflict with each other.
+
+    """
+    if landmarks is not None:
+        return landmarks.shape[0]
+
+    if gp_type is None:
+        n_landmarks = min(n_samples, DEFAULT_N_LANDMARKS)
+    elif (
+        gp_type == GaussianProcessType.FULL
+        or gp_type == GaussianProcessType.FULL_NYSTROEM
+    ):
+        n_landmarks = n_samples
+    elif (
+        gp_type == GaussianProcessType.SPARSE_CHOLESKY
+        or gp_type == GaussianProcessType.SPARSE_NYSTROEM
+    ):
+        if n_samples <= DEFAULT_N_LANDMARKS:
+            message = (
+                f"Gaussian Process type {gp_type} and default "
+                f"number of landmarks {DEFAULT_N_LANDMARKS:,} < "
+                f"number of cells {n_samples:,}. Reduce n_landmarks below "
+                f"the number of cells to use {gp_type}."
+            )
+            logger.warning(message)
+        n_landmarks = DEFAULT_N_LANDMARKS
+    else:
+        n_landmarks = min(n_samples, DEFAULT_N_LANDMARKS)
+        logger.warning(
+            f"Unknown Gaussian Process type {gp_type}, using default "
+            f"n_landmarks={n_landmarks:,}."
+        )
+    return n_landmarks
+
+
+def compute_gp_type(n_landmarks, rank, n_samples):
+    """
+    Determines the type of Gaussian Process based on the landmarks, rank, and method values.
+
+    Parameters
+    ----------
+    landmarks : array-like or None
+        The landmark points for sparse computation.
+    rank : int or float
+        The rank of the approximate covariance matrix.
+    n_samples : array-like
+        The number of samples/cells.
+
+    Returns
+    -------
+    GaussianProcessType
+        One of the Gaussian Process types defined in the `GaussianProcessType` Enum.
+    """
+
+    rank = _validate_float_or_int(rank, "rank", optional=True)
+    n_landmarks = _validate_positive_int(n_landmarks, "n_landmarks")
+    n_samples = _validate_positive_int(n_samples, "n_samples")
+
+    if n_landmarks == 0 or n_landmarks >= n_samples:
+        # Full model
+        if (
+            rank is None
+            or type(rank) is int
+            and (rank >= n_samples)
+            or type(rank) is float
+            and rank >= 1.0
+            or rank == 0
+        ):
+            return GaussianProcessType.FULL
+        else:
+            return GaussianProcessType.FULL_NYSTROEM
+    else:
+        # Sparse model
+        if (
+            rank is None
+            or type(rank) is int
+            and (rank >= n_landmarks)
+            or type(rank) is float
+            and rank >= 1.0
+            or rank == 0
+        ):
+            return GaussianProcessType.SPARSE_CHOLESKY
+        else:
+            return GaussianProcessType.SPARSE_NYSTROEM
 
 
 def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
@@ -333,29 +513,103 @@ def compute_cov_func(cov_func_curry, ls, ls_time=None):
     return cov_func_curry(ls)
 
 
-def compute_L(
+def compute_Lp(
     x,
     cov_func,
+    gp_type=None,
     landmarks=None,
-    rank=DEFAULT_RANK,
-    method=DEFAULT_METHOD,
     sigma=DEFAULT_SIGMA,
     jitter=DEFAULT_JITTER,
 ):
     R"""
-    Compute a low rank :math:`L` and :math:`L_p` such that :math:`L L^\top \approx K`,
-    where :math:`K` is the full rank covariance matrix on `x`, and
-    :math:`L_p L_p^\top = \Sigma_p` where :math:`\Sigma_p` is the full rank
-    covariance matrix on `landmarks`. If there are no landmarks then :math:`L_p=L`.
+    Compute a matrix :math:`L_p` such that :math:`L_p L_p^\top = \Sigma_p`
+    where :math:`\Sigma_p` is the full rank covariance matrix on the
+    inducing points. Unless a full Nyström method or sparse Nyström method
+    is used, in which case None is returned.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param landmarks: The landmark points. If None, computes a full rank decompostion.
-        Defaults to None.
-    :type landmarks: array-like
-    :param rank: The rank of the approximate covariance matrix.
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    cov_func : function
+        The Gaussian process covariance function.
+    gp_type : str or GaussianProcessType
+        The type of sparcification used for the Gaussian Process:
+         - 'full' None-sparse Gaussian Process
+         - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
+            typically employed to enable scalable GP models.
+    landmarks : array-like
+        The landmark points.
+    sigma : float, optional
+        Noise standard deviation of the data we condition on. Defaults to 0.
+    jitter : float, optional
+        A small amount to add to the diagonal. Defaults to 1e-6.
+
+    Returns
+    -------
+    array-like or None
+        :math:`L_p` - A matrix such that :math:`L_p L_p^\top = \Sigma_p`,
+        or None if using full or sparse Nyström.
+    """
+    x = ensure_2d(x)
+    n_samples = x.shape[0]
+    if landmarks is None:
+        n_landmarks = n_samples
+    else:
+        n_landmarks = landmarks.shape[0]
+    gp_type = GaussianProcessType.from_string(gp_type, optional=True)
+    if gp_type is None:
+        gp_type = compute_gp_type(n_landmarks, 1.0, n_samples)
+
+    if (
+        gp_type == GaussianProcessType.FULL_NYSTROEM
+        or gp_type == GaussianProcessType.SPARSE_NYSTROEM
+    ):
+        return None
+    elif gp_type == GaussianProcessType.FULL:
+        return _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
+    elif gp_type == GaussianProcessType.SPARSE_CHOLESKY:
+        return _full_rank(landmarks, cov_func, sigma=sigma, jitter=jitter)
+    else:
+        message = f"Unknown Gaussian Process type {gp_type}."
+        logger.error(message)
+        raise ValueError(message)
+
+
+def compute_L(
+    x,
+    cov_func,
+    gp_type=None,
+    landmarks=None,
+    Lp=None,
+    rank=DEFAULT_RANK,
+    sigma=DEFAULT_SIGMA,
+    jitter=DEFAULT_JITTER,
+):
+    R"""
+    Compute a low rank :math:`L` such that :math:`L L^\top \approx K`,
+    where :math:`K` is the full rank covariance matrix on `x`.
+
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    cov_func : function
+        The Gaussian process covariance function.
+    gp_type : str or GaussianProcessType
+        The type of sparcification used for the Gaussian Process:
+         - 'full' None-sparse Gaussian Process
+         - 'full_nystroem' Sparse GP with Nyström rank reduction without landmarks,
+            which lowers the computational complexity.
+         - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
+            typically employed to enable scalable GP models.
+         - 'sparse_nystroem' Sparse GP using landmarks or inducing points,
+            along with an improved Nyström rank reduction method that balances
+            accuracy with efficiency.
+    landmarks : array-like, optional
+        The landmark points. If None, computes a full rank decomposition. Defaults to None.
+    rank : int or float, optional
+        The rank of the approximate covariance matrix.
         If rank is an int, an :math:`n \times` rank matrix
         :math:`L` is computed such that :math:`L L^\top \approx K`, the exact
         :math:`n \times n` covariance matrix.
@@ -363,77 +617,75 @@ def compute_L(
         of :math:`L` is selected such that the included eigenvalues of the covariance
         between landmark points account for the specified percentage of the
         sum of eigenvalues. Defaults to 0.999.
-    :type rank: int or float
-    :param method: Explicitly specifies whether rank is to be interpreted as a
-        fixed number of eigenvectors or a percent of eigenvalues to include
-        in the low rank approximation. Supports 'fixed', 'percent', or 'auto'.
-        If 'auto', interprets rank as a fixed number of eigenvectors if it is
-        an int and interprets rank as a percent of eigenvalues if it is a float.
-        Defaults to 'auto'.
-    :type method: str
-    :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
-    :type sigma: float
-    :param jitter: A small amount to add to the diagonal. Defaults to 1e-6.
-    :type jitter: float
-    :return: :math:`L`, :math:`L_p` - A matrix such that :math:`L L^\top \approx K`.
-    :rtype: array-like, array-like
+    sigma : float, optional
+        Noise standard deviation of the data we condition on. Defaults to 0.
+    jitter : float, optional
+        A small amount to add to the diagonal. Defaults to 1e-6.
+    Lp : array-like, optional
+        Prespecified matrix :math:`L_p` sich that :math:`L_p L_p^\top = \Sigma_p`
+        where :math:`\Sigma_p` is the full rank covariance matrix on the
+        inducing points. Defaults to None.
+
+    Returns
+    -------
+    array-like
+        :math:`L` - Matrix such that :math:`L L^\top \approx K`.
+
+    Raises
+    ------
+    ValueError
+        If the Gaussian Process type is unknown or if the shape of Lp is incorrect.
     """
     x = ensure_2d(x)
     n_samples = x.shape[0]
     if landmarks is None:
-        n = x.shape[0]
-        method = _check_method(rank, n, method)
-
-        if type(rank) is int and rank == n or type(rank) is float and rank == 1.0:
-            logger.info(
-                f"Doing full-rank Cholesky decomposition for {n_samples:,} samples."
-            )
-            L = _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
-            return L, L
-        else:
-            logger.info(
-                f"Doing full-rank singular value decomposition for {n_samples:,} samples."
-            )
-            L = _full_decomposition_low_rank(
-                x, cov_func, rank=rank, method=method, sigma=sigma, jitter=jitter
-            )
-            return L, None
+        n_landmarks = n_samples
     else:
-        landmarks = ensure_2d(landmarks)
-
         n_landmarks = landmarks.shape[0]
-        method = _check_method(rank, n_landmarks, method)
+    gp_type = GaussianProcessType.from_string(gp_type, optional=True)
+    if rank is None:
+        rank = compute_rank(gp_type)
+    if gp_type is None:
+        gp_type = compute_gp_type(n_landmarks, rank, n_samples)
 
-        if (
-            type(rank) is int
-            and rank == n_landmarks
-            or type(rank) is float
-            and rank == 1.0
-        ):
-            logger.info(
-                "Doing low-rank Cholesky decomposition for "
-                f"{n_samples:,} samples and {n_landmarks:,} landmarks."
-            )
+    if gp_type == GaussianProcessType.FULL:
+        if Lp is None:
+            return _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
+        if Lp.shape != (n_samples, n_samples):
+            message = f" Wrong shape of Lp {Lp.shape} for {gp_type} and {n_samples:,} samples."
+            logger.error(message)
+            raise ValueError(message)
+        return Lp
+    elif gp_type == GaussianProcessType.FULL_NYSTROEM:
+        return _full_decomposition_low_rank(
+            x, cov_func, rank=rank, sigma=sigma, jitter=jitter
+        )
+    elif gp_type == GaussianProcessType.SPARSE_CHOLESKY:
+        n_landmarks = landmarks.shape[0]
+        if Lp is None:
             return _standard_low_rank(
                 x, cov_func, landmarks, sigma=sigma, jitter=jitter
             )
-        else:
-            logger.info(
-                "Doing low-rank improved Nyström decomposition for "
-                f"{n_samples:,} samples and {n_landmarks:,} landmarks."
-            )
-            return (
-                _modified_low_rank(
-                    x,
-                    cov_func,
-                    landmarks,
-                    rank=rank,
-                    method=method,
-                    sigma=sigma,
-                    jitter=jitter,
-                ),
-                None,
-            )
+        if Lp.shape != (n_landmarks, n_landmarks):
+            message = f" Wrong shape of Lp {Lp.shape} for {gp_type} and {n_landmarks:,} landmarks."
+            logger.error(message)
+            raise ValueError(message)
+        return _standard_low_rank(
+            x, cov_func, landmarks, Lp=Lp, sigma=sigma, jitter=jitter
+        )
+    elif gp_type == GaussianProcessType.SPARSE_NYSTROEM:
+        return _modified_low_rank(
+            x,
+            cov_func,
+            landmarks,
+            rank=rank,
+            sigma=sigma,
+            jitter=jitter,
+        )
+    else:
+        message = f"Unknown Gaussian Process type {gp_type}."
+        logger.error(message)
+        raise ValueError(message)
 
 
 def compute_initial_value(nn_distances, d, mu, L):

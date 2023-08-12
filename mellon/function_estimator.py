@@ -1,4 +1,3 @@
-from .decomposition import DEFAULT_METHOD
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
     compute_conditional_mean,
@@ -7,7 +6,7 @@ from .inference import (
     DEFAULT_OPTIMIZER,
 )
 from .parameters import (
-    DEFAULT_N_LANDMARKS,
+    GaussianProcessType,
 )
 from .util import (
     DEFAULT_JITTER,
@@ -36,9 +35,21 @@ class FunctionEstimator(BaseEstimator):
         A curry that takes one length scale argument and returns a covariance function
         of the form k(x, y) :math:`\rightarrow` float. Defaults to Matern52.
 
-    n_landmarks : int, optional
-        The number of landmark points. If less than 1 or greater than or equal to the
-        number of training points, inducing points will not be computed or used. Defaults to 5000.
+    n_landmarks : int
+        The number of landmark/inducing points. Only used if a sparse GP is indicated
+        through gp_type. If 0 or equal to the number of training points, inducing points
+        will not be computed or used. Defaults to 5000.
+
+    gp_type : str or GaussianProcessType
+        The type of sparcification used for the Gaussian Process:
+         - 'full' None-sparse Gaussian Process
+         - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
+            typically employed to enable scalable GP models.
+
+        The value can be either a string matching one of the above options or an instance of
+        the `mellon.parameters.GaussianProcessType` Enum. If a partial match is found with the
+        Enum, a warning will be logged, and the closest match will be used.
+        Defaults to 'sparse_cholesky'.
 
     jitter : float, optional
         A small amount added to the diagonal of the covariance matrix to ensure numerical stability.
@@ -97,8 +108,8 @@ class FunctionEstimator(BaseEstimator):
     def __init__(
         self,
         cov_func_curry=DEFAULT_COV_FUNC,
-        n_landmarks=DEFAULT_N_LANDMARKS,
-        method=DEFAULT_METHOD,
+        n_landmarks=None,
+        gp_type=None,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -118,6 +129,7 @@ class FunctionEstimator(BaseEstimator):
             n_landmarks=n_landmarks,
             rank=1.0,
             jitter=jitter,
+            gp_type=gp_type,
             landmarks=landmarks,
             nn_distances=nn_distances,
             mu=mu,
@@ -129,6 +141,17 @@ class FunctionEstimator(BaseEstimator):
         )
         self.mu = _validate_float(mu, "mu")
         self.sigma = _validate_positive_float(sigma, "sigma")
+        if (
+            gp_type == GaussianProcessType.FULL_NYSTROEM
+            or gp_type == GaussianProcessType.SPARSE_NYSTROEM
+        ):
+            message = (
+                f"gp_type={gp_type} but the Nyström rank reduction is "
+                "not available for the Function Estimator. "
+                "Use gp_type='cholesky' or gp_type='full' instead."
+            )
+            logger.error(message)
+            raise ValueError(message)
 
     def __call__(self, x=None, y=None):
         """This calls self.fit_predict(x, y):
@@ -158,6 +181,8 @@ class FunctionEstimator(BaseEstimator):
         :rtype: function, array-like
         """
         x = self.set_x(x)
+        self._prepare_attribute("n_landmarks")
+        self._prepare_attribute("gp_type")
         if self.ls is None:
             self._prepare_attribute("nn_distances")
         self._prepare_attribute("ls")

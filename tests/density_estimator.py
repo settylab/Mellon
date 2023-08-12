@@ -81,19 +81,17 @@ def test_density_estimator_optimizers(common_setup):
 
 
 @pytest.mark.parametrize(
-    "rank, method, n_landmarks, err_limit",
+    "rank, n_landmarks, err_limit",
     [
-        (1.0, "percent", 0, 1e-1),
-        (1.0, "percent", 10, 2e-1),
-        (0.99, "percent", 80, 2e-1),
+        (1.0, 0, 1e-1),
+        (1.0, 10, 2e-1),
+        (0.99, 80, 2e-1),
     ],
 )
-def test_density_estimator_approximations(
-    common_setup, rank, method, n_landmarks, err_limit
-):
+def test_density_estimator_approximations(common_setup, rank, n_landmarks, err_limit):
     X, _, _, relative_err, _, _ = common_setup
 
-    est = mellon.DensityEstimator(rank=rank, method=method, n_landmarks=n_landmarks)
+    est = mellon.DensityEstimator(rank=rank, n_landmarks=n_landmarks)
     est.fit(X)
     dens_appr = est.predict(X)
     assert (
@@ -131,7 +129,8 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     logger.info(
         "Assertion passed: the deserialized predictor produced the expected results."
     )
-    
+
+
 @pytest.mark.parametrize(
     "rank, n_landmarks, compress",
     [
@@ -140,17 +139,26 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
         (0.99, 80, None),
     ],
 )
-def test_density_estimator_serialization_with_uncertainty(common_setup, rank, n_landmarks, compress):
+def test_density_estimator_serialization_with_uncertainty(
+    common_setup, rank, n_landmarks, compress
+):
     X, test_file, logger, _, _, _ = common_setup
 
-    est = mellon.DensityEstimator(rank=rank, n_landmarks=n_landmarks, optimizer="advi", predictor_with_uncertainty=True)
+    est = mellon.DensityEstimator(
+        rank=rank,
+        n_landmarks=n_landmarks,
+        optimizer="advi",
+        predictor_with_uncertainty=True,
+    )
     est.fit(X)
     dens_appr = est.predict(X)
     uncertainty_pred = est.predict.uncertainty(X)
 
     # Test serialization
     est.predict.to_json(test_file, compress=compress)
-    logger.info(f"Serialized the predictor with uncertainty and saved it to {test_file}.")
+    logger.info(
+        f"Serialized the predictor with uncertainty and saved it to {test_file}."
+    )
     predictor = mellon.Predictor.from_json(test_file, compress=compress)
     logger.info("Deserialized the predictor with uncertainty from the JSON file.")
     reprod = predictor(X)
@@ -196,7 +204,7 @@ def test_density_estimator_single_dimension(common_setup):
     d1_pred = est.fit_predict(X[:, 0])
     assert d1_pred.shape == (n,), "There should be one result per sample."
 
-    est = mellon.DensityEstimator(rank=1.0, method="percent", n_landmarks=0)
+    est = mellon.DensityEstimator(rank=1.0, n_landmarks=0)
     d1_pred_full = est.fit_predict(X[:, 0])
     assert (
         jnp.std(d1_pred - d1_pred_full) < 1e-2

@@ -67,22 +67,20 @@ def test_dimensionality_estimator_optimizer(common_setup_dim_estimator):
 
 
 @pytest.mark.parametrize(
-    "rank, method, n_landmarks, err_limit",
+    "rank, n_landmarks, err_limit",
     [
-        (1.0, "percent", 100, 1e0),
-        (1.0, "percent", 10, 1e0),
-        (0.99, "percent", 80, 1e0),
-        (50, "auto", 80, 1e0),
+        (1.0, 100, 1e0),
+        (1.0, 10, 1e0),
+        (0.99, 80, 1e0),
+        (50, 80, 1e0),
     ],
 )
 def test_dimensionality_estimator_approximations(
-    common_setup_dim_estimator, rank, method, n_landmarks, err_limit
+    common_setup_dim_estimator, rank, n_landmarks, err_limit
 ):
     X, local_dim, relative_err, _, _ = common_setup_dim_estimator
 
-    est = mellon.DimensionalityEstimator(
-        rank=rank, method=method, n_landmarks=n_landmarks
-    )
+    est = mellon.DimensionalityEstimator(rank=rank, n_landmarks=n_landmarks)
     est.fit(X)
     dim_appr = est.predict(X)
     assert (
