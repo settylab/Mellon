@@ -497,7 +497,7 @@ class DensityEstimator(BaseEstimator):
         array-like
             The log density at each training point in `x`.
         """
-        if self.x is not None and self.x is not x:
+        if self.x is not None and x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             error = ValueError(message)
             logger.error(error)

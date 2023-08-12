@@ -5,6 +5,7 @@ import mellon
 from mellon.parameters import (
     compute_n_landmarks,
     compute_rank,
+    compute_nn_distances,
     GaussianProcessType,
     compute_gp_type,
 )
@@ -48,6 +49,43 @@ def test_gaussian_process_type():
         GaussianProcessType.from_string(
             None
         ), "Error was expected with None input without optional flag."
+
+
+def test_compute_nn_distances():
+    # Test with different shapes of input
+    x = jnp.array([[1, 2], [2, 3], [3, 4]])
+    expected_output = jnp.array([jnp.sqrt(2), jnp.sqrt(2), jnp.sqrt(2)])
+    assert jnp.allclose(compute_nn_distances(x), expected_output)
+
+    # Test with identical instances and save=True
+    x = jnp.array([[1, 2], [1, 2], [1, 2]])
+    with pytest.raises(ValueError):
+        compute_nn_distances(x)
+
+    # Test with some identical instances and save=True
+    x = jnp.array([[1, 2], [1, 2], [3, 4]])
+    expected_output = jnp.array([jnp.sqrt(8), jnp.sqrt(8), jnp.sqrt(8)])
+    assert jnp.allclose(compute_nn_distances(x), expected_output)
+
+    # Test with non-positive distances and save=False
+    x = jnp.array([[1, 2], [1, 2], [1, 2]])
+    expected_output = jnp.array([0, 0, 0])
+    assert jnp.allclose(compute_nn_distances(x, save=False), expected_output)
+
+    # Test with varying distances
+    x = jnp.array([[1, 1], [2, 2], [4, 4], [5, 5]])
+    expected_output = jnp.array([jnp.sqrt(2), jnp.sqrt(2), jnp.sqrt(2), jnp.sqrt(2)])
+    assert jnp.allclose(compute_nn_distances(x), expected_output)
+
+    # Test with one instance
+    x = jnp.array([[1, 2]])
+    with pytest.raises(ValueError):
+        compute_nn_distances(x)
+
+    # Test with empty array
+    x = jnp.array([])
+    with pytest.raises(ValueError):
+        compute_nn_distances(x)
 
 
 def test_compute_gp_type():

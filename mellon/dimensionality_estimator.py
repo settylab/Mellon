@@ -578,7 +578,7 @@ class DimensionalityEstimator(BaseEstimator):
         ValueError
             If the argument `x` does not match `self.x` which was already set in a previous operation.
         """
-        if self.x is not None and self.x is not x:
+        if self.x is not None and x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             error = ValueError(message)
             logger.error(error)

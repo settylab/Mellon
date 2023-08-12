@@ -197,3 +197,33 @@ def test_density_estimator_serialization_with_uncertainty(
     logger.info(
         "Assertion passed: the deserialized predictor produced the expected results."
     )
+
+
+def test_density_estimator_errors(common_setup_time_sensitive):
+    X, times, _, _, _, _, _, _ = common_setup_time_sensitive
+    Xt = jnp.concatenate([X, times[:, None]], axis=1)
+    lX = jnp.concatenate(
+        [
+            X,
+        ]
+        * 26
+        + [
+            times[:, None],
+        ],
+        axis=1,
+    )
+    est = mellon.TimeSensitiveDensityEstimator()
+
+    with pytest.raises(ValueError):
+        est.fit_predict()
+    with pytest.raises(ValueError):
+        est.fit(None)
+    est.set_x(Xt)
+    with pytest.raises(ValueError):
+        est.prepare_inference(lX)
+    loss_func, initial_value = est.prepare_inference(None)
+    est.run_inference(loss_func, initial_value, "advi")
+    est.process_inference(est.pre_transformation)
+    with pytest.raises(ValueError):
+        est.fit_predict(lX)
+    est.fit_predict()

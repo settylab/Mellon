@@ -13,8 +13,45 @@ from mellon.validation import (
     _validate_cov_func_curry,
     _validate_cov_func,
     _validate_1d,
+    _validate_params,
 )
 from mellon.cov import Covariance
+from mellon.parameters import GaussianProcessType
+
+
+@pytest.mark.parametrize(
+    "rank, gp_type, n_samples, n_landmarks, landmarks, exception_expected",
+    [
+        # Test valid cases
+        (1.0, GaussianProcessType.FULL, 100, 0, None, None),
+        (0.5, GaussianProcessType.FULL_NYSTROEM, 100, 100, None, None),
+        (1.0, GaussianProcessType.SPARSE_CHOLESKY, 100, 50, None, None),
+        (0.5, GaussianProcessType.SPARSE_NYSTROEM, 100, 50, jnp.zeros((50, 5)), None),
+        # Test error for invalid rank
+        (None, GaussianProcessType.FULL, 100, 0, None, ValueError),
+        ("some_type", GaussianProcessType.FULL, 100, 50, None, ValueError),
+        # Test error for invalid gp_type (not a GaussianProcessType instance)
+        (1.0, "some_type", 100, 0, None, ValueError),
+        # Test error cases for landmarks
+        (None, GaussianProcessType.FULL, 100, 50, jnp.zeros((60, 5)), ValueError),
+        (0.5, GaussianProcessType.SPARSE_CHOLESKY, 100, 0, None, ValueError),
+        (0, GaussianProcessType.SPARSE_NYSTROEM, 100, 100, None, ValueError),
+        (2.0, GaussianProcessType.FULL_NYSTROEM, 100, 0, None, ValueError),
+        (100, GaussianProcessType.SPARSE_NYSTROEM, 100, 50, None, ValueError),
+    ],
+)
+def test_validate_params(
+    rank, gp_type, n_samples, n_landmarks, landmarks, exception_expected
+):
+    if exception_expected:
+        with pytest.raises(exception_expected):
+            _validate_params(
+                rank, gp_type, n_samples, n_landmarks, landmarks, GaussianProcessType
+            )
+    else:
+        _validate_params(
+            rank, gp_type, n_samples, n_landmarks, landmarks, GaussianProcessType
+        )
 
 
 def test_validate_float_or_int():

@@ -31,6 +31,9 @@ def test_density_estimator_properties(common_setup):
     X, _, _, relative_err, est, _ = common_setup
     n, d = X.shape
 
+    len_str = len(str(mellon.DensityEstimator()))
+    assert len_str > 0, "The model should have a string representation."
+
     pred_log_dens = est.predict(X)
     assert relative_err(pred_log_dens) < 1e-5, (
         "The predicive function should be consistent with the density on "
@@ -53,7 +56,9 @@ def test_density_estimator_properties(common_setup):
     assert sng.shape == (n,), "There should be one sign for each hessian determinan."
     assert ld.shape == (n,), "There should be one value for each hessian determinan."
 
-    assert len(str(est)) > 0, "The model should have a string representation."
+    assert (
+        len(str(est)) > len_str
+    ), "The model should have a longer string representation after fitting."
 
 
 def test_density_estimator_fractal_dimension(common_setup):
@@ -209,3 +214,31 @@ def test_density_estimator_single_dimension(common_setup):
     assert (
         jnp.std(d1_pred - d1_pred_full) < 1e-2
     ), "The scalar state function estimations be consistent under approximation."
+
+
+def test_density_estimator_errors(common_setup):
+    X, _, _, _, _, _ = common_setup
+    lX = jnp.concatenate(
+        [
+            X,
+        ]
+        * 26,
+        axis=1,
+    )
+    est = mellon.DensityEstimator()
+
+    with pytest.raises(ValueError):
+        est.fit_predict()
+    with pytest.raises(ValueError):
+        est.fit(lX)
+    with pytest.raises(ValueError):
+        est.fit(None)
+    est.set_x(X)
+    with pytest.raises(ValueError):
+        est.prepare_inference(lX)
+    loss_func, initial_value = est.prepare_inference(None)
+    est.run_inference(loss_func, initial_value, "advi")
+    est.process_inference(est.pre_transformation)
+    with pytest.raises(ValueError):
+        est.fit_predict(lX)
+    est.fit_predict()

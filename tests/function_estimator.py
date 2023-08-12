@@ -45,6 +45,7 @@ def test_function_estimator_multi_fit_predict(function_estimator_setup):
         n,
         2,
     ), "There should be a value for each sample and location."
+    est.multi_fit_predict(X, Y.T, X)
 
 
 @pytest.mark.parametrize("n_landmarks, error_limit", [(0, 1e-4), (10, 1e-1)])

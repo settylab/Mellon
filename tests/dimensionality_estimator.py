@@ -86,3 +86,29 @@ def test_dimensionality_estimator_approximations(
     assert (
         relative_err(dim_appr) < err_limit
     ), "The approximation should be close to the default."
+
+
+def test_dimensionality_estimator_errors(common_setup_dim_estimator):
+    X, _, _, _, _ = common_setup_dim_estimator
+    lX = jnp.concatenate(
+        [
+            X,
+        ]
+        * 26,
+        axis=1,
+    )
+    est = mellon.DimensionalityEstimator()
+
+    with pytest.raises(ValueError):
+        est.fit_predict()
+    with pytest.raises(ValueError):
+        est.fit(None)
+    est.set_x(X)
+    with pytest.raises(ValueError):
+        est.prepare_inference(lX)
+    loss_func, initial_value = est.prepare_inference(None)
+    est.run_inference(loss_func, initial_value, "advi")
+    est.process_inference(est.pre_transformation)
+    with pytest.raises(ValueError):
+        est.fit_predict(lX)
+    est.fit_predict()

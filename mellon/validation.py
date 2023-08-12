@@ -31,6 +31,17 @@ def _validate_params(
         The given landmarks/inducing points.
     """
 
+    n_landmarks = _validate_positive_int(n_landmarks, "n_landmarks")
+    rank = _validate_float_or_int(rank, "rank")
+
+    if not isinstance(gp_type, GaussianProcessType):
+        message = (
+            "gp_type needs to be a mellon.parameters.GaussianProcessType but is a "
+            f"{type(gp_type)} instead."
+        )
+        logger.error(message)
+        raise ValueError(message)
+
     # Validation logic for landmarks
     if landmarks is not None and n_landmarks != landmarks.shape[0]:
         n_spec = landmarks.shape[0]
@@ -90,7 +101,9 @@ def _validate_params(
         type(rank) is int
         and (
             (gp_type == GaussianProcessType.SPARSE_CHOLESKY and rank >= n_landmarks)
+            or (gp_type == GaussianProcessType.SPARSE_NYSTROEM and rank >= n_landmarks)
             or (gp_type == GaussianProcessType.FULL and rank >= n_samples)
+            or (gp_type == GaussianProcessType.FULL_NYSTROEM and rank >= n_samples)
         )
         or type(rank) is float
         and rank >= 1.0
@@ -104,6 +117,8 @@ def _validate_params(
                 f"0 < rank < {n_samples:,} (number of cells) "
                 f"but the actual rank is {rank}."
             )
+            logger.error(message)
+            raise ValueError(message)
         elif gp_type == GaussianProcessType.SPARSE_NYSTROEM:
             message = (
                 f"Gaussian Process type {gp_type} requires "
@@ -111,10 +126,8 @@ def _validate_params(
                 f"0 < rank < {n_landmarks:,} (number of landmakrs) "
                 f"but the actual rank is {rank}."
             )
-        else:
-            return rank
-        logger.error(message)
-        raise ValueError(message)
+            logger.error(message)
+            raise ValueError(message)
     elif (
         gp_type != GaussianProcessType.FULL_NYSTROEM
         and gp_type != GaussianProcessType.SPARSE_NYSTROEM
@@ -125,8 +138,6 @@ def _validate_params(
         )
         logger.error(message)
         raise ValueError(message)
-
-    return rank
 
 
 def _validate_time_x(x, times=None, n_features=None, cast_scalar=False):
