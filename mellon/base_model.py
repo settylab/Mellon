@@ -92,7 +92,9 @@ class BaseEstimator:
         self.cov_func = _validate_cov_func(cov_func, "cov_func", optional=True)
         self.Lp = _validate_array(Lp, "Lp", optional=True)
         self.L = _validate_array(L, "L", optional=True)
-        self.d = _validate_float_or_iterable_numerical(d, "d", optional=True)
+        self.d = _validate_float_or_iterable_numerical(
+            d, "d", optional=True, positive=True
+        )
         self.initial_value = _validate_array(
             initial_value, "initial_value", optional=True
         )

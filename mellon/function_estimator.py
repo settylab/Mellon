@@ -13,7 +13,7 @@ from .util import (
     Log,
 )
 from .validation import (
-    _validate_positive_float,
+    _validate_float_or_iterable_numerical,
     _validate_float,
     _validate_array,
 )
@@ -140,7 +140,9 @@ class FunctionEstimator(BaseEstimator):
             jit=jit,
         )
         self.mu = _validate_float(mu, "mu")
-        self.sigma = _validate_positive_float(sigma, "sigma")
+        self.sigma = _validate_float_or_iterable_numerical(
+            sigma, "sigma", positive=True
+        )
         if (
             gp_type == GaussianProcessType.FULL_NYSTROEM
             or gp_type == GaussianProcessType.SPARSE_NYSTROEM

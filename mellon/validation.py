@@ -29,6 +29,8 @@ def _validate_params(
         Number of landmarks used in the approximation process.
     landmarks : array-like or None
         The given landmarks/inducing points.
+    GaussianProcessType : enum
+        Enum containing the allowed Gaussian Process types.
     """
 
     n_landmarks = _validate_positive_int(n_landmarks, "n_landmarks")
@@ -222,6 +224,29 @@ def _validate_time_x(x, times=None, n_features=None, cast_scalar=False):
 
 
 def _validate_float_or_int(value, param_name, optional=False):
+    """
+    Validates whether a given value is a float or an integer.
+
+    Parameters
+    ----------
+    value : float, int, or string, or None
+        The value to be validated. It should be a float, integer, or convertible to a float.
+    param_name : str
+        The name of the parameter to be used in the error message.
+    optional : bool, optional
+        Whether the value is optional. If optional and value is None, returns None. Default is False.
+
+    Returns
+    -------
+    float or int
+        The validated value as float or int.
+
+    Raises
+    ------
+    ValueError
+        If the value is not float, int, convertible to float, and not None when not optional.
+    """
+
     if value is None and optional:
         return None
 
@@ -237,6 +262,29 @@ def _validate_float_or_int(value, param_name, optional=False):
 
 
 def _validate_positive_float(value, param_name, optional=False):
+    """
+    Validates whether a given value is a positive float.
+
+    Parameters
+    ----------
+    value : float, int, or string, or None
+        The value to be validated. It should be a positive float or convertible to a positive float.
+    param_name : str
+        The name of the parameter to be used in the error message.
+    optional : bool, optional
+        Whether the value is optional. If optional and value is None, returns None. Default is False.
+
+    Returns
+    -------
+    float
+        The validated value as a positive float.
+
+    Raises
+    ------
+    ValueError
+        If the value is not a positive float, not convertible to a positive float, and not None when not optional.
+    """
+
     if value is None and optional:
         return None
 
@@ -300,6 +348,29 @@ def _validate_float(value, param_name, optional=False):
 
 
 def _validate_positive_int(value, param_name, optional=False):
+    """
+    Validates whether a given value is a positive integer.
+
+    Parameters
+    ----------
+    value : int or None
+        The value to be validated. It should be a positive integer.
+    param_name : str
+        The name of the parameter to be used in the error message.
+    optional : bool, optional
+        Whether the value is optional. If optional and value is None, returns None. Default is False.
+
+    Returns
+    -------
+    int or None
+        The validated value as a positive integer, or None if the value is optional and None.
+
+    Raises
+    ------
+    ValueError
+        If the value is not a positive integer and not None when not optional.
+    """
+
     if optional and value is None:
         return None
     if not isinstance(value, int) or value < 0:
@@ -370,6 +441,27 @@ def _validate_array(iterable, name, optional=False, ndim=None):
 
 
 def _validate_bool(value, name):
+    """
+    Validates whether a given value is a boolean.
+
+    Parameters
+    ----------
+    value : any
+        The value to be validated.
+    name : str
+        The name of the parameter to be used in the error message.
+
+    Returns
+    -------
+    bool
+        The validated value as a boolean.
+
+    Raises
+    ------
+    TypeError
+        If the value is not of type bool.
+    """
+
     if not isinstance(value, bool):
         raise TypeError(f"{name} should be of type bool, got {type(value)} instead.")
 
@@ -377,6 +469,31 @@ def _validate_bool(value, name):
 
 
 def _validate_string(value, name, choices=None):
+    """
+    Validates whether a given value is a string and optionally whether it is in a set of choices.
+
+    Parameters
+    ----------
+    value : any
+        The value to be validated.
+    name : str
+        The name of the parameter to be used in the error message.
+    choices : list of str, optional
+        A list of valid string choices. If provided, the value must be one of these choices.
+
+    Returns
+    -------
+    str
+        The validated value as a string.
+
+    Raises
+    ------
+    TypeError
+        If the value is not of type str.
+    ValueError
+        If the value is not one of the choices (if provided).
+    """
+
     if not isinstance(value, str):
         raise TypeError(f"{name} should be of type str, got {type(value)} instead.")
 
@@ -386,18 +503,49 @@ def _validate_string(value, name, choices=None):
     return value
 
 
-def _validate_float_or_iterable_numerical(value, name, optional=False):
+def _validate_float_or_iterable_numerical(value, name, optional=False, positive=False):
+    """
+    Validates whether a given value is a float, integer, or iterable of numerical values,
+    with an option to check for non-negativity.
+
+    Parameters
+    ----------
+    value : int, float, Iterable or None
+        The value to be validated.
+    name : str
+        The name of the parameter to be used in the error message.
+    optional : bool, optional
+        Whether the value is optional. If optional and value is None, returns None. Default is False.
+    positive : bool, optional
+        Whether to validate that the value is non-negative. Default is False.
+
+    Returns
+    -------
+    float or ndarray
+        The validated value as a float or a numeric array.
+
+    Raises
+    ------
+    TypeError
+        If the value is not of type int, float or iterable.
+    ValueError
+        If the value could not be converted to a numeric array (if iterable) or if the value is negative (if positive is True).
+    """
+
     if value is None and optional:
         return None
 
     if isinstance(value, (int, float)):
-        return float(value)
+        value = float(value)
+        if positive and value < 0:
+            raise ValueError(f"{name} should be a non-negative number or array")
+        return value
 
-    if isinstance(value, Iterable):
-        try:
-            return asarray(value, dtype=float)
-        except Exception:
-            raise ValueError(f"Could not convert {name} to a numeric array.")
+    if isinstance(value, Iterable) and not isinstance(value, str):
+        result = asarray(value, dtype=float)
+        if positive and (result < 0).any():
+            raise ValueError(f"All elements in {name} should be non-negative")
+        return result
 
     raise TypeError(
         f"{name} should be of type int, float or iterable, got {type(value)} instead."
@@ -405,6 +553,29 @@ def _validate_float_or_iterable_numerical(value, name, optional=False):
 
 
 def _validate_cov_func_curry(cov_func_curry, cov_func, param_name):
+    """
+    Validates covariance function curry type.
+
+    Parameters
+    ----------
+    cov_func_curry : type or None
+        The covariance function curry type to be validated.
+    cov_func : mellon.Covariance or None
+        An instance of covariance function.
+    param_name : str
+        The name of the parameter to be used in the error message.
+
+    Returns
+    -------
+    type
+        The validated covariance function curry type.
+
+    Raises
+    ------
+    ValueError
+        If both 'cov_func_curry' and 'cov_func' are None, or if 'cov_func_curry' is not a subclass of mellon.Covariance.
+    """
+
     if cov_func_curry is None and cov_func is None:
         raise ValueError(
             "At least one of 'cov_func_curry' and 'cov_func' must not be None"
@@ -421,6 +592,29 @@ def _validate_cov_func_curry(cov_func_curry, cov_func, param_name):
 
 
 def _validate_cov_func(cov_func, param_name, optional=False):
+    """
+    Validates an instance of a covariance function.
+
+    Parameters
+    ----------
+    cov_func : mellon.Covariance or None
+        The covariance function instance to be validated.
+    param_name : str
+        The name of the parameter to be used in the error message.
+    optional : bool, optional
+        Whether the value is optional. If optional and value is None, returns None. Default is False.
+
+    Returns
+    -------
+    mellon.Covariance or None
+        The validated instance of a subclass of mellon.Covariance or None if optional.
+
+    Raises
+    ------
+    ValueError
+        If 'cov_func' is not an instance of a subclass of mellon.Covariance and not None when not optional.
+    """
+
     if cov_func is None and optional:
         return None
     from .base_cov import Covariance

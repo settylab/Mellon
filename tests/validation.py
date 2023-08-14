@@ -165,21 +165,48 @@ def test_validate_string():
 
 
 def test_validate_float_or_iterable_numerical():
-    # Test with float input
-    assert _validate_float_or_iterable_numerical(10.5, "param") == 10.5
+    # Test with positive numbers
+    assert _validate_float_or_iterable_numerical(5, "value") == 5.0
+    assert jnp.allclose(
+        _validate_float_or_iterable_numerical([5, 6], "value"), jnp.asarray([5.0, 6.0])
+    )
 
-    # Test with iterable input
-    array = jnp.array([1, 2, 3])
-    validated_array = _validate_float_or_iterable_numerical(array, "param")
-    assert jnp.array_equal(validated_array, array)
+    # Test with negative numbers, without positive constraint
+    assert _validate_float_or_iterable_numerical(-5, "value") == -5.0
+    assert jnp.allclose(
+        _validate_float_or_iterable_numerical([-5, -6], "value"), jnp.asarray([-5.0, -6.0])
+    )
 
-    # Test with non-numeric iterable input
+    # Test with zero
+    assert _validate_float_or_iterable_numerical(0, "value") == 0.0
+
+    # Test with positive=True
+    assert _validate_float_or_iterable_numerical(5, "value", positive=True) == 5.0
+
+    # Test with negative numbers and positive=True
     with pytest.raises(ValueError):
-        _validate_float_or_iterable_numerical(["invalid", "input"], "param")
+        _validate_float_or_iterable_numerical(-5, "value", positive=True)
 
-    # Test with non-numeric, non-iterable input
     with pytest.raises(ValueError):
-        _validate_float_or_iterable_numerical("invalid", "param")
+        _validate_float_or_iterable_numerical([-5, 6], "value", positive=True)
+
+    # Test with None and optional=True
+    assert _validate_float_or_iterable_numerical(None, "value", optional=True) is None
+
+    # Test with None and optional=False
+    with pytest.raises(TypeError):
+        _validate_float_or_iterable_numerical(None, "value", optional=False)
+
+    # Test with non-numeric types
+    with pytest.raises(TypeError):
+        _validate_float_or_iterable_numerical("string", "value")
+
+    with pytest.raises(ValueError):
+        _validate_float_or_iterable_numerical(["string"], "value")
+
+    # Test with mixed numeric and non-numeric iterable
+    with pytest.raises(ValueError):
+        _validate_float_or_iterable_numerical([5, "string"], "value")
 
 
 def test_validate_time_x():
