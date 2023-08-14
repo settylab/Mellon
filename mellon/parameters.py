@@ -188,8 +188,16 @@ def compute_gp_type(n_landmarks, rank, n_samples):
             and rank >= 1.0
             or rank == 0
         ):
+            logger.info(
+                "Using non-sparse Gaussian Process since n_landmarks "
+                f"({n_landmarks:,}) >= n_samples ({n_samples:,}) and rank = {rank}."
+            )
             return GaussianProcessType.FULL
         else:
+            logger.info(
+                "Using full Gaussian Process with Nyström rank reduction since n_landmarks "
+                f"({n_landmarks:,}) >= n_samples ({n_samples:,}) and rank = {rank}."
+            )
             return GaussianProcessType.FULL_NYSTROEM
     else:
         # Sparse model
@@ -201,8 +209,16 @@ def compute_gp_type(n_landmarks, rank, n_samples):
             and rank >= 1.0
             or rank == 0
         ):
+            logger.info(
+                "Using sparse Gaussian Process since n_landmarks "
+                f"({n_landmarks:,}) < n_samples ({n_samples:,}) and rank = {rank}."
+            )
             return GaussianProcessType.SPARSE_CHOLESKY
         else:
+            logger.info(
+                "Using sparse Gaussian Process with improved Nyström rank reduction since n_landmarks "
+                f"({n_landmarks:,}) >= n_samples ({n_samples:,}) and rank = {rank}."
+            )
             return GaussianProcessType.SPARSE_NYSTROEM
 
 
