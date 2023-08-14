@@ -507,10 +507,10 @@ def compute_cov_func(cov_func_curry, ls, ls_time=None):
         Otherwise, it's a single covariance function considering only the feature dimensions.
     """
     if ls_time is not None:
-        return cov_func_curry(ls, active_dims=slice(None, -1)) * cov_func_curry(
-            ls_time, active_dims=-1
+        return cov_func_curry(ls=ls, active_dims=slice(None, -1)) * cov_func_curry(
+            ls=ls_time, active_dims=-1
         )
-    return cov_func_curry(ls)
+    return cov_func_curry(ls=ls)
 
 
 def compute_Lp(
