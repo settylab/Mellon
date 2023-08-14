@@ -7,9 +7,7 @@ from jax.errors import ConcretizationTypeError
 logger = logging.getLogger(__name__)
 
 
-def _validate_params(
-    rank, gp_type, n_samples, n_landmarks, landmarks, GaussianProcessType
-):
+def _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks):
     """
     Validates that rank, gp_type, n_samples, and n_landmarks are compatible.
 
@@ -29,12 +27,12 @@ def _validate_params(
         Number of landmarks used in the approximation process.
     landmarks : array-like or None
         The given landmarks/inducing points.
-    GaussianProcessType : enum
-        Enum containing the allowed Gaussian Process types.
     """
 
     n_landmarks = _validate_positive_int(n_landmarks, "n_landmarks")
     rank = _validate_float_or_int(rank, "rank")
+
+    from .parameters import GaussianProcessType
 
     if not isinstance(gp_type, GaussianProcessType):
         message = (

@@ -45,13 +45,9 @@ def test_validate_params(
 ):
     if exception_expected:
         with pytest.raises(exception_expected):
-            _validate_params(
-                rank, gp_type, n_samples, n_landmarks, landmarks, GaussianProcessType
-            )
+            _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks)
     else:
-        _validate_params(
-            rank, gp_type, n_samples, n_landmarks, landmarks, GaussianProcessType
-        )
+        _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks)
 
 
 def test_validate_float_or_int():
@@ -174,7 +170,8 @@ def test_validate_float_or_iterable_numerical():
     # Test with negative numbers, without positive constraint
     assert _validate_float_or_iterable_numerical(-5, "value") == -5.0
     assert jnp.allclose(
-        _validate_float_or_iterable_numerical([-5, -6], "value"), jnp.asarray([-5.0, -6.0])
+        _validate_float_or_iterable_numerical([-5, -6], "value"),
+        jnp.asarray([-5.0, -6.0]),
     )
 
     # Test with zero

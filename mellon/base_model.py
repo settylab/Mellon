@@ -325,9 +325,7 @@ class BaseEstimator:
         n_samples = self.x.shape[0]
         n_landmarks = self.n_landmarks
         landmarks = self.landmarks
-        _validate_params(
-            rank, gp_type, n_samples, n_landmarks, landmarks, GaussianProcessType
-        )
+        _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks)
 
     def _run_inference(self):
         function = self.loss_func
