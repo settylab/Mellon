@@ -166,6 +166,7 @@ def test_density_estimator_serialization_with_uncertainty(
     common_setup_time_sensitive, rank, n_landmarks, compress
 ):
     X, times, test_file, logger, _, _, _, _ = common_setup_time_sensitive
+    n = X.shape[0]
 
     est = mellon.TimeSensitiveDensityEstimator(
         rank=rank,
@@ -175,7 +176,16 @@ def test_density_estimator_serialization_with_uncertainty(
     )
     est.fit(X, times)
     dens_appr = est.predict(X, times)
+    covariance = est.predict.covariance(X, times)
+    assert covariance.shape == (
+        n,
+    ), "The diagonal of the covariance matrix should be repoorted."
+    mean_covariance = est.predict.mean_covariance(X, times)
+    assert mean_covariance.shape == (
+        n,
+    ), "The diagonal of the mean covariance should be repoorted."
     uncertainty_pred = est.predict.uncertainty(X, times)
+    assert uncertainty_pred.shape == (n,), "One value per sample should be reported."
 
     # Test serialization
     est.predict.to_json(test_file, compress=compress)
