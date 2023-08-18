@@ -40,6 +40,9 @@ def test_density_estimator_properties(common_setup):
         "the training samples."
     )
 
+    pred_str = len(str(est.predict))
+    assert pred_str > 0, "The predictor should have a string representation."
+
     grads = est.predict.gradient(X)
     assert (
         grads.shape == X.shape
@@ -122,7 +125,12 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     dens_appr = est.predict(X)
 
     # Test serialization
+    json_string = est.predict.to_json()
+    assert isinstance(
+        json_string, str
+    ), "Json string should be returned if no filename is given."
     est.predict.to_json(test_file, compress=compress)
+    est.predict.to_json(str(test_file), compress=compress)
     logger.info(f"Serialized the predictor and saved it to {test_file}.")
     predictor = mellon.Predictor.from_json(test_file, compress=compress)
     logger.info("Deserialized the predictor from the JSON file.")
@@ -140,6 +148,7 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     "rank, n_landmarks, compress",
     [
         (1.0, 0, None),
+        (0.99, 0, None),
         (1.0, 10, None),
         (0.99, 80, None),
     ],
@@ -227,7 +236,7 @@ def test_density_estimator_single_dimension(common_setup):
 
 
 def test_density_estimator_errors(common_setup):
-    X, _, _, _, _, _ = common_setup
+    X, test_file, _, _, _, _ = common_setup
     lX = jnp.concatenate(
         [
             X,
@@ -251,6 +260,17 @@ def test_density_estimator_errors(common_setup):
     est.process_inference(est.pre_transformation)
     with pytest.raises(ValueError):
         est.fit_predict(lX)
+    predictor = est.predict
+    with pytest.raises(ValueError):
+        predictor(X[:, -1])
+    with pytest.raises(ValueError):
+        predictor.covariance(X[:, -1])
+    with pytest.raises(ValueError):
+        predictor.mean_covariance(X[:, -1])
+    with pytest.raises(ValueError):
+        predictor.uncertainty(X[:, -1])
+    with pytest.raises(ValueError):
+        predictor.to_json(test_file, compress="bad_type")
     est.fit_predict()
     est = mellon.DensityEstimator(predictor_with_uncertainty=True)
     with pytest.raises(ValueError):
