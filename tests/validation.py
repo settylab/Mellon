@@ -33,7 +33,9 @@ from mellon.parameters import GaussianProcessType
         # Test error for invalid gp_type (not a GaussianProcessType instance)
         (1.0, "some_type", 100, 0, None, ValueError),
         # Test error cases for landmarks
+        (0.5, GaussianProcessType.SPARSE_NYSTROEM, 100, 51, jnp.zeros((50, 5)), ValueError),
         (None, GaussianProcessType.FULL, 100, 50, jnp.zeros((60, 5)), ValueError),
+        (None, GaussianProcessType.FULL_NYSTROEM, 100, 50, None, ValueError),
         (0.5, GaussianProcessType.SPARSE_CHOLESKY, 100, 0, None, ValueError),
         (0, GaussianProcessType.SPARSE_NYSTROEM, 100, 100, None, ValueError),
         (2.0, GaussianProcessType.FULL_NYSTROEM, 100, 0, None, ValueError),
