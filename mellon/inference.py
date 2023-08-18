@@ -1,7 +1,7 @@
 from collections import namedtuple
 from functools import partial
 from jax import random, vmap
-from jax.numpy import log, pi, exp, stack, arange, sort, mean, zeros_like
+from jax.numpy import log, pi, exp, stack, arange, sort, mean, zeros_like, any
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
 import jax.scipy.stats.norm as norm
@@ -403,7 +403,7 @@ def compute_conditional_mean(
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
         landmarks = ensure_2d(landmarks)
-        if pre_transformation_std is not None and sigma > 0:
+        if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
                 "One can specify either `sigma` or `pre_transformation_std` "
                 "to describe uncertainty, but not both."
@@ -526,7 +526,7 @@ def compute_conditional_mean_times(
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
         landmarks = ensure_2d(landmarks)
-        if pre_transformation_std is not None and sigma > 0:
+        if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
                 "One can specify either `sigma` or `pre_transformation_std` "
                 "to describe uncertainty, but not both."
@@ -649,7 +649,7 @@ def compute_conditional_mean_explog(
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
         landmarks = ensure_2d(landmarks)
-        if pre_transformation_std is not None and sigma > 0:
+        if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
                 "One can specify either `sigma` or `pre_transformation_std` "
                 "to describe uncertainty, but not both."

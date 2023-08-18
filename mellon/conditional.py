@@ -43,7 +43,14 @@ def _check_uncertainty(obj):
 
 
 def _sigma_to_y_cov_factor(sigma, y_cov_factor, n):
-    if y_cov_factor is not None and sigma > 0:
+    if sigma is None and y_cov_factor is None:
+        message = (
+            "No input uncertainty specified. Make sure to set `sigma` or `pre_transformation_std`, "
+            'e.g., by using `optimizer="advi", to quantify uncertainty of the prediction.'
+        )
+        logger.error(message)
+        raise ValueError(message)
+    if y_cov_factor is not None and sigma is not None and any(sigma > 0):
         raise ValueError(
             "One can specify either `sigma` or `y_cov_factor` to describe input noise, but not both."
         )
@@ -278,15 +285,7 @@ class _LandmarksConditionalMean:
         self.L = L
         self._state_variables.add("L")
 
-        if y_cov_factor is not None and any(sigma > 0):
-            raise ValueError(
-                "One can specify either `sigma` or `y_cov_factor` to describe input noise, but not both."
-            )
-        if y_cov_factor is None:
-            try:
-                y_cov_factor = diagonal(sigma)
-            except ValueError:
-                y_cov_factor = eye(xu.shape[0]) * sigma
+        y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, xu.shape[0])
 
         C = solve_triangular(L_B, dot(A, y_cov_factor), lower=True)
         Z = solve_triangular(L_B.T, C)

@@ -242,3 +242,6 @@ def test_density_estimator_errors(common_setup):
     with pytest.raises(ValueError):
         est.fit_predict(lX)
     est.fit_predict()
+    est = mellon.DensityEstimator(predictor_with_uncertainty=True)
+    with pytest.raises(ValueError):
+        est.fit(X)

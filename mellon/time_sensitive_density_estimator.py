@@ -467,6 +467,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             cov_func,
             L,
             Lp,
+            sigma=None,
             jitter=jitter,
             y_is_mean=True,
             with_uncertainty=with_uncertainty,
