@@ -331,6 +331,7 @@ def compute_conditional_mean(
     Lp=None,
     sigma=0,
     jitter=DEFAULT_JITTER,
+    y_is_mean=False,
     with_uncertainty=False,
 ):
     R"""
@@ -366,6 +367,10 @@ def compute_conditional_mean(
         White noise variance, by default 0.
     jitter : float, optional
         A small amount to add to the diagonal for stability, by default 1e-6.
+    y_is_mean : bool
+        Wether to consider y the GP mean or a noise measurment
+        subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+        Defaults to False.
     with_uncertainty : bool
         Wether to compute covariance functions and predictive uncertainty.
         Defaults to False.
@@ -390,6 +395,7 @@ def compute_conditional_mean(
             sigma=sigma,
             jitter=jitter,
             y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
     elif (
@@ -412,6 +418,7 @@ def compute_conditional_mean(
             Lp,
             sigma=sigma,
             jitter=jitter,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
     else:
@@ -429,6 +436,7 @@ def compute_conditional_mean(
             sigma=sigma,
             jitter=jitter,
             y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
 
@@ -445,6 +453,7 @@ def compute_conditional_mean_times(
     Lp,
     sigma=0,
     jitter=DEFAULT_JITTER,
+    y_is_mean=False,
     with_uncertainty=False,
 ):
     R"""
@@ -480,6 +489,10 @@ def compute_conditional_mean_times(
         White noise variance, by default 0.
     jitter : float, optional
         A small amount to add to the diagonal for stability, by default 1e-6.
+    y_is_mean : bool
+        Wether to consider y the GP mean or a noise measurment
+        subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+        Defaults to False.
     with_uncertainty : bool
         Wether to compute covariance functions and predictive uncertainty.
         Defaults to False.
@@ -505,6 +518,7 @@ def compute_conditional_mean_times(
             sigma=sigma,
             jitter=jitter,
             y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
     elif (
@@ -527,6 +541,7 @@ def compute_conditional_mean_times(
             Lp,
             sigma=sigma,
             jitter=jitter,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
     else:
@@ -544,6 +559,7 @@ def compute_conditional_mean_times(
             sigma=sigma,
             jitter=jitter,
             y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
 
@@ -560,6 +576,7 @@ def compute_conditional_mean_explog(
     Lp,
     sigma=0,
     jitter=DEFAULT_JITTER,
+    y_is_mean=False,
     with_uncertainty=False,
 ):
     R"""
@@ -595,6 +612,10 @@ def compute_conditional_mean_explog(
         White noise variance, by default 0.
     jitter : float, optional
         A small amount to add to the diagonal for stability, by default 1e-6.
+    y_is_mean : bool
+        Wether to consider y the GP mean or a noise measurment
+        subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+        Defaults to False.
     with_uncertainty : bool
         Wether to compute covariance functions and predictive uncertainty.
         Defaults to False.
@@ -620,6 +641,7 @@ def compute_conditional_mean_explog(
             sigma=sigma,
             jitter=jitter,
             y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
     elif (
@@ -642,6 +664,7 @@ def compute_conditional_mean_explog(
             Lp,
             sigma=sigma,
             jitter=jitter,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
     else:
@@ -660,6 +683,7 @@ def compute_conditional_mean_explog(
             sigma=sigma,
             jitter=jitter,
             y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
 

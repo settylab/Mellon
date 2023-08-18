@@ -3,7 +3,7 @@ from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-from .util import ensure_2d, stabilize, DEFAULT_JITTER, Log
+from .util import ensure_2d, stabilize, DEFAULT_JITTER, Log, add_variance
 from .base_predictor import Predictor, ExpPredictor, PredictorTime
 from .decomposition import DEFAULT_SIGMA
 
@@ -11,9 +11,10 @@ from .decomposition import DEFAULT_SIGMA
 logger = Log()
 
 
-def _get_L(x, cov_func, jitter=DEFAULT_JITTER):
+def _get_L(x, cov_func, jitter=DEFAULT_JITTER, y_cov_factor=None):
     K = cov_func(x, x)
-    L = cholesky(stabilize(K, jitter=jitter))
+    K = add_variance(K, y_cov_factor, jitter=jitter)
+    L = cholesky(K)
     if any(isnan(L)):
         message = (
             f"Covariance not positively definite with jitter={jitter}. "
@@ -41,6 +42,21 @@ def _check_uncertainty(obj):
         )
 
 
+def _sigma_to_y_cov_factor(sigma, y_cov_factor, n):
+    if y_cov_factor is not None and sigma > 0:
+        raise ValueError(
+            "One can specify either `sigma` or `y_cov_factor` to describe input noise, but not both."
+        )
+
+    if y_cov_factor is None:
+        try:
+            y_cov_factor = diagonal(sigma)
+        except ValueError:
+            y_cov_factor = eye(n) * sigma
+
+    return y_cov_factor
+
+
 class _FullConditionalMean:
     def __init__(
         self,
@@ -52,21 +68,23 @@ class _FullConditionalMean:
         sigma=DEFAULT_SIGMA,
         jitter=DEFAULT_JITTER,
         y_cov_factor=None,
+        y_is_mean=False,
         with_uncertainty=False,
     ):
         R"""
-        The mean function of the conditioned Gaussian process.
+        The mean function of the conditioned Gaussian process (GP).
 
         :param x: The training instances.
         :type x: array-like
         :param y: The function value at each point in x.
         :type y: array-like
-        :param mu: The original Gaussian process mean.
+        :param mu: The original GP mean.
         :type mu: float
-        :param cov_func: The Gaussian process covariance function.
+        :param cov_func: The GP covariance function.
         :type cov_func: function
+
         :param L : A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
-            covariance matrix of the Gaussian Process.
+            covariance matrix of the GP.
         :type L : array-like or None
         :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
         :type sigma: float
@@ -76,17 +94,28 @@ class _FullConditionalMean:
             :math:`\Sigma_L\cdot\Sigma_L` is the covaraince of `y`.
             Only required if `with_uncertainty=True`. Defaults to None.
         :type y_cov_factor: array-like
+        :param y_is_mean: Wether to consider y the GP mean or a noise measurment
+            subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+            Defaults to False.
+        :type y_is_mean: bool
         :param with_uncertainty: Wether to compute covariance functions and
             predictive uncertainty. Defaults to False.
         :type with_uncertainty: bool
-        :return: conditional_mean - The conditioned Gaussian process mean function.
+        :return: conditional_mean - The conditioned GP mean function.
         :rtype: function
         """
         x = ensure_2d(x)
 
         if L is None:
             logger.info("Recomputing covariance decomposition for predictive function.")
-            L = _get_L(x, cov_func, jitter)
+            if y_is_mean:
+                logger.debug("Assuming y is the mean of the GP.")
+                L = _get_L(x, cov_func, jitter)
+            else:
+                logger.debug("Assuming y is not the mean of the GP.")
+                y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
+                sigma = None
+                L = _get_L(x, cov_func, jitter, y_cov_factor)
         r = y - mu
         weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
 
@@ -95,10 +124,9 @@ class _FullConditionalMean:
         self.weights = weights
         self.mu = mu
         self.jitter = jitter
-        self.sigma = sigma
         self.n_input_features = x.shape[1]
 
-        self._state_variables = {"x", "weights", "mu", "sigma", "jitter"}
+        self._state_variables = {"x", "weights", "mu", "jitter"}
 
         if not with_uncertainty:
             return
@@ -106,16 +134,7 @@ class _FullConditionalMean:
         self.L = L
         self._state_variables.add("L")
 
-        if y_cov_factor is not None and sigma > 0:
-            raise ValueError(
-                "One can specify either `sigma` or `y_cov_factor` to describe input noise, but not both."
-            )
-
-        if y_cov_factor is None:
-            try:
-                y_cov_factor = diagonal(sigma)
-            except ValueError:
-                y_cov_factor = eye(x.shape[0]) * sigma
+        y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
 
         W = solve_triangular(L.T, solve_triangular(L, y_cov_factor, lower=True))
         self.W = W
@@ -187,6 +206,7 @@ class _LandmarksConditionalMean:
         sigma=DEFAULT_SIGMA,
         jitter=DEFAULT_JITTER,
         y_cov_factor=None,
+        y_is_mean=False,
         with_uncertainty=False,
     ):
         R"""
@@ -211,6 +231,10 @@ class _LandmarksConditionalMean:
             :math:`\Sigma_L\cdot\Sigma_L` is the covaraince of `y`.
             Only required if `with_uncertainty=True`. Defaults to None.
         :type y_cov_factor: array-like
+        :param y_is_mean: Wether to consider y the GP mean or a noise measurment
+            subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+            Defaults to False.
+        :type y_is_mean: bool
         :param with_uncertainty: Wether to compute predictive uncertainty and
             intermediate covariance functions. Defaults to False.
         :type with_uncertainty: bool
@@ -223,7 +247,17 @@ class _LandmarksConditionalMean:
         L = _get_L(xu, cov_func, jitter)
         A = solve_triangular(L, Kuf, lower=True)
 
-        L_B = cholesky(stabilize(dot(A, A.T), jitter))
+        LLB = dot(A, A.T)
+        if y_is_mean:
+            logger.debug("Assuming y is the mean of the GP.")
+            LLB = stabilize(LLB, jitter)
+        else:
+            logger.debug("Assuming y is not the mean of the GP.")
+            y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, xu.shape[0])
+            sigma = None
+            LLB = add_variance(LLB, y_cov_factor, jitter=jitter)
+
+        L_B = cholesky(LLB)
         r = y - mu
         c = solve_triangular(L_B, dot(A, r), lower=True)
         z = solve_triangular(L_B.T, c)
@@ -233,11 +267,10 @@ class _LandmarksConditionalMean:
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
-        self.sigma = sigma
         self.jitter = jitter
         self.n_input_features = xu.shape[1]
 
-        self._state_variables = {"landmarks", "weights", "mu", "sigma", "jitter"}
+        self._state_variables = {"landmarks", "weights", "mu", "jitter"}
 
         if not with_uncertainty:
             return
@@ -326,6 +359,7 @@ class _LandmarksConditionalMeanCholesky:
         L=None,
         sigma=DEFAULT_SIGMA,
         jitter=DEFAULT_JITTER,
+        y_is_mean=False,
         with_uncertainty=False,
     ):
         """
@@ -347,6 +381,10 @@ class _LandmarksConditionalMeanCholesky:
         :type sigma: float
         :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
         :type jitter: float
+        :param y_is_mean: Wether to consider y the GP mean or a noise measurment
+            subject to `sigma`. Has no effect if `L` is passed.
+            Defaults to False.
+        :type y_is_mean: bool
         :param with_uncertainty: Wether to compute predictive uncertainty and
             intermediate covariance functions. Defaults to False.
         :type with_uncertainty: bool
@@ -356,18 +394,25 @@ class _LandmarksConditionalMeanCholesky:
         xu = ensure_2d(xu)
         if L is None:
             logger.info("Recomputing covariance decomposition for predictive function.")
-            L = _get_L(xu, cov_func, jitter)
+            if y_is_mean:
+                logger.debug("Assuming y is the mean of the GP.")
+                L = _get_L(xu, cov_func, jitter)
+            else:
+                logger.debug("Assuming y is not the mean of the GP.")
+                y_cov_factor = _sigma_to_y_cov_factor(sigma, None, xu.shape[0])
+                sigma = None
+                L = _get_L(xu, cov_func, jitter, y_cov_factor)
+
         weights = solve_triangular(L.T, pre_transformation)
 
         self.cov_func = cov_func
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
-        self.sigma = sigma
         self.jitter = jitter
         self.n_input_features = xu.shape[1]
 
-        self._state_variables = {"landmarks", "weights", "mu", "sigma", "jitter"}
+        self._state_variables = {"landmarks", "weights", "mu", "jitter"}
 
         if not with_uncertainty:
             return

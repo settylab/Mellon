@@ -425,7 +425,9 @@ def compute_nn_distances_within_time_points(x, times=None, normalize=False):
         x_at_time = x[mask, :-1]
         nn_distances_at_time = compute_nn_distances(x_at_time)
         if normalize:
-            logger.warning("Per time point sampling bias normalization is not fully implemented yet.")
+            logger.warning(
+                "Per time point sampling bias normalization is not fully implemented yet."
+            )
             nn_distances_at_time = nn_distances_at_time * n_samples / av_cells_per_tp
         nn_distances = nn_distances.at[mask].set(nn_distances_at_time)
 

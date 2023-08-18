@@ -16,6 +16,7 @@ from .validation import (
     _validate_float_or_iterable_numerical,
     _validate_float,
     _validate_array,
+    _validate_bool,
 )
 
 
@@ -87,6 +88,11 @@ class FunctionEstimator(BaseEstimator):
     sigma : float, optional
         The standard deviation of the white noise. Defaults to 0.
 
+    y_is_mean : bool
+        Wether to consider y the GP mean or a noise measurment
+        subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+        Defaults to False.
+
     predictor_with_uncertainty : bool
         If set to True, computes the predictor instance `.predict` with its predictive uncertainty.
         The uncertainty comes from two sources:
@@ -121,6 +127,7 @@ class FunctionEstimator(BaseEstimator):
         ls_factor=1,
         cov_func=None,
         sigma=0,
+        y_is_mean=False,
         predictor_with_uncertainty=False,
         jit=True,
     ):
@@ -139,6 +146,7 @@ class FunctionEstimator(BaseEstimator):
             predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
         )
+        self.y_is_mean = _validate_bool(y_is_mean, "y_is_mean")
         self.mu = _validate_float(mu, "mu")
         self.sigma = _validate_float_or_iterable_numerical(
             sigma, "sigma", positive=True
@@ -224,6 +232,7 @@ class FunctionEstimator(BaseEstimator):
         cov_func = self.cov_func
         sigma = self.sigma
         jitter = self.jitter
+        y_is_mean = self.y_is_mean
         with_uncertainty = self.predictor_with_uncertainty
         conditional = compute_conditional_mean(
             x,
@@ -237,6 +246,7 @@ class FunctionEstimator(BaseEstimator):
             None,
             sigma,
             jitter=jitter,
+            y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
         )
         self.conditional = conditional

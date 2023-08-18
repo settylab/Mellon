@@ -468,6 +468,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             L,
             Lp,
             jitter=jitter,
+            y_is_mean=True,
             with_uncertainty=with_uncertainty,
         )
         self.log_density_func = log_density_func

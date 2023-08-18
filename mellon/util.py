@@ -24,9 +24,11 @@ from jax.numpy import (
     array,
     isscalar,
     exp,
+    where,
 )
 from numpy import integer, floating
 from jax.numpy import sum as arraysum
+from jax.numpy import diag as diagonal
 from jax.numpy.linalg import norm, lstsq, matrix_rank
 from jax.scipy.special import gammaln
 from jax import vmap, jit
@@ -231,6 +233,41 @@ def stabilize(A, jitter=DEFAULT_JITTER):
     """
     n = A.shape[0]
     return A + eye(n) * jitter
+
+
+def add_variance(K, M=None, jitter=DEFAULT_JITTER):
+    R"""
+    Computes :math:`K + MM^T` where the diagonal of :math:`MM^T` is
+    at least `jitter`. This function stabilizes :math:`K` for the
+    Cholesky decomposition if not already stable enough through adding :math:`MM^T`.
+
+    Parameters
+    ----------
+    K : array_like, shape (n, n)
+        A covariance matrix.
+    M : array_like, shape (n, p), optional
+        Left factor of additional variance. Default is 0.
+    jitter : float, optional
+        A small number to stabilize the covariance matrix. Defaults to 1e-6.
+
+    Returns
+    -------
+    combined_covariance : array_like, shape (n, n)
+        A combined covariance matrix that is more stably positive definite.
+
+    Notes
+    -----
+    If `M` is None, the function will add the jitter to the diagonal of `K` to
+    make it more stable. Otherwise, it will add :math:`MM^T` and correct the
+    diagonal based on the `jitter` parameter.
+    """
+    if M is None:
+        K = stabilize(K, jitter=jitter)
+    else:
+        noise = M.dot(M.T)
+        diff = where(diagonal(noise) < jitter, jitter - diagonal(noise), 0)
+        K = K + noise + diagonal(diff)
+    return K
 
 
 def mle(nn_distances, d):
