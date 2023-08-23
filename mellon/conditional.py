@@ -64,7 +64,7 @@ def _sigma_to_y_cov_factor(sigma, y_cov_factor, n):
     return y_cov_factor
 
 
-class _FullConditionalMean:
+class _FullConditional:
     def __init__(
         self,
         x,
@@ -190,19 +190,19 @@ class _FullConditionalMean:
             return cov
 
 
-class FullConditionalMean(_FullConditionalMean, Predictor):
+class FullConditional(_FullConditional, Predictor):
     pass
 
 
-class ExpFullConditionalMean(_FullConditionalMean, ExpPredictor):
+class ExpFullConditional(_FullConditional, ExpPredictor):
     pass
 
 
-class FullConditionalMeanTime(_FullConditionalMean, PredictorTime):
+class FullConditionalTime(_FullConditional, PredictorTime):
     pass
 
 
-class _LandmarksConditionalMean:
+class _LandmarksConditional:
     def __init__(
         self,
         x,
@@ -336,19 +336,19 @@ class _LandmarksConditionalMean:
             return cov
 
 
-class LandmarksConditionalMean(_LandmarksConditionalMean, Predictor):
+class LandmarksConditional(_LandmarksConditional, Predictor):
     pass
 
 
-class ExpLandmarksConditionalMean(_LandmarksConditionalMean, ExpPredictor):
+class ExpLandmarksConditional(_LandmarksConditional, ExpPredictor):
     pass
 
 
-class LandmarksConditionalMeanTime(_LandmarksConditionalMean, PredictorTime):
+class LandmarksConditionalTime(_LandmarksConditional, PredictorTime):
     pass
 
 
-class _LandmarksConditionalMeanCholesky:
+class _LandmarksConditionalCholesky:
     def __init__(
         self,
         xu,
@@ -474,17 +474,13 @@ class _LandmarksConditionalMeanCholesky:
             return cov
 
 
-class LandmarksConditionalMeanCholesky(_LandmarksConditionalMeanCholesky, Predictor):
+class LandmarksConditionalCholesky(_LandmarksConditionalCholesky, Predictor):
     pass
 
 
-class ExpLandmarksConditionalMeanCholesky(
-    _LandmarksConditionalMeanCholesky, ExpPredictor
-):
+class ExpLandmarksConditionalCholesky(_LandmarksConditionalCholesky, ExpPredictor):
     pass
 
 
-class LandmarksConditionalMeanCholeskyTime(
-    _LandmarksConditionalMeanCholesky, PredictorTime
-):
+class LandmarksConditionalCholeskyTime(_LandmarksConditionalCholesky, PredictorTime):
     pass

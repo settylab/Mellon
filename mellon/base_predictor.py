@@ -92,9 +92,12 @@ class Predictor(ABC):
     def _predict(self, *args, **kwars):
         """Call the predictor. Must be overridden by subclasses."""
 
-    def __call__(self, x):
+    def mean(self, x):
         """
         Use the trained model to make a prediction based on the input array, x.
+
+        The prediction represents the mean of the Gaussian Process conditional
+        distribution of predictive functions.
 
         The input array should be 2D with its second dimension's length
         equal to the number of features used in training the model.
@@ -125,6 +128,8 @@ class Predictor(ABC):
                 "Please ensure that the input data has the same number of features as the training data."
             )
         return self._predict(x)
+
+    __call__ = mean
 
     @abstractmethod
     def _covariance(self, *args, **kwars):
@@ -196,6 +201,8 @@ class Predictor(ABC):
         """
         Computes the total uncertainty of the predicted values quantified by their variance
         or covariance.
+
+        The total uncertainty is defined by `.covariance` + `.mean_covariance`.
 
         Parameters
         ----------
@@ -543,10 +550,14 @@ class PredictorTime(Predictor):
     """
 
     @make_multi_time_argument
-    def __call__(self, Xnew, time=None):
+    def mean(self, Xnew, time=None):
         """
-        Call method to use the class instance as a function. This method
-        deals with an optional 'time' argument.
+        Use the trained model to make a prediction based on the input array, x,
+        and time or multi_time.
+
+        The prediction represents the mean of the Gaussian Process conditional
+        distribution of predictive functions.
+
         If 'time' is a scalar, it converts it to a 1D array of the same size as 'Xnew'.
 
         Parameters
@@ -575,6 +586,8 @@ class PredictorTime(Predictor):
         )
 
         return self._predict(Xnew)
+
+    __call__ = mean
 
     @make_multi_time_argument
     def covariance(self, Xnew, time=None, diag=True):
@@ -639,6 +652,8 @@ class PredictorTime(Predictor):
         """
         Computes the total uncertainty of the predicted values quantified by their variance
         or covariance.
+
+        The total uncertainty is defined by `.covariance` + `.mean_covariance`.
 
         Parameters
         ----------

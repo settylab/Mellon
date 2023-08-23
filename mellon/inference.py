@@ -9,15 +9,15 @@ import jax
 from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
 from .conditional import (
-    FullConditionalMean,
-    ExpFullConditionalMean,
-    FullConditionalMeanTime,
-    LandmarksConditionalMean,
-    ExpLandmarksConditionalMean,
-    LandmarksConditionalMeanTime,
-    LandmarksConditionalMeanCholesky,
-    ExpLandmarksConditionalMeanCholesky,
-    LandmarksConditionalMeanCholeskyTime,
+    FullConditional,
+    ExpFullConditional,
+    FullConditionalTime,
+    LandmarksConditional,
+    ExpLandmarksConditional,
+    LandmarksConditionalTime,
+    LandmarksConditionalCholesky,
+    ExpLandmarksConditionalCholesky,
+    LandmarksConditionalCholeskyTime,
 )
 from .util import ensure_2d, DEFAULT_JITTER
 
@@ -386,7 +386,7 @@ def compute_conditional_mean(
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
             y_cov_factor = None
-        return FullConditionalMean(
+        return FullConditional(
             x,
             y,
             mu,
@@ -410,7 +410,7 @@ def compute_conditional_mean(
             )
         elif pre_transformation_std is not None:
             sigma = pre_transformation_std
-        return LandmarksConditionalMeanCholesky(
+        return LandmarksConditionalCholesky(
             landmarks,
             pre_transformation,
             mu,
@@ -427,7 +427,7 @@ def compute_conditional_mean(
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
             y_cov_factor = None
-        return LandmarksConditionalMean(
+        return LandmarksConditional(
             x,
             landmarks,
             y,
@@ -509,7 +509,7 @@ def compute_conditional_mean_times(
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
             y_cov_factor = None
-        return FullConditionalMeanTime(
+        return FullConditionalTime(
             x,
             y,
             mu,
@@ -533,7 +533,7 @@ def compute_conditional_mean_times(
             )
         elif pre_transformation_std is not None:
             sigma = pre_transformation_std
-        return LandmarksConditionalMeanCholeskyTime(
+        return LandmarksConditionalCholeskyTime(
             landmarks,
             pre_transformation,
             mu,
@@ -550,7 +550,7 @@ def compute_conditional_mean_times(
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
             y_cov_factor = None
-        return LandmarksConditionalMeanTime(
+        return LandmarksConditionalTime(
             x,
             landmarks,
             y,
@@ -632,7 +632,7 @@ def compute_conditional_mean_explog(
         else:
             y_cov_factor = None
         y = log(y)
-        return ExpFullConditionalMean(
+        return ExpFullConditional(
             x,
             y,
             mu,
@@ -656,7 +656,7 @@ def compute_conditional_mean_explog(
             )
         elif pre_transformation_std is not None:
             sigma = pre_transformation_std
-        return ExpLandmarksConditionalMeanCholesky(
+        return ExpLandmarksConditionalCholesky(
             landmarks,
             pre_transformation,
             mu,
@@ -674,7 +674,7 @@ def compute_conditional_mean_explog(
         else:
             y_cov_factor = None
         y = log(y)
-        return ExpLandmarksConditionalMean(
+        return ExpLandmarksConditional(
             x,
             landmarks,
             y,
