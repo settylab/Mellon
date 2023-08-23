@@ -410,11 +410,13 @@ def compute_conditional(
             )
         elif pre_transformation_std is not None:
             sigma = pre_transformation_std
+        n_obs = x.shape[0]
         return LandmarksConditionalCholesky(
             landmarks,
             pre_transformation,
             mu,
             cov_func,
+            n_obs,
             Lp,
             sigma=sigma,
             jitter=jitter,
@@ -533,11 +535,13 @@ def compute_conditional_times(
             )
         elif pre_transformation_std is not None:
             sigma = pre_transformation_std
+        n_obs = x.shape[0]
         return LandmarksConditionalCholeskyTime(
             landmarks,
             pre_transformation,
             mu,
             cov_func,
+            n_obs,
             Lp,
             sigma=sigma,
             jitter=jitter,
@@ -656,11 +660,13 @@ def compute_conditional_explog(
             )
         elif pre_transformation_std is not None:
             sigma = pre_transformation_std
+        n_obs = x.shape[0]
         return ExpLandmarksConditionalCholesky(
             landmarks,
             pre_transformation,
             mu,
             cov_func,
+            n_obs,
             Lp,
             sigma=sigma,
             jitter=jitter,

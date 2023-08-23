@@ -123,6 +123,9 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     est = mellon.DensityEstimator(rank=rank, n_landmarks=n_landmarks)
     est.fit(X)
     dens_appr = est.predict(X)
+    norm_dens_appr = est.predict(X, normalize=True)
+    is_close = jnp.all(jnp.isclose(dens_appr, norm_dens_appr))
+    assert not is_close, "The normalized and non-normalized predictions should differ."
 
     # Test serialization
     json_string = est.predict.to_json()
@@ -135,10 +138,12 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     predictor = mellon.Predictor.from_json(test_file, compress=compress)
     logger.info("Deserialized the predictor from the JSON file.")
     reprod = predictor(X)
+    norm_reprod = predictor(X, normalize=True)
     logger.info("Made a prediction with the deserialized predictor.")
     is_close = jnp.all(jnp.isclose(dens_appr, reprod))
+    norm_is_close = jnp.all(jnp.isclose(norm_dens_appr, norm_reprod))
     assert_msg = "Serialized + deserialized predictor should produce the same results."
-    assert is_close, assert_msg
+    assert is_close and norm_is_close, assert_msg
     logger.info(
         "Assertion passed: the deserialized predictor produced the expected results."
     )

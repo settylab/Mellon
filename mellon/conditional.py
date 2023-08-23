@@ -132,6 +132,7 @@ class _FullConditional:
         self.mu = mu
         self.jitter = jitter
         self.n_input_features = x.shape[1]
+        self.n_obs = x.shape[0]
 
         self._state_variables = {"x", "weights", "mu", "jitter"}
 
@@ -276,6 +277,7 @@ class _LandmarksConditional:
         self.mu = mu
         self.jitter = jitter
         self.n_input_features = xu.shape[1]
+        self.n_obs = x.shape[0]
 
         self._state_variables = {"landmarks", "weights", "mu", "jitter"}
 
@@ -355,6 +357,7 @@ class _LandmarksConditionalCholesky:
         pre_transformation,
         mu,
         cov_func,
+        n_obs,
         L=None,
         sigma=DEFAULT_SIGMA,
         jitter=DEFAULT_JITTER,
@@ -373,6 +376,8 @@ class _LandmarksConditionalCholesky:
         :type mu: float
         :param cov_func: The Gaussian process covariance function.
         :type cov_func: function
+        :param n_obs: The number of observations/cells trained on. Used for normalization.
+        :type n_obs: int
         :param L : A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
             covariance matrix of the Gaussian Process.
         :type L : array-like or None
@@ -410,6 +415,7 @@ class _LandmarksConditionalCholesky:
         self.mu = mu
         self.jitter = jitter
         self.n_input_features = xu.shape[1]
+        self.n_obs = n_obs
 
         self._state_variables = {"landmarks", "weights", "mu", "jitter"}
 

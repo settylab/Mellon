@@ -10,7 +10,7 @@ import bz2
 
 import json
 
-from jax.numpy import exp
+from jax.numpy import exp, log
 from .base_cov import Covariance
 from .util import (
     Log,
@@ -24,7 +24,12 @@ from .derivatives import (
     hessian,
     hessian_log_determinant,
 )
-from .validation import _validate_time_x, _validate_float, _validate_array
+from .validation import (
+    _validate_time_x,
+    _validate_float,
+    _validate_array,
+    _validate_bool,
+)
 
 
 logger = Log()
@@ -61,6 +66,9 @@ class Predictor(ABC):
     # number of features of input data (x.shape[1]) to be specified in __init__
     n_input_features: int
 
+    # number of observations trained on (x.shape[0]) to be specified in __init__
+    n_obs: int
+
     # a set of attribute names that should be saved to reconstruct the object
     _state_variables: Union[Set, List]
 
@@ -78,7 +86,9 @@ class Predictor(ABC):
             + self.__class__.__name__
             + '" with covariance function "'
             + repr(self.cov_func)
-            + '" and data:\n'
+            + f'" trained on {self.n_obs:,} observations '
+            + f"with {self.n_input_features:,} features "
+            + "and data:\n"
             + "\n".join(
                 [
                     str(key) + ": " + repr(getattr(self, key))
@@ -89,10 +99,10 @@ class Predictor(ABC):
         return string
 
     @abstractmethod
-    def _mean(self, *args, **kwars):
+    def _mean(self, *args, **kwargs):
         """Call the predictor. Must be overridden by subclasses."""
 
-    def mean(self, x):
+    def mean(self, x, normalize=False):
         """
         Use the trained model to make a prediction based on the input array, x.
 
@@ -107,6 +117,10 @@ class Predictor(ABC):
         x : array-like
             The input data to the predictor.
             The array should have shape (n_samples, n_input_features).
+        normalize : bool
+            Whether to normalize the value by subtracting log(self.n_obs)
+            (number of cells trained on). Applicable only for cell-state density predictions.
+            Default is False.
 
         Returns
         -------
@@ -121,13 +135,18 @@ class Predictor(ABC):
         """
         x = _validate_array(x, "x")
         x = ensure_2d(x)
+        normalize = _validate_bool(normalize, "normalize")
+
         if x.shape[1] != self.n_input_features:
             raise ValueError(
                 f"The predictor was trained on data with {self.n_input_features} features. "
                 f"However, the provided input data has {x.shape[1]} features. "
                 "Please ensure that the input data has the same number of features as the training data."
             )
-        return self._predict(x)
+        if normalize:
+            return self._mean(x) - log(self.n_obs)
+        else:
+            return self._mean(x)
 
     __call__ = mean
 
@@ -251,7 +270,8 @@ class Predictor(ABC):
         """
         x = _validate_array(x, "x")
         x = ensure_2d(x)
-        return gradient(self.__call__, x, jit=jit)
+
+        return gradient(self._mean, x, jit=jit)
 
     def hessian(self, x, jit=True):
         R"""
@@ -303,7 +323,12 @@ class Predictor(ABC):
         metaversion = getattr(metamodule, "__version__", "NA")
         version = getattr(module, "__version__", metaversion)
         data = self._data_dict()
-        data.update({"n_input_features": self.n_input_features})
+        data.update(
+            {
+                "n_input_features": self.n_input_features,
+                "n_obs": self.n_obs,
+            }
+        )
         data = {k: make_serializable(v) for k, v in data.items()}
 
         state = {
@@ -494,7 +519,7 @@ class ExpPredictor(Predictor):
                 f"However, the provided input data has {x.shape[1]} features. "
                 "Please ensure that the input data has the same number of features as the training data."
             )
-        return exp(self._predict(x))
+        return exp(self._mean(x))
 
     @wraps(Predictor.covariance)
     def covariance(self, *args, **kwargs):
@@ -550,25 +575,27 @@ class PredictorTime(Predictor):
     """
 
     @make_multi_time_argument
-    def mean(self, Xnew, time=None):
+    def mean(self, Xnew, time=None, normalize=False):
         """
-        Use the trained model to make a prediction based on the input array, x,
-        and time or multi_time.
+        Use the trained model to make predictions based on the input array 'Xnew',
+        considering the specified 'time' or 'multi_time'.
 
-        The prediction represents the mean of the Gaussian Process conditional
+        The predictions represent the mean of the Gaussian Process conditional
         distribution of predictive functions.
 
-        If 'time' is a scalar, it converts it to a 1D array of the same size as 'Xnew'.
+        If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
 
         Parameters
         ----------
         Xnew : array-like
             The new data points for prediction.
         time : scalar or array-like, optional
-            The time points associated with each cell/row in 'Xnew'.
+            The time points associated with each row in 'Xnew'.
             If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
-        multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction will be made for each row.
+        normalize : bool
+            Whether to normalize the value by subtracting log(self.n_obs)
+            (number of cells trained on). Applicable only for cell-state density predictions.
+            Default is False.
 
         Returns
         -------
@@ -584,8 +611,12 @@ class PredictorTime(Predictor):
         Xnew = _validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
+        normalize = _validate_bool(normalize, "normalize")
 
-        return self._predict(Xnew)
+        if normalize:
+            return self._mean(Xnew) - log(self.n_obs)
+        else:
+            return self._mean(Xnew)
 
     __call__ = mean
 
@@ -729,10 +760,10 @@ class PredictorTime(Predictor):
             Data points at which the gradient is to be computed.
         time : float
             Specific time point at which to compute the gradient.
-        multi_time : array-like, optional
-            If 'multi_time' is specified then the computation will be made for each row.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then the computation will be made for each row.
 
         Returns
         -------
@@ -743,7 +774,7 @@ class PredictorTime(Predictor):
         time = _validate_float(time, "time", optional=True)
 
         def dens_at(x):
-            return self.__call__(x, time)
+            return self.mean(x, time)
 
         return gradient(dens_at, x, jit=jit)
 
