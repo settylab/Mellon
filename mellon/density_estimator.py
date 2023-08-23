@@ -3,7 +3,7 @@ from .inference import (
     compute_transform,
     compute_loss_func,
     compute_log_density_x,
-    compute_conditional_mean,
+    compute_conditional,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_JIT,
@@ -321,7 +321,7 @@ class DensityEstimator(BaseEstimator):
         jitter = self.jitter
         with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive function.")
-        log_density_func = compute_conditional_mean(
+        log_density_func = compute_conditional(
             x,
             landmarks,
             pre_transformation,

@@ -147,7 +147,7 @@ class _FullConditional:
         self.W = W
         self._state_variables.add("W")
 
-    def _predict(self, Xnew):
+    def _mean(self, Xnew):
         cov_func = self.cov_func
         x = self.x
         weights = self.weights
@@ -293,7 +293,7 @@ class _LandmarksConditional:
         self.W = W
         self._state_variables.add("W")
 
-    def _predict(self, Xnew):
+    def _mean(self, Xnew):
         cov_func = self.cov_func
         xu = self.landmarks
         weights = self.weights
@@ -429,7 +429,7 @@ class _LandmarksConditionalCholesky:
         self.W = W
         self._state_variables.add("W")
 
-    def _predict(self, Xnew):
+    def _mean(self, Xnew):
         cov_func = self.cov_func
         xu = self.landmarks
         weights = self.weights

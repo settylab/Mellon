@@ -89,7 +89,7 @@ class Predictor(ABC):
         return string
 
     @abstractmethod
-    def _predict(self, *args, **kwars):
+    def _mean(self, *args, **kwars):
         """Call the predictor. Must be overridden by subclasses."""
 
     def mean(self, x):

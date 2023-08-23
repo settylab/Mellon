@@ -3,8 +3,8 @@ from .inference import (
     compute_dimensionality_transform,
     compute_dimensionality_loss_func,
     compute_log_density_x,
-    compute_conditional_mean,
-    compute_conditional_mean_explog,
+    compute_conditional,
+    compute_conditional_explog,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_JIT,
@@ -335,7 +335,7 @@ class DimensionalityEstimator(BaseEstimator):
         jitter = self.jitter
         with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive dimensionality function.")
-        log_dim_func = compute_conditional_mean_explog(
+        log_dim_func = compute_conditional_explog(
             x,
             landmarks,
             pre_transformation,
@@ -367,7 +367,7 @@ class DimensionalityEstimator(BaseEstimator):
         jitter = self.jitter
         with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive density function.")
-        log_density_func = compute_conditional_mean(
+        log_density_func = compute_conditional(
             x,
             landmarks,
             pre_transformation,

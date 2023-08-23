@@ -319,7 +319,7 @@ def compute_parameter_cov_factor(pre_transformation_std, L):
     return L * pre_transformation_std[None, :]
 
 
-def compute_conditional_mean(
+def compute_conditional(
     x,
     landmarks,
     pre_transformation,
@@ -441,7 +441,7 @@ def compute_conditional_mean(
         )
 
 
-def compute_conditional_mean_times(
+def compute_conditional_times(
     x,
     landmarks,
     pre_transformation,
@@ -564,7 +564,7 @@ def compute_conditional_mean_times(
         )
 
 
-def compute_conditional_mean_explog(
+def compute_conditional_explog(
     x,
     landmarks,
     pre_transformation,

@@ -1,6 +1,6 @@
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
-    compute_conditional_mean,
+    compute_conditional,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_OPTIMIZER,
@@ -234,7 +234,7 @@ class FunctionEstimator(BaseEstimator):
         jitter = self.jitter
         y_is_mean = self.y_is_mean
         with_uncertainty = self.predictor_with_uncertainty
-        conditional = compute_conditional_mean(
+        conditional = compute_conditional(
             x,
             landmarks,
             None,
