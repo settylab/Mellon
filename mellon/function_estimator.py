@@ -284,8 +284,8 @@ class FunctionEstimator(BaseEstimator):
         # Check if the number of samples in x and y match
         if y.shape[0] != n_samples:
             raise ValueError(
-                f"X.shape[0] = {n_samples} (n_samples) should equal "
-                "y.shape[0] = {y.shape[0]}."
+                f"X.shape[0] = {n_samples:,} (n_samples) should equal "
+                f"y.shape[0] = {y.shape[0]:,}."
             )
 
         self.prepare_inference(x)

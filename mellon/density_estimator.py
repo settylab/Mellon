@@ -163,6 +163,12 @@ class DensityEstimator(BaseEstimator):
     jit : bool
         Use jax just-in-time compilation for loss and its gradient during optimization.
         Defaults to False.
+
+    check_rank : bool
+        Weather to check if landmarks allow sufficent complexity by checking the approximate
+        rank of the covariance matrix. This only applies to the non-Nyström gp_types.
+        If set to None the rank check is only performed if n_landmarks >= n_samples/10.
+        Defaults to None.
     """
 
     def __init__(
@@ -188,6 +194,7 @@ class DensityEstimator(BaseEstimator):
         initial_value=None,
         predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
+        check_rank=None,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
@@ -210,6 +217,7 @@ class DensityEstimator(BaseEstimator):
             initial_value=initial_value,
             predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
+            check_rank=check_rank,
         )
         self.d_method = _validate_string(
             d_method, "d_method", choices={"fractal", "embedding"}

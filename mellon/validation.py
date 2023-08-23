@@ -438,7 +438,7 @@ def _validate_array(iterable, name, optional=False, ndim=None):
     return array
 
 
-def _validate_bool(value, name):
+def _validate_bool(value, name, optional=False):
     """
     Validates whether a given value is a boolean.
 
@@ -446,8 +446,13 @@ def _validate_bool(value, name):
     ----------
     value : any
         The value to be validated.
+
     name : str
         The name of the parameter to be used in the error message.
+
+    optional : bool, optional
+        If True, 'value' can be None and the function will return None in this case.
+        If False and 'value' is None, a TypeError is raised. Defaults to False.
 
     Returns
     -------
@@ -459,6 +464,12 @@ def _validate_bool(value, name):
     TypeError
         If the value is not of type bool.
     """
+
+    if value is None:
+        if optional:
+            return None
+        else:
+            raise TypeError(f"'{name}' can't be None.")
 
     if not isinstance(value, bool):
         raise TypeError(f"{name} should be of type bool, got {type(value)} instead.")

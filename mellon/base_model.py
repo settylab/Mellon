@@ -74,6 +74,7 @@ class BaseEstimator:
         initial_value=None,
         predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
+        check_rank=None,
     ):
         self.cov_func_curry = _validate_cov_func_curry(
             cov_func_curry, cov_func, "cov_func_curry"
@@ -109,6 +110,7 @@ class BaseEstimator:
             predictor_with_uncertainty, "predictor_with_uncertainty"
         )
         self.jit = _validate_bool(jit, "jit")
+        self.check_rank = _validate_bool(check_rank, "check_rank", optional=True)
         self.x = None
         self.pre_transformation = None
 
@@ -272,6 +274,8 @@ class BaseEstimator:
         Lp = self.Lp
         rank = self.rank
         jitter = self.jitter
+        check_rank = self.check_rank
+
         L = compute_L(
             x,
             cov_func,
@@ -303,9 +307,10 @@ class BaseEstimator:
 
         # Check if the number of landmarks is sufficient for the number of samples
         if (
-            gp_type == GaussianProcessType.SPARSE_CHOLESKY
+            check_rank is None
+            and gp_type == GaussianProcessType.SPARSE_CHOLESKY
             and SAMPLE_LANDMARK_RATIO * n_landmarks < n_samples
-        ):
+        ) or (check_rank is not None and check_rank):
             logger.info(
                 "Estimating approximation accuracy "
                 f"since {n_samples:,} samples are more than {SAMPLE_LANDMARK_RATIO} x "

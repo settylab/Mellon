@@ -164,6 +164,12 @@ class DimensionalityEstimator(BaseEstimator):
 
     jit: bool, optional (default=False)
         If True, use JAX's just-in-time compilation for loss and its gradient during optimization.
+
+    check_rank : bool
+        Weather to check if landmarks allow sufficent complexity by checking the approximate
+        rank of the covariance matrix. This only applies to the non-Nyström gp_types.
+        If set to None the rank check is only performed if n_landmarks >= n_samples/10.
+        Defaults to None.
     """
 
     def __init__(
@@ -190,6 +196,7 @@ class DimensionalityEstimator(BaseEstimator):
         initial_value=None,
         predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
+        check_rank=None,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
@@ -212,6 +219,7 @@ class DimensionalityEstimator(BaseEstimator):
             initial_value=initial_value,
             predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
+            check_rank=check_rank,
         )
         self.k = _validate_positive_int(k, "k")
         self.mu_dim = _validate_float(mu_dim, "mu_dim")
