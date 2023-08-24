@@ -27,6 +27,7 @@ setup(
     install_requires=[
         "jax",
         "jaxopt",
+        "numpy<1.25.0", # Specific version required due to compatibility with jax<0.4.15
         "scikit-learn",
     ],
     classifiers=[
