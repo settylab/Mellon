@@ -39,7 +39,7 @@ class GaussianProcessType(Enum):
     This enum can be passed through the `gp_type` attribute to the mentioned estimators. If a string representing
     one of these values is passed alternatively, the :func:`from_string` method is called to convert it to a `GaussianProcessType`.
 
-    Attributes are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem'.
+    Options are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem'.
     """
 
     FULL = "full"

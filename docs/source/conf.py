@@ -47,6 +47,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "nbsphinx",
     "sphinx.ext.napoleon",
+    "sphinx_github_style",
 ]
 
 source_suffix = [".rst", ".md"]
