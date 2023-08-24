@@ -1,4 +1,6 @@
 sphinxcontrib-autoprogram
+sphinxcontrib-napoleon
+sphinx-autodocgen
 sphinx-mdinclude
 m2r2
 nbsphinx
