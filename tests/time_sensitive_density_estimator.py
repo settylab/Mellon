@@ -34,7 +34,7 @@ def common_setup_time_sensitive(tmp_path):
 def test_time_sensitive_density_estimator_properties(common_setup_time_sensitive):
     X, times, _, _, relative_err, est, _, test_time = common_setup_time_sensitive
     n, d = X.shape
-    multi_time = [test_time, test_time, test_time+1]
+    multi_time = [test_time, test_time, test_time + 1]
     n_times = len(multi_time)
 
     pred_log_dens = est.predict(X, times)
@@ -51,12 +51,17 @@ def test_time_sensitive_density_estimator_properties(common_setup_time_sensitive
     hess = est.predict.hessian(X, test_time)
     assert hess.shape == (n, d, d), "The hessian should have the correct shape."
     hess = est.predict.hessian(X, multi_time=multi_time)
-    assert hess.shape == (n, n_times, d, d), "The hessians should have the correct shape."
-    assert (
-        jnp.all(hess[:, 0, :, :] == hess[:, 1, :, :])
+    assert hess.shape == (
+        n,
+        n_times,
+        d,
+        d,
+    ), "The hessians should have the correct shape."
+    assert jnp.all(
+        hess[:, 0, :, :] == hess[:, 1, :, :]
     ), "Equal time points should produce equal results."
-    assert (
-        jnp.any(hess[:, 0, :, :] != hess[:, 2, :, :])
+    assert jnp.any(
+        hess[:, 0, :, :] != hess[:, 2, :, :]
     ), "Different time points should produce differnt results."
 
     result = est.predict.hessian_log_determinant(X, test_time)
