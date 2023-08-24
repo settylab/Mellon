@@ -10,10 +10,12 @@ from mellon.validation import (
     _validate_string,
     _validate_float_or_iterable_numerical,
     _validate_positive_int,
-    _validate_cov_func_curry,
-    _validate_cov_func,
     _validate_1d,
-    _validate_params,
+)
+from mellon.parameter_validation import (
+        _validate_params,
+        _validate_cov_func_curry,
+        _validate_cov_func,
 )
 from mellon.cov import Covariance
 from mellon.parameters import GaussianProcessType

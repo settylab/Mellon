@@ -11,3 +11,4 @@ __pycache__/
 .coverage
 *.h5ad
 *.json
+*.png

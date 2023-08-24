@@ -33,10 +33,12 @@ from .validation import (
     _validate_string,
     _validate_bool,
     _validate_array,
+    _validate_float_or_iterable_numerical,
+)
+from .parameter_validation import (
+    _validate_params,
     _validate_cov_func_curry,
     _validate_cov_func,
-    _validate_float_or_iterable_numerical,
-    _validate_params,
 )
 
 
