@@ -31,6 +31,17 @@ logger = Log()
 
 
 class GaussianProcessType(Enum):
+    """
+    Defines types of Gaussian Process (GP) computations for various estimators within the mellon library:
+    :class:`mellon.model.DensityEstimator`, :class:`mellon.model.FunctionEstimator`,
+    :class:`mellon.model.DimensionalityEstimator`, :class:`mellon.model.TimeSensitiveDensityEstimator`.
+
+    This enum can be passed through the `gp_type` attribute to the mentioned estimators. If a string representing
+    one of these values is passed alternatively, the :func:`from_string` method is called to convert it to a `GaussianProcessType`.
+
+    Attributes are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem'.
+    """
+
     FULL = "full"
     FULL_NYSTROEM = "full_nystroem"
     SPARSE_CHOLESKY = "sparse_cholesky"
@@ -38,6 +49,31 @@ class GaussianProcessType(Enum):
 
     @staticmethod
     def from_string(s: str, optional: bool = False):
+        """
+        Converts a string to a GaussianProcessType object or raises an error.
+
+        Parameters
+        ----------
+        s : str
+            The type of Gaussian Process (GP). Options are:
+             - 'full': None-sparse GP
+             - 'full_nystroem': Sparse GP with Nyström rank reduction
+             - 'sparse_cholesky': Sparse GP using landmarks/inducing points
+             - 'sparse_nystroem': Sparse GP along with an improved Nyström rank reduction
+        optional : bool, optional
+            Specifies if the input is optional. Returns None if True and input is None.
+
+        Returns
+        -------
+        GaussianProcessType
+            Corresponding Gaussian Process type.
+
+        Raises
+        ------
+        ValueError
+            If the input does not correspond to any known Gaussian Process type.
+        """
+
         if s is None:
             if optional:
                 return None
