@@ -67,6 +67,7 @@ exclude_patterns = ["_build", "**.ipynb_checkpoints"]
 # a list of builtin themes.
 #
 html_theme = "furo"
+pygments_style = "tango"
 
 html_theme_options = {
     "footer_icons": [

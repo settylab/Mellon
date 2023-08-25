@@ -23,7 +23,6 @@ from jax.numpy import (
     ndarray,
     array,
     isscalar,
-    exp,
     where,
 )
 from numpy import integer, floating
