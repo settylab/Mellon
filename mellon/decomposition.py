@@ -204,7 +204,7 @@ def _standard_low_rank(
     C = cov_func(x, xu)
 
     if Lp is None:
-        Lp = _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
+        Lp = _full_rank(xu, cov_func, sigma=sigma, jitter=jitter)
     L = solve_triangular(Lp, C.T, lower=True).T
     return L
 

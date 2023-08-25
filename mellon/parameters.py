@@ -483,16 +483,33 @@ def compute_d(x):
 
 
 def compute_d_factal(x, k=10, n=500, seed=432):
-    R"""
+    """
     Computes the dimensionality of the data based on the average fractal
-    dimension around n randomly selected cells.
+    dimension around `n` randomly selected cells.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param n: Number of samples.
-    :type n: int
-    :param seed: Random seed for sampling.
-    :type seed: int
+    Parameters
+    ----------
+    x : array-like
+        The training instances. Shape must be (n_samples, n_features).
+    k : int, optional
+        Number of nearest neighbors to use in the algorithm.
+        Defaults to 10.
+    n : int, optional
+        Number of samples to randomly select.
+        Defaults to 500.
+    seed : int, optional
+        Random seed for sampling. Defaults to 432.
+
+    Returns
+    -------
+    float
+        The average fractal dimension of the data.
+
+    Warnings
+    --------
+    If `k` is greater than the number of samples in `x`, a warning will
+    be logged, and `k` will be set to the number of samples.
+
     """
     if len(x.shape) < 2:
         return 1
@@ -502,8 +519,15 @@ def compute_d_factal(x, k=10, n=500, seed=432):
         x_query = x[idx, ...]
     else:
         x_query = x
+    if k > x.shape[0]:
+        logger.warning(
+            f"Number of nearest neighbors (k={k}) is "
+            f"greater than the number of samples ({x.shape[0]}). "
+            "Setting k to the number of samples."
+        )
+        k = x.shape[0]
     local_dims = local_dimensionality(x, k=k, x_query=x_query)
-    return local_dims.mean()
+    return local_dims.mean().item()
 
 
 def compute_mu(nn_distances, d):
