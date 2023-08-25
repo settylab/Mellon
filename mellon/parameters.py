@@ -634,6 +634,7 @@ def compute_Lp(
     n_samples = x.shape[0]
     if landmarks is None:
         n_landmarks = n_samples
+        landmarks = x
     else:
         n_landmarks = landmarks.shape[0]
     gp_type = GaussianProcessType.from_string(gp_type, optional=True)
