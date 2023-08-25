@@ -37,6 +37,8 @@ __all__ = [
     "derivatives",
     "__version__",
 ]
+# Set up logger
+Log()
 
 # Set default configuration at import time
 jaxconfig.update("jax_enable_x64", True)

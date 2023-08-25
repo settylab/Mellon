@@ -1,3 +1,4 @@
+import logging
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
     compute_transform,
@@ -21,7 +22,6 @@ from .parameters import (
 from .compute_ls_time import compute_ls_time
 from .util import (
     DEFAULT_JITTER,
-    Log,
 )
 from .validation import (
     _validate_time_x,
@@ -34,7 +34,7 @@ from .validation import (
 
 DEFAULT_D_METHOD = "embedding"
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class TimeSensitiveDensityEstimator(BaseEstimator):

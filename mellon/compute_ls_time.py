@@ -1,12 +1,12 @@
+import logging
 from jax.numpy import exp, unique, corrcoef, zeros, abs, stack
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm
 from jaxopt import ScipyMinimize
 from .density_estimator import DensityEstimator
-from .util import Log
 from .validation import _validate_time_x
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 def compute_ls_time(

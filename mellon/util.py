@@ -411,13 +411,12 @@ class Log(object):
     def __new__(cls):
         """Return the singelton Logger."""
         if not hasattr(cls, "logger"):
-            logger = logging.getLogger(__name__)
+            logger = logging.getLogger("mellon")
             logger.setLevel(logging.INFO)
             cls.handler = logging.StreamHandler(sys.stdout)
             formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
             cls.handler.setFormatter(formatter)
             logger.addHandler(cls.handler)
-            logger.propagate = False
             cls.logger = logger
         return cls.logger
 

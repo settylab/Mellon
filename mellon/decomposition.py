@@ -1,3 +1,4 @@
+import logging
 from jax.numpy import (
     cumsum,
     searchsorted,
@@ -10,13 +11,13 @@ from jax.numpy import (
 )
 from jax.numpy.linalg import eigh, cholesky, qr
 from jax.scipy.linalg import solve_triangular
-from .util import stabilize, DEFAULT_JITTER, Log
+from .util import stabilize, DEFAULT_JITTER
 
 
 DEFAULT_RANK = 0.99
 DEFAULT_SIGMA = 0
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 def _eigendecomposition(A, rank=DEFAULT_RANK):

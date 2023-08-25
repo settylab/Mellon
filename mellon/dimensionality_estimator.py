@@ -1,3 +1,4 @@
+import logging
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
     compute_dimensionality_transform,
@@ -17,7 +18,6 @@ from .parameters import (
 )
 from .util import (
     DEFAULT_JITTER,
-    Log,
     local_dimensionality,
 )
 from .validation import (
@@ -27,7 +27,7 @@ from .validation import (
 )
 
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class DimensionalityEstimator(BaseEstimator):

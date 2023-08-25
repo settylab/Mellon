@@ -1,14 +1,15 @@
+import logging
 from jax.numpy import dot, square, isnan, any, eye
 from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-from .util import ensure_2d, stabilize, DEFAULT_JITTER, Log, add_variance
+from .util import ensure_2d, stabilize, DEFAULT_JITTER, add_variance
 from .base_predictor import Predictor, ExpPredictor, PredictorTime
 from .decomposition import DEFAULT_SIGMA
 
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 def _get_L(x, cov_func, jitter=DEFAULT_JITTER, y_cov_factor=None):

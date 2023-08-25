@@ -7,7 +7,7 @@ from .validation import (
     _validate_float_or_int,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("mellon")
 
 
 def _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks):

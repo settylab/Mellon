@@ -1,3 +1,4 @@
+import logging
 from .cov import Matern52
 from .inference import (
     minimize_adam,
@@ -23,7 +24,6 @@ from .parameters import (
 from .util import (
     test_rank,
     DEFAULT_JITTER,
-    Log,
 )
 from .validation import (
     _validate_positive_int,
@@ -46,7 +46,7 @@ DEFAULT_COV_FUNC = Matern52
 RANK_FRACTION_THRESHOLD = 0.8
 SAMPLE_LANDMARK_RATIO = 10
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class BaseEstimator:

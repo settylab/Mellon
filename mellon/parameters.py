@@ -1,4 +1,5 @@
 from enum import Enum
+import logging
 from jax.numpy import exp, log, quantile, stack, unique, empty, where
 from jax.numpy import sum as arraysum
 from jax.numpy import any as arrayany
@@ -8,7 +9,7 @@ from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle, local_dimensionality, Log, ensure_2d, DEFAULT_JITTER
+from .util import mle, local_dimensionality, ensure_2d, DEFAULT_JITTER
 from .decomposition import (
     _full_rank,
     _full_decomposition_low_rank,
@@ -27,7 +28,7 @@ from .validation import (
 
 DEFAULT_N_LANDMARKS = 5000
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class GaussianProcessType(Enum):

@@ -1,4 +1,5 @@
 import sys
+import logging
 from jax import vmap
 from jax.numpy import expand_dims, reshape
 from abc import ABC, abstractmethod
@@ -6,11 +7,11 @@ from importlib import import_module
 from datetime import datetime
 import json
 
-from .util import Log, make_serializable, deserialize
+from .util import make_serializable, deserialize
 
 MELLON_NAME = __name__.split(".")[0]
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class Covariance(ABC):

@@ -1,4 +1,5 @@
 import sys
+import logging
 from importlib import import_module
 from abc import ABC, abstractmethod
 from functools import wraps
@@ -13,7 +14,6 @@ import json
 from jax.numpy import exp, log
 from .base_cov import Covariance
 from .util import (
-    Log,
     make_serializable,
     deserialize,
     ensure_2d,
@@ -32,7 +32,7 @@ from .validation import (
 )
 
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class Predictor(ABC):
