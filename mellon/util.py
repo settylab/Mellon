@@ -40,17 +40,6 @@ DEFAULT_JITTER = 1e-6
 DEFAULT_RANK_TOL = 5e-1
 
 
-def Exp(func):
-    """
-    Function wrapper, making a function that returns the exponent of the wrapped function.
-    """
-
-    def new_func(x):
-        return exp(func(x))
-
-    return new_func
-
-
 def _None_to_str(v):
     if v is None:
         return "None"

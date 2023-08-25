@@ -152,8 +152,8 @@ class FunctionEstimator(BaseEstimator):
             sigma, "sigma", positive=True
         )
         if (
-            gp_type == GaussianProcessType.FULL_NYSTROEM
-            or gp_type == GaussianProcessType.SPARSE_NYSTROEM
+            self.gp_type == GaussianProcessType.FULL_NYSTROEM
+            or self.gp_type == GaussianProcessType.SPARSE_NYSTROEM
         ):
             message = (
                 f"gp_type={gp_type} but the Nyström rank reduction is "

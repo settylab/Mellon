@@ -148,6 +148,17 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
         "Assertion passed: the deserialized predictor produced the expected results."
     )
 
+    
+def test_density_estimator_without_uncertainty(common_setup):
+    X, _, _, _, est, _ = common_setup
+    
+    with pytest.raises(ValueError):
+        est.predict.covariance(X)
+    with pytest.raises(ValueError):
+        est.predict.mean_covariance(X)
+    with pytest.raises(ValueError):
+        est.predict.uncertainty(X)
+
 
 @pytest.mark.parametrize(
     "rank, n_landmarks, compress",
@@ -175,13 +186,24 @@ def test_density_estimator_serialization_with_uncertainty(
     covariance = est.predict.covariance(X)
     assert covariance.shape == (
         n,
-    ), "The diagonal of the covariance matrix should be repoorted."
+    ), "The diagonal of the covariance matrix should be reported."
     mean_covariance = est.predict.mean_covariance(X)
     assert mean_covariance.shape == (
         n,
-    ), "The diagonal of the mean covariance should be repoorted."
+    ), "The diagonal of the mean covariance should be reported."
     uncertainty_pred = est.predict.uncertainty(X)
     assert uncertainty_pred.shape == (n,), "One value per sample should be reported."
+    
+    full_covariance = est.predict.covariance(X, diag=False)
+    assert full_covariance.shape == (
+        n, n,
+    ), "The full covariance matrix should be repoorted."
+    full_mean_covariance = est.predict.mean_covariance(X, diag=False)
+    assert full_mean_covariance.shape == (
+        n, n,
+    ), "The full mean covariance should be repoorted."
+    full_uncertainty_pred = est.predict.uncertainty(X, diag=False)
+    assert full_uncertainty_pred.shape == (n, n), "The full covariance should be reported."
 
     # Test serialization
     est.predict.to_json(test_file, compress=compress)

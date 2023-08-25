@@ -198,7 +198,7 @@ class Predictor(ABC):
                 f"However, the provided input data has {x.shape[1]} features. "
                 "Please ensure that the input data has the same number of features as the training data."
             )
-        return self._covariance(x, diag)
+        return self._covariance(x, diag=diag)
 
     @abstractmethod
     def _mean_covariance(self, *args, **kwars):
@@ -231,7 +231,7 @@ class Predictor(ABC):
                 f"However, the provided input data has {x.shape[1]} features. "
                 "Please ensure that the input data has the same number of features as the training data."
             )
-        return self._mean_covariance(x, diag)
+        return self._mean_covariance(x, diag=diag)
 
     def uncertainty(self, x, diag=True):
         """
@@ -262,7 +262,7 @@ class Predictor(ABC):
                 f"However, the provided input data has {x.shape[1]} features. "
                 "Please ensure that the input data has the same number of features as the training data."
             )
-        return self._covariance(x, diag) + self._mean_covariance(x, diag)
+        return self._covariance(x, diag=diag) + self._mean_covariance(x, diag=diag)
 
     def _data_dict(self):
         """Returns a dictionary containing the predictor's state data.
@@ -681,7 +681,7 @@ class PredictorTime(Predictor):
         Xnew = _validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
-        return self._covariance(Xnew, diag)
+        return self._covariance(Xnew, diag=diag)
 
     @make_multi_time_argument
     def mean_covariance(self, Xnew, time=None, diag=True):
@@ -710,7 +710,7 @@ class PredictorTime(Predictor):
         Xnew = _validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
-        return self._mean_covariance(Xnew, diag)
+        return self._mean_covariance(Xnew, diag=diag)
 
     @make_multi_time_argument
     def uncertainty(self, Xnew, time=None, diag=True):
@@ -740,7 +740,7 @@ class PredictorTime(Predictor):
         Xnew = _validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
-        return self._covariance(Xnew, diag) + self._mean_covariance(Xnew, diag)
+        return self._covariance(Xnew, diag=diag) + self._mean_covariance(Xnew, diag=diag)
 
     @make_multi_time_argument
     def time_derivative(
