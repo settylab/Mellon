@@ -67,8 +67,7 @@ class DimensionalityEstimator(BaseEstimator):
          - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
             typically employed to enable scalable GP models.
          - 'sparse_nystroem' Sparse GP using landmarks or inducing points,
-            along with an improved Nyström rank reduction method that balances
-            accuracy with efficiency.
+            along with an improved Nyström rank reduction method.
 
         The value can be either a string matching one of the above options or an instance of
         the `mellon.parameters.GaussianProcessType` Enum. If a partial match is found with the
@@ -166,7 +165,7 @@ class DimensionalityEstimator(BaseEstimator):
         If True, use JAX's just-in-time compilation for loss and its gradient during optimization.
 
     check_rank : bool
-        Weather to check if landmarks allow sufficent complexity by checking the approximate
+        Weather to check if landmarks allow sufficient complexity by checking the approximate
         rank of the covariance matrix. This only applies to the non-Nyström gp_types.
         If set to None the rank check is only performed if n_landmarks >= n_samples/10.
         Defaults to None.
