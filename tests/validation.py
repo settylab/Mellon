@@ -13,9 +13,9 @@ from mellon.validation import (
     _validate_1d,
 )
 from mellon.parameter_validation import (
-        _validate_params,
-        _validate_cov_func_curry,
-        _validate_cov_func,
+    _validate_params,
+    _validate_cov_func_curry,
+    _validate_cov_func,
 )
 from mellon.cov import Covariance
 from mellon.parameters import GaussianProcessType
@@ -32,7 +32,7 @@ from mellon.parameters import GaussianProcessType
         # Test error for invalid rank
         (None, GaussianProcessType.FULL, 100, 0, None, ValueError),
         ("some_type", GaussianProcessType.FULL, 100, 50, None, ValueError),
-        (.9, GaussianProcessType.FULL, 100, 0, None, ValueError),
+        (0.9, GaussianProcessType.FULL, 100, 0, None, ValueError),
         # Test error for invalid gp_type (not a GaussianProcessType instance)
         (1.0, "some_type", 100, 0, None, ValueError),
         # Test error cases for landmarks
@@ -47,7 +47,7 @@ from mellon.parameters import GaussianProcessType
         (None, GaussianProcessType.FULL, 100, 50, jnp.zeros((60, 5)), ValueError),
         (None, GaussianProcessType.FULL_NYSTROEM, 100, 50, None, ValueError),
         (0.5, GaussianProcessType.SPARSE_CHOLESKY, 100, 0, None, ValueError),
-        (1., GaussianProcessType.FULL, 100, 10, None, ValueError),
+        (1.0, GaussianProcessType.FULL, 100, 10, None, ValueError),
         (0, GaussianProcessType.SPARSE_NYSTROEM, 100, 100, None, ValueError),
         (2.0, GaussianProcessType.FULL_NYSTROEM, 100, 0, None, ValueError),
         (100, GaussianProcessType.SPARSE_NYSTROEM, 100, 50, None, ValueError),

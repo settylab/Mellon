@@ -51,6 +51,7 @@ def test_Log():
     assert hasattr(logger, "error")
     mellon.util.Log.off()
     mellon.util.Log.on()
-    
+
+
 def test_set_jax_config():
     mellon.util.set_jax_config()

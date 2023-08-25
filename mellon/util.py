@@ -71,6 +71,8 @@ def make_serializable(x):
         return {"type": "slice", "data": dat}
     elif isinstance(x, dict):
         return {"type": "dict", "data": {k: make_serializable(v) for k, v in x.items()}}
+    elif isinstance(x, set):
+        return {"type": "set", "data": [make_serializable(v) for v in x]}
     else:
         return _None_to_str(x)
 
@@ -104,6 +106,8 @@ def deserialize(serializable_x):
             return slice(*dat)
         elif data_type == "dict":
             return {k: deserialize(v) for k, v in serializable_x["data"].items()}
+        elif data_type == "set":
+            return {deserialize(v) for v in serializable_x["data"]}
     else:
         return _str_to_None(serializable_x)
 

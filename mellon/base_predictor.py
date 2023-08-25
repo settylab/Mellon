@@ -344,6 +344,7 @@ class Predictor(ABC):
             {
                 "n_input_features": self.n_input_features,
                 "n_obs": self.n_obs,
+                "_state_variables": self._state_variables,
             }
         )
         data = {k: make_serializable(v) for k, v in data.items()}
@@ -740,7 +741,9 @@ class PredictorTime(Predictor):
         Xnew = _validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
-        return self._covariance(Xnew, diag=diag) + self._mean_covariance(Xnew, diag=diag)
+        return self._covariance(Xnew, diag=diag) + self._mean_covariance(
+            Xnew, diag=diag
+        )
 
     @make_multi_time_argument
     def time_derivative(
