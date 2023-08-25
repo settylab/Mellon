@@ -147,6 +147,8 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     logger.info(
         "Assertion passed: the deserialized predictor produced the expected results."
     )
+    logger.info("Serializing deserialized predictor again.")
+    predictor.to_json(test_file, compress=compress)
 
 
 def test_density_estimator_without_uncertainty(common_setup):
