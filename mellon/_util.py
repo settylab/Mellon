@@ -5,6 +5,7 @@ from .util import (
     local_dimensionality,
     Log,
     set_jax_config,
+    GaussianProcessType,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "local_dimensionality",
     "Log",
     "set_jax_config",
+    "GaussianProcessType",
 ]

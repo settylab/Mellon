@@ -457,8 +457,9 @@ class GaussianProcessType(Enum):
     :class:`mellon.model.DensityEstimator`, :class:`mellon.model.FunctionEstimator`,
     :class:`mellon.model.DimensionalityEstimator`, :class:`mellon.model.TimeSensitiveDensityEstimator`.
 
-    This enum can be passed through the `gp_type` attribute to the mentioned estimators. If a string representing
-    one of these values is passed alternatively, the :func:`from_string` method is called to convert it to a `GaussianProcessType`.
+    This enum can be passed through the `gp_type` attribute to the mentioned estimators.
+    If a string representing one of these values is passed alternatively, the
+    :func:`from_string` method is called to convert it to a `GaussianProcessType`.
 
     Options are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem'.
     """
