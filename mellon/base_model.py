@@ -10,7 +10,6 @@ from .inference import (
     DEFAULT_JIT,
 )
 from .parameters import (
-    GaussianProcessType,
     compute_rank,
     compute_n_landmarks,
     compute_landmarks,
@@ -24,6 +23,7 @@ from .parameters import (
 from .util import (
     test_rank,
     DEFAULT_JITTER,
+    GaussianProcessType,
 )
 from .validation import (
     _validate_positive_int,

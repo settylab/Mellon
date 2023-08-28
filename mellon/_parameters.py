@@ -1,5 +1,4 @@
 from .parameters import (
-    GaussianProcessType,
     compute_d,
     compute_d_factal,
     compute_rank,
@@ -19,7 +18,6 @@ from .parameters import (
 from .compute_ls_time import compute_ls_time
 
 __all__ = [
-    "GaussianProcessType",
     "compute_d",
     "compute_d_factal",
     "compute_rank",

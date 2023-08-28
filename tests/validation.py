@@ -18,7 +18,7 @@ from mellon.parameter_validation import (
     _validate_cov_func,
 )
 from mellon.cov import Covariance
-from mellon.parameters import GaussianProcessType
+from mellon.util import GaussianProcessType
 
 
 @pytest.mark.parametrize(

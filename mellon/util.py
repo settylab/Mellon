@@ -3,6 +3,7 @@ import logging
 import functools
 import inspect
 from inspect import Parameter
+from enum import Enum
 
 from jax.config import config as jaxconfig
 from jax.numpy import (
@@ -34,6 +35,8 @@ from jax import vmap, jit
 from sklearn.neighbors import BallTree, KDTree
 
 from .validation import _validate_array
+
+logger = logging.getLogger("mellon")
 
 DEFAULT_JITTER = 1e-6
 DEFAULT_RANK_TOL = 5e-1
@@ -410,7 +413,6 @@ class Log(object):
     def __new__(cls):
         """Return the singelton Logger."""
         if not hasattr(cls, "logger"):
-            logger = logging.getLogger("mellon")
             logger.setLevel(logging.INFO)
             cls.handler = logging.StreamHandler(sys.stdout)
             formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
@@ -447,3 +449,78 @@ def set_jax_config(enable_x64=True, platform_name="cpu"):
     """
     jaxconfig.update("jax_enable_x64", enable_x64)
     jaxconfig.update("jax_platform_name", platform_name)
+
+
+class GaussianProcessType(Enum):
+    """
+    Defines types of Gaussian Process (GP) computations for various estimators within the mellon library:
+    :class:`mellon.model.DensityEstimator`, :class:`mellon.model.FunctionEstimator`,
+    :class:`mellon.model.DimensionalityEstimator`, :class:`mellon.model.TimeSensitiveDensityEstimator`.
+
+    This enum can be passed through the `gp_type` attribute to the mentioned estimators. If a string representing
+    one of these values is passed alternatively, the :func:`from_string` method is called to convert it to a `GaussianProcessType`.
+
+    Options are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem'.
+    """
+
+    FULL = "full"
+    FULL_NYSTROEM = "full_nystroem"
+    SPARSE_CHOLESKY = "sparse_cholesky"
+    SPARSE_NYSTROEM = "sparse_nystroem"
+
+    @staticmethod
+    def from_string(s: str, optional: bool = False):
+        """
+        Converts a string to a GaussianProcessType object or raises an error.
+
+        Parameters
+        ----------
+        s : str
+            The type of Gaussian Process (GP). Options are:
+             - 'full': None-sparse GP
+             - 'full_nystroem': Sparse GP with Nyström rank reduction
+             - 'sparse_cholesky': Sparse GP using landmarks/inducing points
+             - 'sparse_nystroem': Sparse GP along with an improved Nyström rank reduction
+        optional : bool, optional
+            Specifies if the input is optional. Returns None if True and input is None.
+
+        Returns
+        -------
+        GaussianProcessType
+            Corresponding Gaussian Process type.
+
+        Raises
+        ------
+        ValueError
+            If the input does not correspond to any known Gaussian Process type.
+        """
+
+        if s is None:
+            if optional:
+                return None
+            else:
+                logger.error("Gaussian process type must be specified but is None.")
+                raise ValueError("Gaussian process type must be specified but is None.")
+
+        if isinstance(s, GaussianProcessType):
+            return s
+
+        normalized_input = s.lower().replace(" ", "_")
+
+        # Try to match the exact Enum value
+        for gp_type in GaussianProcessType:
+            if gp_type.value == normalized_input:
+                logger.info(f"Gaussian Process type: {gp_type.value}")
+                return gp_type
+
+        # If no exact match, try partial matching by finding the closest match
+        for gp_type in GaussianProcessType:
+            if normalized_input in gp_type.value:
+                logger.warning(
+                    f"Partial match found for Gaussian Process type: {gp_type.value}. Input was: {s}"
+                )
+                return gp_type
+
+        message = f"Unknown Gaussian Process type: {s}"
+        logger.error(message)
+        raise ValueError(message)

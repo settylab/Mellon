@@ -6,11 +6,9 @@ from .inference import (
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_OPTIMIZER,
 )
-from .parameters import (
-    GaussianProcessType,
-)
 from .util import (
     DEFAULT_JITTER,
+    GaussianProcessType,
 )
 from .validation import (
     _validate_float_or_iterable_numerical,

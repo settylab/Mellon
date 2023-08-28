@@ -8,7 +8,6 @@ from mellon.parameters import (
     compute_n_landmarks,
     compute_rank,
     compute_nn_distances,
-    GaussianProcessType,
     compute_gp_type,
     compute_landmarks_rescale_time,
     compute_nn_distances_within_time_points,
@@ -16,6 +15,7 @@ from mellon.parameters import (
     compute_Lp,
     compute_L,
 )
+from mellon.util import GaussianProcessType
 
 
 def test_compute_landmarks_rescale_time():
@@ -138,13 +138,13 @@ def test_compute_Lp():
 
 
 def test_compute_L():
-    x = jnp.array([[1, 2], [3, 4], [5, 6]])
-    landmarks = jnp.array([[1, 2], [3, 4]])
+    x = jnp.array([[1, 2], [3, 4], [5, 6], [8, 8]])
+    landmarks = jnp.array([[1, 2], [3, 4], [5, 6]])
     mock_cov_func = mellon.cov.ExpQuad(1.1)
 
     # Test FULL type with Lp=None
     L = compute_L(x, mock_cov_func, gp_type="full")
-    assert L.shape == (3, 3)
+    assert L.shape == (4, 4)
     assert isinstance(L, jnp.ndarray)
 
     # Test FULL type with Lp as an array
@@ -154,20 +154,24 @@ def test_compute_L():
 
     # Test FULL_NYSTROEM type
     L = compute_L(x, mock_cov_func, gp_type="full_nystroem", rank=2)
-    assert L.shape == (3, 2)
+    assert L.shape == (4, 2)
     assert isinstance(L, jnp.ndarray)
 
     # Test SPARSE_CHOLESKY with landmarks and Lp=None
     L = compute_L(x, mock_cov_func, gp_type="sparse_cholesky", landmarks=landmarks)
-    assert L.shape == (3, 2)
+    assert L.shape == (4, 3)
     assert isinstance(L, jnp.ndarray)
 
     # Test SPARSE_CHOLESKY with landmarks and Lp as an array
     Lp = jnp.array([[0.5, 0.1], [0.1, 0.5]])
     L = compute_L(
-        x, mock_cov_func, gp_type="sparse_cholesky", landmarks=landmarks, Lp=Lp
+        x,
+        mock_cov_func,
+        gp_type="sparse_cholesky",
+        landmarks=landmarks[:2, :],
+        Lp=Lp,
     )
-    assert L.shape == (3, 2)
+    assert L.shape == (4, 2)
     assert isinstance(L, jnp.ndarray)
 
     with pytest.raises(ValueError):
@@ -184,7 +188,7 @@ def test_compute_L():
     L = compute_L(
         x, mock_cov_func, gp_type="sparse_nystroem", landmarks=landmarks, rank=2
     )
-    assert L.shape == (3, 2)
+    assert L.shape == (4, 2)
     assert isinstance(L, jnp.ndarray)
 
     # Test with unknown gp_type
@@ -192,8 +196,8 @@ def test_compute_L():
         compute_L(x, mock_cov_func, gp_type="unknown")
 
     # Test with custom rank, sigma, and jitter
-    L = compute_L(x, mock_cov_func, gp_type="full", rank=2, sigma=0.1, jitter=0.001)
-    assert L.shape == (3, 3)
+    L = compute_L(x, mock_cov_func, rank=2, sigma=0.1, jitter=0.001)
+    assert L.shape == (4, 2)
     assert isinstance(L, jnp.ndarray)
 
 

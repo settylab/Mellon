@@ -1,4 +1,3 @@
-from enum import Enum
 import logging
 from jax.numpy import exp, log, quantile, stack, unique, empty, where
 from jax.numpy import sum as arraysum
@@ -9,7 +8,13 @@ from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import BallTree, KDTree
-from .util import mle, local_dimensionality, ensure_2d, DEFAULT_JITTER
+from .util import (
+    mle,
+    local_dimensionality,
+    ensure_2d,
+    DEFAULT_JITTER,
+    GaussianProcessType,
+)
 from .decomposition import (
     _full_rank,
     _full_decomposition_low_rank,
@@ -24,86 +29,14 @@ from .validation import (
     _validate_float_or_int,
     _validate_positive_int,
 )
+from .parameter_validation import (
+    _validate_params,
+)
 
 
 DEFAULT_N_LANDMARKS = 5000
 
 logger = logging.getLogger("mellon")
-
-
-class GaussianProcessType(Enum):
-    """
-    Defines types of Gaussian Process (GP) computations for various estimators within the mellon library:
-    :class:`mellon.model.DensityEstimator`, :class:`mellon.model.FunctionEstimator`,
-    :class:`mellon.model.DimensionalityEstimator`, :class:`mellon.model.TimeSensitiveDensityEstimator`.
-
-    This enum can be passed through the `gp_type` attribute to the mentioned estimators. If a string representing
-    one of these values is passed alternatively, the :func:`from_string` method is called to convert it to a `GaussianProcessType`.
-
-    Options are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem'.
-    """
-
-    FULL = "full"
-    FULL_NYSTROEM = "full_nystroem"
-    SPARSE_CHOLESKY = "sparse_cholesky"
-    SPARSE_NYSTROEM = "sparse_nystroem"
-
-    @staticmethod
-    def from_string(s: str, optional: bool = False):
-        """
-        Converts a string to a GaussianProcessType object or raises an error.
-
-        Parameters
-        ----------
-        s : str
-            The type of Gaussian Process (GP). Options are:
-             - 'full': None-sparse GP
-             - 'full_nystroem': Sparse GP with Nyström rank reduction
-             - 'sparse_cholesky': Sparse GP using landmarks/inducing points
-             - 'sparse_nystroem': Sparse GP along with an improved Nyström rank reduction
-        optional : bool, optional
-            Specifies if the input is optional. Returns None if True and input is None.
-
-        Returns
-        -------
-        GaussianProcessType
-            Corresponding Gaussian Process type.
-
-        Raises
-        ------
-        ValueError
-            If the input does not correspond to any known Gaussian Process type.
-        """
-
-        if s is None:
-            if optional:
-                return None
-            else:
-                logger.error("Gaussian process type must be specified but is None.")
-                raise ValueError("Gaussian process type must be specified but is None.")
-
-        if isinstance(s, GaussianProcessType):
-            return s
-
-        normalized_input = s.lower().replace(" ", "_")
-
-        # Try to match the exact Enum value
-        for gp_type in GaussianProcessType:
-            if gp_type.value == normalized_input:
-                logger.info(f"Gaussian Process type: {gp_type.value}")
-                return gp_type
-
-        # If no exact match, try partial matching by finding the closest match
-        for gp_type in GaussianProcessType:
-            if normalized_input in gp_type.value:
-                logger.warning(
-                    f"Partial match found for Gaussian Process type: {gp_type.value}. Input was: {s}"
-                )
-                return gp_type
-
-        message = f"Unknown Gaussian Process type: {s}"
-        logger.error(message)
-        raise ValueError(message)
 
 
 def compute_rank(gp_type):
@@ -131,7 +64,7 @@ def compute_rank(gp_type):
     elif (gp_type == GaussianProcessType.FULL_NYSTROEM) or (
         gp_type == GaussianProcessType.SPARSE_NYSTROEM
     ):
-        return 0.99
+        return DEFAULT_RANK
     else:
         return 1.0
 
@@ -147,7 +80,8 @@ def compute_n_landmarks(gp_type, n_samples, landmarks):
     n_samples : array-like
         The number of samples/cells.
     landmarks : array-like or None
-        The given landmarks. If specified, its shape determines the number of landmarks, unless conflicting with `n_landmarks`.
+        The given landmarks. If specified, its shape determines the number of landmarks,
+        unless conflicting with `n_landmarks`.
 
     Returns
     -------
@@ -456,8 +390,8 @@ def compute_nn_distances_within_time_points(x, times=None, normalize=False):
                 f"Insufficient data: Only {n_samples} sample(s) found at time point {time}. "
                 "Nearest neighbors cannot be computed with less than two samples per time point. "
                 "Please confirm if you have provided the correct time axis. "
-                "If the time points indeed have very few samples, consider aggregating nearby time points for better results, "
-                "or you may specify `nn_distances` manually."
+                "If the time points indeed have very few samples, consider aggregating nearby "
+                "time points for better results, or you may specify `nn_distances` manually."
             )
         x_at_time = x[mask, :-1]
         nn_distances_at_time = compute_nn_distances(x_at_time)
@@ -657,13 +591,72 @@ def compute_Lp(
         raise ValueError(message)
 
 
+def _validate_compute_L_input(x, cov_func, gp_type, landmarks, Lp, rank, sigma, jitter):
+    """
+    Validate input for the fuction compute_L.
+
+    Returns
+    -------
+    x : array-like
+        The training instances with at least 2 dimensions (n_samples, n_dims).
+    n_landmarks : int
+        The number of landmarks.
+    n_samples : int
+        The number of samples/cells.
+    gp_type : mellon.util.GaussianProcessType
+        The type of Gaussian Process to use.
+    rank : float, optional
+        The rank of the approximate covariance matrix.
+
+    Raises
+    ------
+    ValueError
+        If any of the inputs are inconsistent or violate constraints.
+    """
+    jitter = _validate_positive_float(jitter, "jitter")
+    rank = _validate_float_or_int(rank, "rank", optional=True)
+
+    n_samples = x.shape[0]
+    if landmarks is None:
+        n_landmarks = n_samples
+    else:
+        n_landmarks = landmarks.shape[0]
+    gp_type = GaussianProcessType.from_string(gp_type, optional=True)
+    if rank is None:
+        rank = compute_rank(gp_type)
+    if gp_type is None:
+        gp_type = compute_gp_type(n_landmarks, rank, n_samples)
+    _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks)
+
+    if (
+        gp_type == GaussianProcessType.FULL
+        and Lp is not None
+        and Lp.shape != (n_samples, n_samples)
+    ):
+        message = (
+            f" Wrong shape of Lp {Lp.shape} for {gp_type} and {n_samples:,} samples."
+        )
+        logger.error(message)
+        raise ValueError(message)
+    elif (
+        gp_type == GaussianProcessType.SPARSE_CHOLESKY
+        and Lp is not None
+        and Lp.shape != (n_landmarks, n_landmarks)
+    ):
+        message = f" Wrong shape of Lp {Lp.shape} for {gp_type} and {n_landmarks:,} landmarks."
+        logger.error(message)
+        raise ValueError(message)
+
+    return x, n_landmarks, n_samples, gp_type, rank
+
+
 def compute_L(
     x,
     cov_func,
     gp_type=None,
     landmarks=None,
     Lp=None,
-    rank=DEFAULT_RANK,
+    rank=None,
     sigma=DEFAULT_SIGMA,
     jitter=DEFAULT_JITTER,
 ):
@@ -697,8 +690,8 @@ def compute_L(
         If rank is a float 0.0 :math:`\le` rank :math:`\le` 1.0, the rank/size
         of :math:`L` is selected such that the included eigenvalues of the covariance
         between landmark points account for the specified percentage of the
-        sum of eigenvalues. Defaults to 0.999.
-    sigma : float, optional
+        sum of eigenvalues. Defaults to 0.99 if gp_type indicates Nyström.
+    sigma : float, array-like, optional
         Noise standard deviation of the data we condition on. Defaults to 0.
     jitter : float, optional
         A small amount to add to the diagonal. Defaults to 1e-6.
@@ -717,40 +710,23 @@ def compute_L(
     ValueError
         If the Gaussian Process type is unknown or if the shape of Lp is incorrect.
     """
-    x = ensure_2d(x)
-    n_samples = x.shape[0]
-    if landmarks is None:
-        n_landmarks = n_samples
-    else:
-        n_landmarks = landmarks.shape[0]
-    gp_type = GaussianProcessType.from_string(gp_type, optional=True)
-    if rank is None:
-        rank = compute_rank(gp_type)
-    if gp_type is None:
-        gp_type = compute_gp_type(n_landmarks, rank, n_samples)
+    x, n_landmarks, n_samples, gp_type, rank = _validate_compute_L_input(
+        x, cov_func, gp_type, landmarks, Lp, rank, sigma, jitter
+    )
 
     if gp_type == GaussianProcessType.FULL:
         if Lp is None:
             return _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
-        if Lp.shape != (n_samples, n_samples):
-            message = f" Wrong shape of Lp {Lp.shape} for {gp_type} and {n_samples:,} samples."
-            logger.error(message)
-            raise ValueError(message)
         return Lp
     elif gp_type == GaussianProcessType.FULL_NYSTROEM:
         return _full_decomposition_low_rank(
             x, cov_func, rank=rank, sigma=sigma, jitter=jitter
         )
     elif gp_type == GaussianProcessType.SPARSE_CHOLESKY:
-        n_landmarks = landmarks.shape[0]
         if Lp is None:
             return _standard_low_rank(
                 x, cov_func, landmarks, sigma=sigma, jitter=jitter
             )
-        if Lp.shape != (n_landmarks, n_landmarks):
-            message = f" Wrong shape of Lp {Lp.shape} for {gp_type} and {n_landmarks:,} landmarks."
-            logger.error(message)
-            raise ValueError(message)
         return _standard_low_rank(
             x, cov_func, landmarks, Lp=Lp, sigma=sigma, jitter=jitter
         )
@@ -763,10 +739,6 @@ def compute_L(
             sigma=sigma,
             jitter=jitter,
         )
-    else:
-        message = f"Unknown Gaussian Process type {gp_type}."
-        logger.error(message)
-        raise ValueError(message)
 
 
 def compute_initial_value(nn_distances, d, mu, L):
