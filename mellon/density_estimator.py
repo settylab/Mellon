@@ -123,8 +123,8 @@ class DensityEstimator(BaseEstimator):
         the geometric mean of the nearest neighbor distances times a constant. If `cov_func`
         is supplied explicitly, `ls` has no effect. Defaults to None.
 
-    cov_func : function or None
-        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
+    cov_func : mellon.Covaraince or None
+        The Gaussian process covariance function as instance of :class:`mellon.Covaraince`.
         If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
         Defaults to None.
 

@@ -124,10 +124,10 @@ class DimensionalityEstimator(BaseEstimator):
         selected. It is used to manually adjust the automatically chosen length
         scale for finer control over the model's sensitivity to variations in the data.
 
-    cov_func: function or None, optional
-        The Gaussian process covariance function of the form k(x, y)
-        :math:`\rightarrow` float. If None, the covariance function is generated
-        automatically as `cov_func = cov_func_curry(ls)`.
+    cov_func : mellon.Covaraince or None
+        The Gaussian process covariance function as instance of :class:`mellon.Covaraince`.
+        If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
+        Defaults to None.
 
     Lp : array-like or None
         A matrix such that :math:`L_p L_p^\top = \Sigma_p`, where :math:`\Sigma_p` is the

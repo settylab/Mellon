@@ -165,8 +165,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         Default is an empty dictionary ({}).
 
     cov_func : mellon.Covariance or None
-        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
-        Should be an instance of a class that inherits from :class:`mellon.Covariance`.
+        The Gaussian process covariance function as instance of :class:`mellon.Covaraince`.
         If None, the covariance function `cov_func` is automatically generated as
         `cov_func_curry(ls, active_dims=slice(None, -1)) * cov_func_curry(ls_time, active_dims=-1)`.
         Defaults to None.
