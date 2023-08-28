@@ -1,6 +1,7 @@
 import sys
 import logging
 from importlib import import_module
+from packaging import version
 from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Union, Set, List
@@ -471,6 +472,18 @@ class Predictor(ABC):
         """
         clsname = data_dict["metadata"]["classname"]
         module_name = data_dict["metadata"]["module_name"]
+        module_version = data_dict["metadata"]["module_version"]
+
+        if version.parse(module_version) < version.parse("1.4.0"):
+            if module_name == "mellon.conditional":
+                clsname = clsname.replace("ConditionalMean", "Conditional")
+            data_dict["data"]["n_obs"] = data_dict["data"].get("n_obs", None)
+            state_vars = set(data_dict["data"].keys()) - {
+                "n_input_features",
+            }
+            data_dict["data"]["_state_variables"] = data_dict["data"].get(
+                "_state_variables", state_vars
+            )
 
         module = import_module(module_name)
         Subclass = getattr(module, clsname)
