@@ -2,6 +2,7 @@ import sys
 import logging
 import functools
 import inspect
+from typing import List
 from inspect import Parameter
 from enum import Enum
 
@@ -534,7 +535,7 @@ class GaussianProcessType(Enum):
         raise ValueError(message)
 
 
-def object_str(obj: object, dim_names: list[str] = None) -> str:
+def object_str(obj: object, dim_names: List[str] = None) -> str:
     """
     Generate a concise string representation of metadata for array-like objects.
 
