@@ -317,6 +317,9 @@ def test_density_estimator_errors(common_setup):
     with pytest.raises(ValueError):
         predictor.to_json(test_file, compress="bad_type")
     est.fit_predict()
+    est.predict.n_obs = None
+    with pytest.raises(ValueError):
+        est.predict(lX, normalize=True)
     est = mellon.DensityEstimator(predictor_with_uncertainty=True)
     with pytest.raises(ValueError):
         est.fit(X)
