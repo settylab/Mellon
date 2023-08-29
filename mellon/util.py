@@ -380,6 +380,13 @@ def local_dimensionality(x, k=30, x_query=None, neighbor_idx=None):
     This function computes the local fractal dimension of a dataset at query points.
     It uses nearest neighbors and fits a line in log-log space to estimate the fractal dimension.
     """
+    if k > x.shape[0]:
+        logger.warning(
+            f"Number of nearest neighbors (k={k}) is "
+            f"greater than the number of samples ({x.shape[0]}). "
+            "Setting k to the number of samples."
+        )
+        k = x.shape[0]
     if neighbor_idx is None:
         if x_query is None:
             x_query = x
@@ -525,3 +532,47 @@ class GaussianProcessType(Enum):
         message = f"Unknown Gaussian Process type: {s}"
         logger.error(message)
         raise ValueError(message)
+
+
+def object_str(obj: object, dim_names: list[str] = None) -> str:
+    """
+    Generate a concise string representation of metadata for array-like objects.
+
+    Parameters
+    ----------
+    obj : object
+        Object for which to generate metadata string.
+
+    dim_names : list of str, optional
+        Names for dimensions, used for array-like objects.
+
+    Returns
+    -------
+    str
+        Metadata string.
+
+    Examples
+    --------
+    >>> object_metadata_str(np.array([[1, 2], [3, 4]]), dim_names=['row', 'col'])
+    '<array 2 row x 2 col, dtype=int64>'
+
+    >>> object_metadata_str(np.array([1, 2, 3]), dim_names=['element'])
+    '<array 3 element, dtype=int64>'
+
+    >>> object_metadata_str("hello")
+    'hello'
+    """
+    if hasattr(obj, "shape") and hasattr(obj, "dtype"):
+        dims = obj.shape
+        if dim_names:
+            dim_strs = [f"{dim:,} {name}" for dim, name in zip(dims, dim_names)]
+        else:
+            dim_strs = [f"{dim:,}" for dim in dims]
+
+        for i in range(len(dim_strs), len(dims)):
+            dim_strs.append(f"{dims[i]} dimension {i + 1}")
+
+        dim_str = " x ".join(dim_strs)
+        return f"<array {dim_str}, dtype={obj.dtype}>"
+    else:
+        return str(obj)

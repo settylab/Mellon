@@ -123,6 +123,11 @@ class DensityEstimator(BaseEstimator):
         the geometric mean of the nearest neighbor distances times a constant. If `cov_func`
         is supplied explicitly, `ls` has no effect. Defaults to None.
 
+    ls_factor : float, optional
+        A scaling factor applied to the length scale when it's automatically
+        selected. It is used to manually adjust the automatically chosen length
+        scale for finer control over the model's sensitivity to variations in the data.
+
     cov_func : mellon.Covaraince or None
         The Gaussian process covariance function as instance of :class:`mellon.Covaraince`.
         If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
@@ -229,40 +234,6 @@ class DensityEstimator(BaseEstimator):
         self.pre_transformation_std = None
         self.log_density_x = None
         self.log_density_func = None
-
-    def __repr__(self):
-        name = self.__class__.__name__
-        string = (
-            f"{name}("
-            f"cov_func_curry={self.cov_func_curry}, "
-            f"n_landmarks={self.n_landmarks}, "
-            f"rank={self.rank}, "
-            f"jitter={self.jitter}, "
-            f"optimizer='{self.optimizer}', "
-            f"n_iter={self.n_iter}, "
-            f"init_learn_rate={self.init_learn_rate}, "
-            f"landmarks={self.landmarks}, "
-        )
-        if self.nn_distances is None:
-            string += "nn_distances=None, "
-        else:
-            string += "nn_distances=nn_distances, "
-        string += (
-            f"d={self.d}, "
-            f"mu={self.mu}, "
-            f"ls={self.ls}, "
-            f"cov_func={self.cov_func}, "
-        )
-        if self.L is None:
-            string += "L=None, "
-        else:
-            string += "L=L, "
-        if self.initial_value is None:
-            string += "initial_value=None, "
-        else:
-            string += "initial_value=initial_value, "
-        string += f"jit={self.jit}" ")"
-        return string
 
     def _compute_d(self):
         x = self.x

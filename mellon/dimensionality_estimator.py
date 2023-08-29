@@ -19,6 +19,7 @@ from .parameters import (
 from .util import (
     DEFAULT_JITTER,
     local_dimensionality,
+    object_str,
 )
 from .validation import (
     _validate_positive_int,
@@ -70,7 +71,7 @@ class DimensionalityEstimator(BaseEstimator):
             along with an improved Nyström rank reduction method.
 
         The value can be either a string matching one of the above options or an instance of
-        the `mellon.parameters.GaussianProcessType` Enum. If a partial match is found with the
+        the `mellon.util.GaussianProcessType` Enum. If a partial match is found with the
         Enum, a warning will be logged, and the closest match will be used.
 
     jitter: float, optional (default=1e-6)
@@ -237,37 +238,36 @@ class DimensionalityEstimator(BaseEstimator):
 
     def __repr__(self):
         name = self.__class__.__name__
+        landmarks = object_str(self.landmarks, ["landmarks", "dims"])
+        Lp = object_str(self.Lp, ["landmarks", "landmarks"])
+        L = object_str(self.L, ["cells", "ranks"])
+        nn_distances = object_str(self.nn_distances, ["cells"])
+        d = object_str(self.d, ["cells"])
+        initial_value = object_str(self.initial_value, ["functions", "ranks"])
         string = (
             f"{name}("
-            f"cov_func_curry={self.cov_func_curry}, "
-            f"n_landmarks={self.n_landmarks}, "
-            f"rank={self.rank}, "
-            f"jitter={self.jitter}, "
-            f"optimizer='{self.optimizer}', "
-            f"n_iter={self.n_iter}, "
-            f"init_learn_rate={self.init_learn_rate}, "
-            f"landmarks={self.landmarks}, "
+            f"\n    cov_func_curry={self.cov_func_curry},"
+            f"\n    n_landmarks={self.n_landmarks},"
+            f"\n    rank={self.rank},"
+            f"\n    gp_type={self.gp_type},"
+            f"\n    jitter={self.jitter}, "
+            f"\n    optimizer={self.optimizer},"
+            f"\n    landmarks={landmarks},"
+            f"\n    nn_distances={nn_distances},"
+            f"\n    d={d},"
+            f"\n    mu_dim={self.mu_dim},"
+            f"\n    mu_dens={self.mu_dens},"
+            f"\n    ls={self.ls},"
+            f"\n    ls_factor={self.ls_factor},"
+            f"\n    cov_func={self.cov_func},"
+            f"\n    Lp={Lp},"
+            f"\n    L={L},"
+            f"\n    initial_value={initial_value},"
+            f"\n    predictor_with_uncertainty={self.predictor_with_uncertainty},"
+            f"\n    jit={self.jit},"
+            f"\n    check_rank={self.check_rank},"
+            "\n)"
         )
-        if self.distances is None:
-            string += "distances=None, "
-        else:
-            string += "distances=distances, "
-        string += (
-            f"d={self.d}, "
-            f"mu_dim={self.mu_dim}, "
-            f"mu_dens={self.mu_dens}, "
-            f"ls={self.ls}, "
-            f"cov_func={self.cov_func}, "
-        )
-        if self.L is None:
-            string += "L=None, "
-        else:
-            string += "L=L, "
-        if self.initial_value is None:
-            string += "initial_value=None, "
-        else:
-            string += "initial_value=initial_value, "
-        string += f"jit={self.jit}" ")"
         return string
 
     def _compute_mu_dens(self):

@@ -454,13 +454,6 @@ def compute_d_factal(x, k=10, n=500, seed=432):
         x_query = x[idx, ...]
     else:
         x_query = x
-    if k > x.shape[0]:
-        logger.warning(
-            f"Number of nearest neighbors (k={k}) is "
-            f"greater than the number of samples ({x.shape[0]}). "
-            "Setting k to the number of samples."
-        )
-        k = x.shape[0]
     local_dims = local_dimensionality(x, k=k, x_query=x_query)
     return local_dims.mean().item()
 

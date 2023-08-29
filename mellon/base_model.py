@@ -22,6 +22,7 @@ from .parameters import (
 )
 from .util import (
     test_rank,
+    object_str,
     DEFAULT_JITTER,
     GaussianProcessType,
 )
@@ -121,33 +122,34 @@ class BaseEstimator:
 
     def __repr__(self):
         name = self.__class__.__name__
+        landmarks = object_str(self.landmarks, ["landmarks", "dims"])
+        Lp = object_str(self.Lp, ["landmarks", "landmarks"])
+        L = object_str(self.L, ["cells", "ranks"])
+        nn_distances = object_str(self.nn_distances, ["cells"])
+        initial_value = object_str(self.initial_value, ["ranks"])
         string = (
             f"{name}("
-            f"cov_func_curry={self.cov_func_curry}, "
-            f"rank={self.rank}, "
-            f"jitter={self.jitter}, "
-            f"rank={self.rank}, "
-            f"n_landmarks={self.n_landmarks}, "
-            f"gp_type={self.gp_type}, "
-            f"predictor_with_uncertainty={self.predictor_with_uncertainty}, "
+            f"\n    cov_func_curry={self.cov_func_curry},"
+            f"\n    n_landmarks={self.n_landmarks},"
+            f"\n    rank={self.rank},"
+            f"\n    gp_type={self.gp_type},"
+            f"\n    jitter={self.jitter}, "
+            f"\n    optimizer={self.optimizer},"
+            f"\n    landmarks={landmarks},"
+            f"\n    nn_distances={nn_distances},"
+            f"\n    d={self.d},"
+            f"\n    mu={self.mu},"
+            f"\n    ls={self.ls},"
+            f"\n    ls_factor={self.ls_factor},"
+            f"\n    cov_func={self.cov_func},"
+            f"\n    Lp={Lp},"
+            f"\n    L={L},"
+            f"\n    initial_value={initial_value},"
+            f"\n    predictor_with_uncertainty={self.predictor_with_uncertainty},"
+            f"\n    jit={self.jit},"
+            f"\n    check_rank={self.check_rank},"
+            "\n)"
         )
-        if self.nn_distances is None:
-            string += "nn_distances=None, "
-        else:
-            string += "nn_distances=nn_distances, "
-        string += f"mu={self.mu}, " f"ls={self.mu}, " f"cov_func={self.cov_func}, "
-        if self.Lp is None:
-            string += "Lp=None, "
-        else:
-            string += "Lp=Lp, "
-        if self.L is None:
-            string += "L=None, "
-        else:
-            string += "L=L, "
-        if self.landmarks is None:
-            string += "landmarks=None, "
-        else:
-            string += "landmarks=landmarks, "
         return string
 
     def __call__(self, x=None):

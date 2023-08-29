@@ -79,7 +79,7 @@ class Predictor(ABC):
         ValueError
             If the number of features in 'x' does not align with the number of features the
             predictor was trained on.
-            
+
     Attributes
     ----------
     n_obs : int
@@ -639,7 +639,7 @@ class PredictorTime(Predictor):
         ValueError
             If the number of features in 'x' does not align with the number of features the
             predictor was trained on.
-            
+
     Attributes
     ----------
     n_obs : int

@@ -6,6 +6,7 @@ from .util import (
     Log,
     set_jax_config,
     GaussianProcessType,
+    object_str,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "Log",
     "set_jax_config",
     "GaussianProcessType",
+    "object_str",
 ]

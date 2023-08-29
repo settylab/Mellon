@@ -22,6 +22,7 @@ from .parameters import (
 from .compute_ls_time import compute_ls_time
 from .util import (
     DEFAULT_JITTER,
+    object_str,
 )
 from .validation import (
     _validate_time_x,
@@ -236,7 +237,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         ls=None,
         ls_time=None,
         ls_factor=1,
-        ls_factor_times=1,
+        ls_time_factor=1,
         density_estimator_kwargs=dict(),
         cov_func=None,
         Lp=None,
@@ -277,9 +278,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             d_method, "d_method", choices={"fractal", "embedding"}
         )
         self.ls_time = _validate_positive_float(ls_time, "ls_time", optional=True)
-        self.ls_factor_times = _validate_positive_float(
-            ls_factor_times, "ls_factor_times"
-        )
+        self.ls_time_factor = _validate_positive_float(ls_time_factor, "ls_time_factor")
         self._save_intermediate_ls_times = _save_intermediate_ls_times
         self.normalize_per_time_point = _validate_bool(
             normalize_per_time_point, "normalize_per_time_point"
@@ -295,37 +294,41 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
 
     def __repr__(self):
         name = self.__class__.__name__
+        landmarks = object_str(self.landmarks, ["landmarks", "dims"])
+        Lp = object_str(self.Lp, ["landmarks", "landmarks"])
+        L = object_str(self.L, ["cells", "ranks"])
+        nn_distances = object_str(self.nn_distances, ["cells"])
+        initial_value = object_str(self.initial_value, ["ranks"])
+        normalize_per_time_point = object_str(
+            self.normalize_per_time_point, ["time points"]
+        )
         string = (
             f"{name}("
-            f"cov_func_curry={self.cov_func_curry}, "
-            f"n_landmarks={self.n_landmarks}, "
-            f"rank={self.rank}, "
-            f"jitter={self.jitter}, "
-            f"optimizer='{self.optimizer}', "
-            f"n_iter={self.n_iter}, "
-            f"init_learn_rate={self.init_learn_rate}, "
-            f"landmarks={self.landmarks}, "
+            f"\n    cov_func_curry={self.cov_func_curry},"
+            f"\n    n_landmarks={self.n_landmarks},"
+            f"\n    rank={self.rank},"
+            f"\n    gp_type={self.gp_type},"
+            f"\n    jitter={self.jitter}, "
+            f"\n    optimizer={self.optimizer},"
+            f"\n    landmarks={landmarks},"
+            f"\n    nn_distances={nn_distances},"
+            f"\n    normalize_per_time_point={normalize_per_time_point},"
+            f"\n    d={self.d},"
+            f"\n    mu={self.mu},"
+            f"\n    ls={self.ls},"
+            f"\n    ls_time={self.ls_time},"
+            f"\n    ls_factor={self.ls_factor},"
+            f"\n    ls_time_factor={self.ls_time_factor},"
+            f"\n    density_estimator_kwargs={self.density_estimator_kwargs},"
+            f"\n    cov_func={self.cov_func},"
+            f"\n    Lp={Lp},"
+            f"\n    L={L},"
+            f"\n    initial_value={initial_value},"
+            f"\n    predictor_with_uncertainty={self.predictor_with_uncertainty},"
+            f"\n    jit={self.jit},"
+            f"\n    check_rank={self.check_rank},"
+            "\n)"
         )
-        if self.nn_distances is None:
-            string += "nn_distances=None, "
-        else:
-            string += "nn_distances=nn_distances, "
-        string += (
-            f"d={self.d}, "
-            f"mu={self.mu}, "
-            f"ls={self.ls}, "
-            f"ls_time={self.ls_time}, "
-            f"cov_func={self.cov_func}, "
-        )
-        if self.L is None:
-            string += "L=None, "
-        else:
-            string += "L=L, "
-        if self.initial_value is None:
-            string += "initial_value=None, "
-        else:
-            string += "initial_value=initial_value, "
-        string += f"jit={self.jit}" ")"
         return string
 
     def _compute_d(self):
@@ -415,7 +418,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
                 "Storing `self.densities`, `self.predictors`, and `self.numeric_stages`."
             )
             ls, self.densities, self.predictors, self.numeric_stages = ls
-        ls *= self.ls_factor_times
+        ls *= self.ls_time_factor
         return ls
 
     def _compute_landmarks(self):
