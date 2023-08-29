@@ -149,6 +149,17 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     )
     logger.info("Serializing deserialized predictor again.")
     predictor.to_json(test_file, compress=compress)
+    # test backwards compatibility
+    edict = predictor.to_dict()
+    edict["metadata"]["module_version"] = "1.3.1"
+    edict["data"].pop("n_obs")
+    edict["data"].pop("_state_variables")
+    mellon.Predictor.from_dict(edict)
+    reprod = predictor(X, normalize=False)
+    is_close = jnp.all(jnp.isclose(dens_appr, reprod))
+    assert is_close, (
+        "Deserialized predictor of mellon 1.3.1 should produce the same results."
+    )
 
 
 def test_density_estimator_without_uncertainty(common_setup):
