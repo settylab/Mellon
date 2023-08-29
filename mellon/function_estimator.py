@@ -46,7 +46,7 @@ class FunctionEstimator(BaseEstimator):
             typically employed to enable scalable GP models.
 
         The value can be either a string matching one of the above options or an instance of
-        the `mellon.parameters.GaussianProcessType` Enum. If a partial match is found with the
+        the `mellon.util.GaussianProcessType` Enum. If a partial match is found with the
         Enum, a warning will be logged, and the closest match will be used.
         Defaults to 'sparse_cholesky'.
 

@@ -173,7 +173,7 @@ def _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks):
 
     if not isinstance(gp_type, GaussianProcessType):
         message = (
-            "gp_type needs to be a mellon.parameters.GaussianProcessType but is a "
+            "gp_type needs to be a mellon.util.GaussianProcessType but is a "
             f"{type(gp_type)} instead."
         )
         logger.error(message)
