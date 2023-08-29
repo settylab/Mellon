@@ -79,6 +79,13 @@ class Predictor(ABC):
         ValueError
             If the number of features in 'x' does not align with the number of features the
             predictor was trained on.
+            
+    Attributes
+    ----------
+    n_obs : int
+        The number of samples or cells that the model was trained on. This attribute is critical
+        for normalization purposes, particularly when the `normalize` parameter in the `__call__`
+        method is set to `True`.
     """
 
     # number of features of input data (x.shape[1]) to be specified in __init__
@@ -162,6 +169,13 @@ class Predictor(ABC):
                 "Please ensure that the input data has the same number of features as the training data."
             )
         if normalize:
+            if self.n_obs is None or self.n_obs == 0:
+                message = (
+                    "Cannot normalize without n_obs. Please set self.n_obs to the number "
+                    "of samples/cells trained on to enable normalization."
+                )
+                logger.error(message)
+                raise ValueError(message)
             return self._mean(x) - log(self.n_obs)
         else:
             return self._mean(x)
@@ -475,6 +489,11 @@ class Predictor(ABC):
         module_version = data_dict["metadata"]["module_version"]
 
         if version.parse(module_version) < version.parse("1.4.0"):
+            message = (
+                f"Loading a predictor written by mellon {module_version} < 1.4.0. "
+                "Please set predictor.n_obs to enable normalization."
+            )
+            logger.warning(message)
             if module_name == "mellon.conditional":
                 clsname = clsname.replace("ConditionalMean", "Conditional")
             data_dict["data"]["n_obs"] = data_dict["data"].get("n_obs", None)
@@ -620,6 +639,13 @@ class PredictorTime(Predictor):
         ValueError
             If the number of features in 'x' does not align with the number of features the
             predictor was trained on.
+            
+    Attributes
+    ----------
+    n_obs : int
+        The average number of samples or cells per time point that the model was trained on.
+        This attribute is critical for normalization purposes, particularly when the `normalize`
+        parameter in the `__call__` method is set to `True`.
     """
 
     @make_multi_time_argument
@@ -662,6 +688,13 @@ class PredictorTime(Predictor):
         normalize = _validate_bool(normalize, "normalize")
 
         if normalize:
+            if self.n_obs is None or self.n_obs == 0:
+                message = (
+                    "Cannot normalize without n_obs. Please set self.n_obs to the number "
+                    "of samples/cells (per time point) trained on to enable normalization."
+                )
+                logger.error(message)
+                raise ValueError(message)
             return self._mean(Xnew) - log(self.n_obs)
         else:
             return self._mean(Xnew)
