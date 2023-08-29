@@ -20,6 +20,7 @@ The `Predictor` class, accessible through the `predict` property of an estimator
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: n_obs, n_input_features
 
 Serialization to AnnData
 ------------------------

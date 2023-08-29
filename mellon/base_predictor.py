@@ -86,6 +86,10 @@ class Predictor(ABC):
         The number of samples or cells that the model was trained on. This attribute is critical
         for normalization purposes, particularly when the `normalize` parameter in the `__call__`
         method is set to `True`.
+
+    n_input_features : int
+        The number of features/dimensions of the cell-state representation the predictor was
+        trained on. This is used for validation of input data.
     """
 
     # number of features of input data (x.shape[1]) to be specified in __init__
@@ -646,6 +650,10 @@ class PredictorTime(Predictor):
         The average number of samples or cells per time point that the model was trained on.
         This attribute is critical for normalization purposes, particularly when the `normalize`
         parameter in the `__call__` method is set to `True`.
+
+    n_input_features : int
+        The number of features/dimensions of the cell-state representation the predictor was
+        trained on. This is used for validation of input data.
     """
 
     @make_multi_time_argument
