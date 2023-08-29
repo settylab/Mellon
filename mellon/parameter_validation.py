@@ -1,5 +1,5 @@
 import logging
-
+from jax.numpy import ndarray
 from .util import GaussianProcessType
 from .base_cov import Covariance
 from .validation import (
@@ -261,3 +261,19 @@ def _validate_cov_func(cov_func, param_name, optional=False):
             f"'{param_name}' must be an instance of a subclass of mellon.Covariance"
         )
     return cov_func
+
+
+def _validate_normalize_parameter(normalize, unique_times):
+    """
+    Used in parameters.compute_nn_distances_within_time_points to validate input.
+    """
+    if isinstance(normalize, dict):
+        missing_times = [t for t in unique_times if t.item() not in normalize]
+        if missing_times:
+            raise ValueError(
+                f"Missing time point(s) in normalization dictionary: {missing_times}"
+            )
+    elif isinstance(normalize, (list, ndarray)) and len(normalize) != len(unique_times):
+        raise ValueError(
+            "Length of the normalize list or array must match the number of unique time points."
+        )

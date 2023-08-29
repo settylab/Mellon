@@ -15,6 +15,7 @@ from .parameters import (
     compute_landmarks_rescale_time,
     compute_cov_func,
     compute_d,
+    compute_ls,
     compute_d_factal,
     compute_mu,
     compute_initial_value,
@@ -117,13 +118,24 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         distances are computed automatically, using a KDTree if the dimensionality of the data
         is less than 20, or a BallTree otherwise. Defaults to None.
 
-    normalize_per_time_point : bool, optional
-        If True, the computation of nearest neighbor distances incorporates a normalization step
-        based on the number of samples within each time point group. This process mitigates potential
-        bias in the density estimation due to unequal sample distribution across different time points.
-        Note that if `nn_distance` is provided, this parameter is ignored as the provided distances
-        are used directly.
-        Defaults to False.
+    normalize_per_time_point : bool, list, array-like, or dict, optional
+        Controls the normalization for varying cell counts across time points to adjust for sampling bias
+        by modifying the nearest neighbor distances before inference.
+
+        - If True, normalizes to simulate a constant total cell count divided by the number of time points.
+
+        - If False, the raw cell counts per time point is reflected in the density estimation.
+
+        - If a list or array-like, assumes total cell counts for time points, ordered from earliest to latest.
+
+        - If a dict, maps each time point to its total cell count. Must cover all unique time points.
+
+        Note: Relative cell counts are sufficient for comparison within dataset; exact numbers are not required.
+
+        Note: Ignored if `nn_distance` is provided; distances are used as-is and this parameter has no effect.
+
+        Default is False.
+
 
     d : int, array-like or None
         The intrinsic dimensionality of the data, i.e., the dimensionality of the embedded
@@ -280,9 +292,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         self.ls_time = _validate_positive_float(ls_time, "ls_time", optional=True)
         self.ls_time_factor = _validate_positive_float(ls_time_factor, "ls_time_factor")
         self._save_intermediate_ls_times = _save_intermediate_ls_times
-        self.normalize_per_time_point = _validate_bool(
-            normalize_per_time_point, "normalize_per_time_point"
-        )
+        self.normalize_per_time_point = normalize_per_time_point
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -379,12 +389,27 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
     def _compute_nn_distances(self):
         x = self.x
         normalize_per_time_point = self.normalize_per_time_point
+        d = self.d
         logger.info("Computing nearest neighbor distances within time points.")
         nn_distances = compute_nn_distances_within_time_points(
             x,
+            d=d,
             normalize=normalize_per_time_point,
         )
         return nn_distances
+
+    def _compute_ls(self):
+        nn_distances = self.nn_distances
+        normalized = self.normalize_per_time_point
+        if normalized is not False and normalized is not None:
+            logger.info(
+                "Computing non-normalized nn_distances for length scale heuristic."
+            )
+            x = self.x
+            nn_distances = compute_nn_distances_within_time_points(x, normalize=False)
+        ls = compute_ls(nn_distances)
+        ls *= self.ls_factor
+        return ls
 
     def _compute_ls_time(self):
         nn_distances = self.nn_distances
@@ -528,8 +553,8 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         self._prepare_attribute("rank")
         self._prepare_attribute("gp_type")
         self._validate_parameter()
-        self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
+        self._prepare_attribute("nn_distances")
         self._prepare_attribute("mu")
         self._prepare_attribute("ls")
         self._prepare_attribute("ls_time")

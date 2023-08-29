@@ -237,3 +237,36 @@ def test_density_estimator_errors(common_setup_time_sensitive):
     with pytest.raises(ValueError):
         est.fit_predict(lX)
     est.fit_predict()
+
+
+@pytest.mark.parametrize(
+    "normalization, different",
+    [
+        (False, False),
+        (True, False),
+        ([4, 4, 1000, 4], True),
+        (jnp.array([4, 4, 1000, 4]), True),
+        ({1: 4, 0: 4, 2: 1000, 3: 4}, True),
+    ],
+)
+def test_time_sensitive_density_estimator_normalizations(
+    common_setup_time_sensitive, normalization, different
+):
+    X, times, _, _, relative_err, _, _, _ = common_setup_time_sensitive
+    n = X.shape[0]
+    err_limit = 1e-4
+    min_diff = 1e-1
+
+    est = mellon.TimeSensitiveDensityEstimator(
+        normalize_per_time_point=normalization,
+    )
+    est.fit(X, times)
+    dens_appr = est.predict(X, times)
+    if different:
+        assert (
+            relative_err(dens_appr) > min_diff
+        ), "This normalization should be different the default."
+    else:
+        assert (
+            relative_err(dens_appr) < err_limit
+        ), "This normalization should be close to the default."

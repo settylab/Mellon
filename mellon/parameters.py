@@ -1,5 +1,5 @@
 import logging
-from jax.numpy import exp, log, quantile, stack, unique, empty, where
+from jax.numpy import exp, log, quantile, stack, unique, empty, where, ndim
 from jax.numpy import sum as arraysum
 from jax.numpy import any as arrayany
 from jax.numpy import all as arrayall
@@ -28,9 +28,11 @@ from .validation import (
     _validate_positive_float,
     _validate_float_or_int,
     _validate_positive_int,
+    _validate_float_or_iterable_numerical,
 )
 from .parameter_validation import (
     _validate_params,
+    _validate_normalize_parameter,
 )
 
 
@@ -347,7 +349,15 @@ def compute_nn_distances(x, save=True):
     return nn_distances
 
 
-def compute_nn_distances_within_time_points(x, times=None, normalize=False):
+def _get_target_cell_count(normalize, time, av_cells_per_tp, unique_times):
+    if isinstance(normalize, bool):
+        return av_cells_per_tp
+    if isinstance(normalize, dict):
+        return normalize[time.item()]
+    return normalize[unique_times.tolist().index(time)]
+
+
+def compute_nn_distances_within_time_points(x, times=None, d=None, normalize=False):
     R"""
     Computes the distance to the nearest neighbor for each training instance
     within the same time point group. It retains the original order of instances in `x`.
@@ -364,10 +374,24 @@ def compute_nn_distances_within_time_points(x, times=None, normalize=False):
         If provided, it overrides the last column of 'x' as the times.
         Shape must be either (n_samples,) or (n_samples, 1).
 
-    normalize : bool, optional
-        If True, distances are normalized by the number of samples within the same time point group.
-        This normalization reduces potential bias in the density estimation arising from uneven
-        sampling across different time points. Defaults to False.
+    d : int, array-like or None
+        The intrinsic dimensionality of the data, i.e., the dimensionality of the embedded
+        manifold. Only required for the normalization.
+        Defaults to None.
+
+    normalize : bool, list, array-like, or dict, optional
+        Controls the normalization for varying cell counts across time points to adjust for sampling bias
+        by modifying the nearest neighbor distances.
+
+        - If True, normalizes to simulate a constant total cell count divided by the number of time points.
+
+        - If False, the raw cell counts per time point is reflected in the nearest neighbor distances.
+
+        - If a list or array-like, assumes total cell counts for time points, ordered from earliest to latest.
+
+        - If a dict, maps each time point to its total cell count. Must cover all unique time points.
+
+        Default is False.
 
     Returns
     -------
@@ -382,6 +406,21 @@ def compute_nn_distances_within_time_points(x, times=None, normalize=False):
     n_cells = x.shape[0]
     av_cells_per_tp = n_cells / len(unique_times)
 
+    _validate_normalize_parameter(normalize, unique_times)
+
+    if normalize is not False and normalize is not None:
+        d = _validate_float_or_iterable_numerical(d, "d", optional=False, positive=True)
+        if ndim(d) > 0 and len(d) != x.shape[0]:
+            ld = len(d)
+            raise ValueError(
+                f"If `d` (length={ld:,}) is a vector then it needs to have one value "
+                f"per cell in x (x.shape[0]={n_cells:,})."
+            )
+        logger.info(
+            "Normalizing nearest neighbor distances correcting sampling bias for "
+            f"{len(unique_times):,} different time points."
+        )
+
     for time in unique_times:
         mask = x[:, -1] == time
         n_samples = arraysum(mask)
@@ -395,11 +434,14 @@ def compute_nn_distances_within_time_points(x, times=None, normalize=False):
             )
         x_at_time = x[mask, :-1]
         nn_distances_at_time = compute_nn_distances(x_at_time)
-        if normalize:
-            logger.warning(
-                "Per time point sampling bias normalization is not fully implemented yet."
+        if normalize is not False and normalize is not None:
+            target_cell_count = _get_target_cell_count(
+                normalize, time, av_cells_per_tp, unique_times
             )
-            nn_distances_at_time = nn_distances_at_time * n_samples / av_cells_per_tp
+            factor = (n_samples / target_cell_count) ** (
+                1 / d if ndim(d) == 0 else 1 / d[mask]
+            )
+            nn_distances_at_time = factor * nn_distances_at_time
         nn_distances = nn_distances.at[mask].set(nn_distances_at_time)
 
     return nn_distances
