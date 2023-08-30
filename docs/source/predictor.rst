@@ -49,7 +49,7 @@ The `Predictor` module contains various specialized subclasses of
 While the `gp_type` impacts the internat iplementation the nature of the
 prediction impacts its functionality leading to these subclasses
 
-- **Real-valued**: :class:`mellon.Predictor` 
+- **Real-valued**: :class:`mellon.Predictor`
 - **Positive-valued**: :class:`mellon.base_predictor.ExpPredictor`
 - **Time-sensitive**: :class:`mellon.base_predictor.PredictorTime`
 
@@ -78,10 +78,10 @@ Vanilla Predictor
 
 Utilized in the following methods:
 
-- :meth:`mellon.model.DensityEstimator.predict`
-- :meth:`mellon.model.DimensionalityEstimator.predict_density`
-- :meth:`mellon.model.FunctionEstimator.predict`
-    
+- :attr:`mellon.model.DensityEstimator.predict`
+- :attr:`mellon.model.DimensionalityEstimator.predict_density`
+- :attr:`mellon.model.FunctionEstimator.predict`
+
 .. autoclass:: mellon.Predictor
    :members:
    :undoc-members:
@@ -91,7 +91,7 @@ Utilized in the following methods:
 Exponential Predictor
 ---------------------
 
-- Used in :meth:`mellon.model.DimensionalityEstimator.predict`
+- Used in :attr:`mellon.model.DimensionalityEstimator.predict`
 - Predicted values are strictly positive. Variance is expressed in log scale.
 
 .. autoclass:: mellon.base_predictor.ExpPredictor
@@ -103,7 +103,7 @@ Exponential Predictor
 Time-sensitive Predictor
 ------------------------
 
-- Utilized in :meth:`mellon.model.TimeSensitiveDensityEstimator.predict`
+- Utilized in :attr:`mellon.model.TimeSensitiveDensityEstimator.predict`
 - Special arguments `time` and `multi_time` permit time-specific predictions.
 
 .. autoclass:: mellon.base_predictor.PredictorTime
