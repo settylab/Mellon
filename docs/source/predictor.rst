@@ -37,24 +37,8 @@ location.
     - :meth:`mellon.Predictor.mean_covariance`
     - :meth:`mellon.Predictor.uncertainty`
 
-Classifications
----------------
-
-The `Predictor` module contains various specialized subclasses of
-:class:`mellon.Predictor`. The subclass returned by the model depends on:
-
-- The `gp_type` argument, which specifies the Gaussian Process type.
-- The nature of the predicted value—be it real-valued, positive, or time-sensitive.
-
-While the `gp_type` impacts the internat iplementation the nature of the
-prediction impacts its functionality leading to these subclasses
-
-- **Real-valued**: :class:`mellon.Predictor`
-- **Positive-valued**: :class:`mellon.base_predictor.ExpPredictor`
-- **Time-sensitive**: :class:`mellon.base_predictor.PredictorTime`
-
-Classifications of Predictors
------------------------------
+Sub-Classes
+-----------
 
 The `Predictor` module in the Mellon framework features a variety of
 specialized subclasses of :class:`mellon.Predictor`. The specific subclass
