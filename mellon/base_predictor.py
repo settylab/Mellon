@@ -19,6 +19,7 @@ from .util import (
     deserialize,
     ensure_2d,
     make_multi_time_argument,
+    object_str,
 )
 from .derivatives import (
     gradient,
@@ -121,8 +122,8 @@ class Predictor(ABC):
             + "and data:\n"
             + "\n".join(
                 [
-                    str(key) + ": " + repr(getattr(self, key))
-                    for key in self._data_dict().keys()
+                    str(key) + ": " + object_str(v)
+                    for key, v in self._data_dict().items()
                 ]
             )
         )

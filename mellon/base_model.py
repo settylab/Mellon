@@ -127,6 +127,7 @@ class BaseEstimator:
         L = object_str(self.L, ["cells", "ranks"])
         nn_distances = object_str(self.nn_distances, ["cells"])
         initial_value = object_str(self.initial_value, ["ranks"])
+        d = object_str(self.d, ["cells"])
         string = (
             f"{name}("
             f"\n    cov_func_curry={self.cov_func_curry},"
@@ -137,7 +138,7 @@ class BaseEstimator:
             f"\n    optimizer={self.optimizer},"
             f"\n    landmarks={landmarks},"
             f"\n    nn_distances={nn_distances},"
-            f"\n    d={self.d},"
+            f"\n    d={d},"
             f"\n    mu={self.mu},"
             f"\n    ls={self.ls},"
             f"\n    ls_factor={self.ls_factor},"

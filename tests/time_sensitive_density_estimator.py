@@ -241,7 +241,7 @@ def test_density_estimator_errors(common_setup_time_sensitive):
     est.fit_predict()
     est.predict.n_obs = None
     with pytest.raises(ValueError):
-        est.predict(X, normalize=True)
+        est.predict(X, time=times, normalize=True)
 
 
 @pytest.mark.parametrize(

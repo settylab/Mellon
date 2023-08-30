@@ -312,6 +312,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         normalize_per_time_point = object_str(
             self.normalize_per_time_point, ["time points"]
         )
+        d = object_str(self.d, ["cells"])
         string = (
             f"{name}("
             f"\n    cov_func_curry={self.cov_func_curry},"
@@ -323,7 +324,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             f"\n    landmarks={landmarks},"
             f"\n    nn_distances={nn_distances},"
             f"\n    normalize_per_time_point={normalize_per_time_point},"
-            f"\n    d={self.d},"
+            f"\n    d={d},"
             f"\n    mu={self.mu},"
             f"\n    ls={self.ls},"
             f"\n    ls_time={self.ls_time},"
