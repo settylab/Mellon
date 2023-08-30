@@ -689,6 +689,9 @@ class PredictorTime(Predictor):
             Whether to normalize the value by subtracting log(self.n_obs)
             (number of cells trained on). Applicable only for cell-state density predictions.
             Default is False.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction for all stest in x will
+            be made for each time value in multi_time separatly.
 
         Returns
         -------
@@ -735,6 +738,9 @@ class PredictorTime(Predictor):
             If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
         diag : boolean, optional (default=True)
             Whether to return the variance (True) or the full covariance matrix (False).
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction for all stest in x will
+            be made for each time value in multi_time separatly.
 
         Returns
         -------
@@ -764,6 +770,9 @@ class PredictorTime(Predictor):
             If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
         diag : boolean, optional (default=True)
             Whether to compute the variance (True) or the full covariance matrix (False).
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction for all stest in x will
+            be made for each time value in multi_time separatly.
 
         Returns
         -------
@@ -795,6 +804,9 @@ class PredictorTime(Predictor):
             If 'time' is a scalar, it will be converted into a 1D array of the same size as 'Xnew'.
         diag : bool, optional (default=True)
             Whether to compute the variance (True) or the full covariance matrix (False).
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction for all stest in x will
+            be made for each time value in multi_time separatly.
 
         Returns
         -------
@@ -834,10 +846,11 @@ class PredictorTime(Predictor):
             specific time point for all data points in `x`.
             If `time` is an array, it should be 1-D and the time derivative
             will be computed for all data-points at the corresponding time in the array.
-        multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction will be made for each row.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction for all stest in x will
+            be made for each time value in multi_time separatly.
 
         Returns
         -------
@@ -865,7 +878,8 @@ class PredictorTime(Predictor):
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
         multi_time : array-like, optional
-            If 'multi_time' is specified then the computation will be made for each row.
+            If 'multi_time' is specified then a prediction for all stest in x will
+            be made for each time value in multi_time separatly.
 
         Returns
         -------
@@ -895,6 +909,9 @@ class PredictorTime(Predictor):
             If 'multi_time' is specified then the computation will be made for each row.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction for all stest in x will
+            be made for each time value in multi_time separatly.
 
         Returns
         -------
@@ -921,10 +938,11 @@ class PredictorTime(Predictor):
             Data points at which the log determinant is to be computed.
         time : float
             Specific time point at which to compute the log determinant.
-                multi_time : array-like, optional
-                        If 'multi_time' is specified then the computation will be made for each row.
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
+        multi_time : array-like, optional
+            If 'multi_time' is specified then a prediction for all stest in x will
+            be made for each time value in multi_time separatly.
 
         Returns
         -------
