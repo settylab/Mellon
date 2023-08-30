@@ -543,7 +543,7 @@ class ExpPredictor(Predictor):
     It is the responsibility of subclasses to define the behaviour of `_mean`.
     """
 
-    def __call__(self, x):
+    def mean(self, x, logscale=False):
         """
         Use the trained model to make a prediction based on the input array, x.
 
@@ -555,6 +555,10 @@ class ExpPredictor(Predictor):
         x : array-like
             The input data to the predictor.
             The array should have shape (n_samples, n_input_features).
+
+        logscale : bool
+            Weather the predicted value should be returned in log scale.
+            Default is False.
 
         Returns
         -------
@@ -568,6 +572,7 @@ class ExpPredictor(Predictor):
             number of features the predictor was trained on.
         """
         x = _validate_array(x, "x")
+        logscale = _validate_bool(logscale, "logscale")
         x = ensure_2d(x)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
@@ -575,26 +580,30 @@ class ExpPredictor(Predictor):
                 f"However, the provided input data has {x.shape[1]} features. "
                 "Please ensure that the input data has the same number of features as the training data."
             )
+        if logscale:
+            return self._mean(x)
         return exp(self._mean(x))
+
+    __call__ = mean
 
     @wraps(Predictor.covariance)
     def covariance(self, *args, **kwargs):
         logger.warning(
-            "The covariance will be computed for the log of the predicted value."
+            "The covariance will be computed for the predicted value in log scale."
         )
         return super().covariance(*args, **kwargs)
 
     @wraps(Predictor.mean_covariance)
     def mean_covariance(self, *args, **kwargs):
         logger.warning(
-            "The mean_covariance will be computed for the log of the predicted value."
+            "The mean_covariance will be computed for the predicted value in log scale."
         )
         return super().mean_covariance(*args, **kwargs)
 
     @wraps(Predictor.uncertainty)
     def uncertainty(self, *args, **kwargs):
         logger.warning(
-            "The uncertainty will be computed for the log of the predicted value."
+            "The uncertainty will be computed for the predicted value in log scale."
         )
         return super().uncertainty(*args, **kwargs)
 
