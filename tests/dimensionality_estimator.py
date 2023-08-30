@@ -72,7 +72,7 @@ def test_dimensionality_estimator_serialization_with_uncertainty(
     X, test_file, _, _, _, _ = common_setup_dim_estimator
     n = X.shape[0]
 
-    est = mellon.DensityEstimator(
+    est = mellon.DimensionalityEstimator(
         rank=rank,
         n_landmarks=n_landmarks,
         optimizer="advi",
@@ -80,6 +80,7 @@ def test_dimensionality_estimator_serialization_with_uncertainty(
     )
     est.fit(X)
     dens_appr = est.predict(X)
+    log_dens_appr = est.predict(X, logscale=True)
     covariance = est.predict.covariance(X)
     assert covariance.shape == (
         n,
