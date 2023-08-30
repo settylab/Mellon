@@ -157,9 +157,9 @@ def test_density_estimator_serialization(common_setup, rank, n_landmarks, compre
     mellon.Predictor.from_dict(edict)
     reprod = predictor(X, normalize=False)
     is_close = jnp.all(jnp.isclose(dens_appr, reprod))
-    assert is_close, (
-        "Deserialized predictor of mellon 1.3.1 should produce the same results."
-    )
+    assert (
+        is_close
+    ), "Deserialized predictor of mellon 1.3.1 should produce the same results."
 
 
 def test_density_estimator_without_uncertainty(common_setup):

@@ -256,7 +256,6 @@ def test_time_sensitive_density_estimator_normalizations(
     common_setup_time_sensitive, normalization, different
 ):
     X, times, _, _, relative_err, _, _, _ = common_setup_time_sensitive
-    n = X.shape[0]
     err_limit = 1e-4
     min_diff = 1e-1
 

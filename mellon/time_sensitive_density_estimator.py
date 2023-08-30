@@ -19,6 +19,7 @@ from .parameters import (
     compute_d_factal,
     compute_mu,
     compute_initial_value,
+    compute_average_cell_count,
 )
 from .compute_ls_time import compute_ls_time
 from .util import (
@@ -30,7 +31,6 @@ from .validation import (
     _validate_positive_float,
     _validate_string,
     _validate_array,
-    _validate_bool,
 )
 
 
@@ -490,6 +490,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         Lp = self.Lp
         jitter = self.jitter
         with_uncertainty = self.predictor_with_uncertainty
+        normalize = self.normalize_per_time_point
         logger.info("Computing predictive function.")
         log_density_func = compute_conditional_times(
             x,
@@ -506,6 +507,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             y_is_mean=True,
             with_uncertainty=with_uncertainty,
         )
+        log_density_func.n_obs = compute_average_cell_count(x, normalize)
         self.log_density_func = log_density_func
 
     def prepare_inference(self, x, times=None):

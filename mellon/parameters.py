@@ -1,5 +1,16 @@
 import logging
-from jax.numpy import exp, log, quantile, stack, unique, empty, where, ndim
+from jax.numpy import (
+    exp,
+    log,
+    quantile,
+    stack,
+    unique,
+    empty,
+    where,
+    ndim,
+    asarray,
+    ndarray,
+)
 from jax.numpy import sum as arraysum
 from jax.numpy import any as arrayany
 from jax.numpy import all as arrayall
@@ -822,3 +833,48 @@ def compute_initial_dimensionalities(x, mu_dim, mu_dens, L, nn_distances, d):
     initial_dens = compute_initial_value(nn_distances, d, mu_dens, L)
     initial_value = stack([initial_dims, initial_dens])
     return initial_value
+
+
+def compute_average_cell_count(x, normalize):
+    """
+    Compute the average cell count based on the `normalize` parameter and the input data `x`.
+
+    Parameters
+    ----------
+    x : jax.numpy.ndarray
+        Input array with shape (n_samples, n_features).
+        The last column is assumed to contain the time identifiers.
+
+    normalize : bool, list, jax.numpy.ndarray, dict, or None
+        The parameter controlling the normalization.
+
+        - If True or None, returns the average cell count computed from `x`.
+
+        - If a list or jax.numpy.ndarray, returns the average of the list or array.
+
+        - If a dict, returns the average of the dict values.
+
+    Returns
+    -------
+    float
+        The average cell count computed based on the `normalize` parameter and `x`.
+
+    Raises
+    ------
+    ValueError
+        If the type of `normalize` is not recognized.
+    """
+    n_cells = x.shape[0]
+    unique_times = unique(x[:, -1])
+    n_unique_times = unique_times.shape[0]
+
+    if normalize is None or isinstance(normalize, bool):
+        return n_cells / n_unique_times
+
+    if isinstance(normalize, dict):
+        return sum(normalize.values()) / n_unique_times
+
+    if isinstance(normalize, (list, ndarray)):
+        return arraysum(asarray(normalize)) / len(normalize)
+
+    raise ValueError(f"Unrecognized type for 'normalize': {type(normalize)}")

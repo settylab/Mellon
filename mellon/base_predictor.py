@@ -110,12 +110,13 @@ class Predictor(ABC):
         return self.__repr__()
 
     def __repr__(self):
+        n_obs = "None" if self.n_obs is None else f"{self.n_obs:,}"
         string = (
             'A predictor of class "'
             + self.__class__.__name__
             + '" with covariance function "'
             + repr(self.cov_func)
-            + f'" trained on {self.n_obs:,} observations '
+            + f'" trained on {n_obs} observations '
             + f"with {self.n_input_features:,} features "
             + "and data:\n"
             + "\n".join(
