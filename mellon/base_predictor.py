@@ -690,7 +690,7 @@ class PredictorTime(Predictor):
             (number of cells trained on). Applicable only for cell-state density predictions.
             Default is False.
         multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction for all stest in x will
+            If 'multi_time' is specified then a prediction for all states in x will
             be made for each time value in multi_time separatly.
 
         Returns
@@ -739,8 +739,8 @@ class PredictorTime(Predictor):
         diag : boolean, optional (default=True)
             Whether to return the variance (True) or the full covariance matrix (False).
         multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction for all stest in x will
-            be made for each time value in multi_time separatly.
+            If 'multi_time' is specified then a covariance for all states in x will
+            be computed for each time value in multi_time separatly.
 
         Returns
         -------
@@ -771,8 +771,8 @@ class PredictorTime(Predictor):
         diag : boolean, optional (default=True)
             Whether to compute the variance (True) or the full covariance matrix (False).
         multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction for all stest in x will
-            be made for each time value in multi_time separatly.
+            If 'multi_time' is specified then a mean covariance for all states in x will
+            be computed for each time value in multi_time separatly.
 
         Returns
         -------
@@ -805,8 +805,8 @@ class PredictorTime(Predictor):
         diag : bool, optional (default=True)
             Whether to compute the variance (True) or the full covariance matrix (False).
         multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction for all stest in x will
-            be made for each time value in multi_time separatly.
+            If 'multi_time' is specified then a uncertainty for all states in x will
+            be computed for each time value in multi_time separatly.
 
         Returns
         -------
@@ -849,8 +849,8 @@ class PredictorTime(Predictor):
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
         multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction for all stest in x will
-            be made for each time value in multi_time separatly.
+            If 'multi_time' is specified then a time derivative for all states in x will
+            be computed for each time value in multi_time separatly.
 
         Returns
         -------
@@ -878,7 +878,7 @@ class PredictorTime(Predictor):
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
         multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction for all stest in x will
+            If 'multi_time' is specified then a gradient for all states in x will
             be made for each time value in multi_time separatly.
 
         Returns
@@ -910,8 +910,8 @@ class PredictorTime(Predictor):
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
         multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction for all stest in x will
-            be made for each time value in multi_time separatly.
+            If 'multi_time' is specified then a hessian for all states in x will
+            be computed for each time value in multi_time separatly.
 
         Returns
         -------
@@ -941,8 +941,8 @@ class PredictorTime(Predictor):
         jit : bool, optional
             If True, use JAX's just-in-time (JIT) compilation to speed up the computation. Defaults to True.
         multi_time : array-like, optional
-            If 'multi_time' is specified then a prediction for all stest in x will
-            be made for each time value in multi_time separatly.
+            If 'multi_time' is specified then a log determinant for all states in x will
+            be computed for each time value in multi_time separatly.
 
         Returns
         -------
