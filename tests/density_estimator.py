@@ -307,19 +307,19 @@ def test_density_estimator_errors(common_setup):
         est.fit_predict(lX)
     predictor = est.predict
     with pytest.raises(ValueError):
-        predictor(X[:, -1])
+        predictor(X[:, :-1])
     with pytest.raises(ValueError):
-        predictor.covariance(X[:, -1])
+        predictor.covariance(X[:, :-1])
     with pytest.raises(ValueError):
-        predictor.mean_covariance(X[:, -1])
+        predictor.mean_covariance(X[:, :-1])
     with pytest.raises(ValueError):
-        predictor.uncertainty(X[:, -1])
+        predictor.uncertainty(X[:, :-1])
     with pytest.raises(ValueError):
         predictor.to_json(test_file, compress="bad_type")
     est.fit_predict()
     est.predict.n_obs = None
     with pytest.raises(ValueError):
-        est.predict(lX, normalize=True)
+        est.predict(X, normalize=True)
     est = mellon.DensityEstimator(predictor_with_uncertainty=True)
     with pytest.raises(ValueError):
         est.fit(X)

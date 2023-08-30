@@ -235,11 +235,13 @@ def test_density_estimator_errors(common_setup_time_sensitive):
     est.run_inference(loss_func, initial_value, "advi")
     est.process_inference(est.pre_transformation)
     with pytest.raises(ValueError):
+        est.predict(X[:, :-1], times)
+    with pytest.raises(ValueError):
         est.fit_predict(lX)
     est.fit_predict()
     est.predict.n_obs = None
     with pytest.raises(ValueError):
-        est.predict(lX, normalize=True)
+        est.predict(X, normalize=True)
 
 
 @pytest.mark.parametrize(
