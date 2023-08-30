@@ -81,6 +81,10 @@ def test_dimensionality_estimator_serialization_with_uncertainty(
     est.fit(X)
     dens_appr = est.predict(X)
     log_dens_appr = est.predict(X, logscale=True)
+    is_close = jnp.all(jnp.isclose(dens_appr, jnp.exp(log_dens_appr)))
+    assert (
+        is_close
+    ), "The exp of the log scale prediction should mix the original prediction."
     covariance = est.predict.covariance(X)
     assert covariance.shape == (
         n,

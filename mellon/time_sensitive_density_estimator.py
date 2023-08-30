@@ -652,23 +652,18 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-        An instance of the :class:`mellon.Predictor` that predicts the log density at each point in x.
+        An instance of the :class:`mellon.base_predictor.PredictorTime` that predicts the
+        log density at each point in x and time point time.
 
         The instance contains a __call__ method which can be used to predict the log density.
         This instance also supports serialization features which allows for saving
-        and loading the predictor state. Refer to mellon.Predictor documentation for more details.
-
-        Note that the last column of the input array `x` should contain the time information.
-
-        Parameters
-        ----------
-        x : array-like
-            The new data to predict, where the last column should contain the time information.
+        and loading the predictor state. Refer to :class:`mellon.base_predictor.PredictorTime`
+        documentation for more details.
 
         Returns
         -------
-        log_density : array-like
-            The log density at each test point in `x`.
+        mellon.base_predictor.PredictorTime
+            A predictor instance that computes the log density at each new data point.
 
         Example
         -------

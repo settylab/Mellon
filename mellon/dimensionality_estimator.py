@@ -509,18 +509,16 @@ class DimensionalityEstimator(BaseEstimator):
     @property
     def predict_density(self):
         """
-        Predicts the log density with an adaptive unit for each data point in `x`.
-        The unit of density depends on the dimensionality of the data.
+        A property that returns an instance of the :class:`mellon.Predictor` class. This predictor can
+        be used to predict the log density for new data points by calling the instance like a function.
 
-        Parameters
-        ----------
-        x : array-like of shape (n_samples, n_features)
-            The new data for which to predict the log density.
+        The predictor instance also supports serialization features, which allow for saving and loading
+        the predictor's state. For more details, refer to the :class:`mellon.Predictor` documentation.
 
         Returns
         -------
-        array-like
-            The predicted log density for each test point in `x`.
+        mellon.Predictor
+            A predictor instance that computes the log density at each new data point.
 
         Example
         -------
@@ -535,22 +533,18 @@ class DimensionalityEstimator(BaseEstimator):
     @property
     def predict(self):
         """
-        Returns an instance of the :class:`mellon.Predictor` class, which predicts the dimensionality
-        at each point in `x`.
+        A property that returns an instance of the :class:`mellon.base_predictor.ExpPredictor` class.
+        This predictor can be used to predict the dimensionality for new data points by calling
+        the instance like a function.
 
-        This instance includes a __call__ method, which can be used to predict the dimensionality.
-        The instance also supports serialization features, allowing for saving and loading the predictor's
-        state. For more details, refer to :class:`mellon.Predictor`.
-
-        Parameters
-        ----------
-        x : array-like of shape (n_samples, n_features)
-            The new data for which to predict the dimensionality.
+        The predictor instance also supports serialization features, which allow for saving and loading
+        the predictor's state. For more details, refer to the :class:`mellon.base_predictor.ExpPredictor`
+        documentation.
 
         Returns
         -------
-        array-like
-            The predicted dimensionality for each test point in `x`.
+        mellon.base_predictor.ExpPredictor
+            A predictor instance that computes the dimensionality at each new data point.
 
         Example
         -------

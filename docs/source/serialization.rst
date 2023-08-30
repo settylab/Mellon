@@ -1,31 +1,34 @@
+.. _serialization:
+
 Serialization
 =============
 
-The Mellon module provides a comprehensive suite of tools for serializing and deserializing estimators. This functionality is particularly useful in computational biology where models might be trained on one dataset and then used for making predictions on new datasets. The ability to serialize an estimator allows you to save the state of a model after it has been trained, and then load it later for predictions without needing to retrain the model.
+The Mellon module facilitates the serialization and deserialization of
+predictors, streamlining model transfer and reuse. This is especially relevant
+in computational biology for applying pre-trained models to new datasets.
+Serialization captures essential metadata like date, Python version, estimator
+class, and Mellon version, ensuring research reproducibility and context for
+the original training.
 
-For instance, you might have a large dataset on which you train an estimator. Training might take a long time due to the size and complexity of the data. With serialization, you can save the trained estimator and then easily share it with collaborators, apply it to new data, or use it in a follow-up study.
-
-When an estimator is serialized, it includes a variety of metadata, including the serialization date, Python version, the class name of the estimator, and the Mellon version.
-This metadata serves as a detailed record of the state of your environment at the time of serialization, which can be crucial for reproducibility in scientific research and for understanding the conditions under which the estimator was originally trained.
-
-All estimators in Mellon that inherit from the :class:`BaseEstimator` class, including :class:`mellon.model.DensityEstimator`, :class:`mellon.model.FunctionEstimator`, and :class:`mellon.model.DimensionalityEstimator`, have serialization capabilities.
+After fitting data, all Mellon models generate a predictor via their `.predict`
+property, including model classes like :class:`mellon.model.DensityEstimator`,
+:class:`mellon.model.TimeSensitiveDensityEstimator`,
+:class:`mellon.model.FunctionEstimator`, and
+:class:`mellon.model.DimensionalityEstimator`.
 
 
 Predictor Class
 ---------------
 
-The `Predictor` class, accessible through the `predict` property of an estimator, handles the serialization and deserialization process.
-
-.. autoclass:: mellon.Predictor
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :exclude-members: n_obs, n_input_features
+All predictors inherit their serialization methods from :class:`mellon.Predictor`.
 
 Serialization to AnnData
 ------------------------
 
-Estimators can be serialized to an `AnnData`_ object. The `log_density` computation for the AnnData object shown below is a simplified example. For a more comprehensive guide on how to properly preprocess data to compute the log density, refer to our
+Predictors can be serialized to an `AnnData`_ object. The `log_density`
+computation for the AnnData object shown below is a simplified example. For a
+more comprehensive guide on how to properly preprocess data to compute the log
+density, refer to our
 `basic tutorial notebook <https://github.com/settylab/Mellon/blob/main/notebooks/basic_tutorial.ipynb>`_.
 
 
@@ -49,6 +52,9 @@ Estimators can be serialized to an `AnnData`_ object. The `log_density` computat
 Deserialization from AnnData
 ----------------------------
 
+The function `mellon.Predictor.from_dict` can deserialize the
+:class:`mellon.Predictor` and any sub class.
+
 .. code-block:: python
 
     # Load the AnnData object
@@ -64,6 +70,9 @@ Serialization to File
 ---------------------
 
 Mellon supports serialization to a human-readable JSON file and compressed file formats such as .gz (gzip) and .bz2 (bzip2).
+
+The function `mellon.Predictor.from_json` can deserialize the
+:class:`mellon.Predictor` and any sub class.
 
 .. code-block:: python
 
