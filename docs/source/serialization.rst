@@ -52,7 +52,7 @@ density, refer to our
 Deserialization from AnnData
 ----------------------------
 
-The function `mellon.Predictor.from_dict` can deserialize the
+The function :meth:`mellon.Predictor.from_dict` can deserialize the
 :class:`mellon.Predictor` and any sub class.
 
 .. code-block:: python
@@ -69,9 +69,10 @@ The function `mellon.Predictor.from_dict` can deserialize the
 Serialization to File
 ---------------------
 
-Mellon supports serialization to a human-readable JSON file and compressed file formats such as .gz (gzip) and .bz2 (bzip2).
+Mellon supports serialization to a human-readable JSON file and compressed file
+formats such as .gz (gzip) and .bz2 (bzip2).
 
-The function `mellon.Predictor.from_json` can deserialize the
+The function :meth:`mellon.Predictor.from_json` can deserialize the
 :class:`mellon.Predictor` and any sub class.
 
 .. code-block:: python
@@ -88,7 +89,8 @@ The function `mellon.Predictor.from_json` can deserialize the
 Deserialization from File
 -------------------------
 
-Mellon supports deserialization from JSON and compressed file formats. The compression method can be inferred from the file extension.
+Mellon supports deserialization from JSON and compressed file formats. The
+compression method can be inferred from the file extension.
 
 .. code-block:: python
 
