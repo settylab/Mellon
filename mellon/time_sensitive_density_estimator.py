@@ -28,7 +28,6 @@ from .util import (
 from .validation import (
     _validate_time_x,
     _validate_positive_float,
-    _validate_string,
     _validate_array,
 )
 

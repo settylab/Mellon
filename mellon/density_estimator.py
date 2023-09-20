@@ -19,7 +19,6 @@ from .util import (
     DEFAULT_JITTER,
 )
 from .validation import (
-    _validate_string,
     _validate_array,
 )
 
