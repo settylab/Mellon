@@ -1,6 +1,5 @@
 from .parameters import (
     compute_d,
-    compute_d_factal,
     compute_rank,
     compute_n_landmarks,
     compute_landmarks,
@@ -19,7 +18,6 @@ from .compute_ls_time import compute_ls_time
 
 __all__ = [
     "compute_d",
-    "compute_d_factal",
     "compute_rank",
     "compute_n_landmarks",
     "compute_landmarks",

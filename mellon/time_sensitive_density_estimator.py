@@ -14,9 +14,8 @@ from .parameters import (
     compute_nn_distances_within_time_points,
     compute_landmarks_rescale_time,
     compute_cov_func,
-    compute_d,
     compute_ls,
-    compute_d_factal,
+    compute_d,
     compute_mu,
     compute_initial_value,
     compute_average_cell_count,
@@ -33,8 +32,6 @@ from .validation import (
     _validate_array,
 )
 
-
-DEFAULT_D_METHOD = "embedding"
 
 logger = logging.getLogger("mellon")
 
@@ -84,13 +81,6 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         the `mellon.util.GaussianProcessType` Enum. If a partial match is found with the
         Enum, a warning will be logged, and the closest match will be used.
         Defaults to 'sparse_cholesky'.
-
-    d_method : str
-        The method to compute the intrinsic dimensionality of the data. Implemented options are
-         - 'embedding': uses the embedding dimension `x.shape[1]`
-         - 'fractal': uses the average fractal dimension (experimental)
-
-        Defaults to 'embedding'.
 
     jitter : float
         A small amount added to the diagonal of the covariance matrix to bind eigenvalues
@@ -236,7 +226,6 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         n_landmarks=None,
         rank=None,
         gp_type=None,
-        d_method=DEFAULT_D_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -286,9 +275,6 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         if not isinstance(density_estimator_kwargs, dict):
             raise ValueError("density_estimator_kwargs needs to be a dictionary.")
         self.density_estimator_kwargs = density_estimator_kwargs
-        self.d_method = _validate_string(
-            d_method, "d_method", choices={"fractal", "embedding"}
-        )
         self.ls_time = _validate_positive_float(ls_time, "ls_time", optional=True)
         self.ls_time_factor = _validate_positive_float(ls_time_factor, "ls_time_factor")
         self._save_intermediate_ls_times = _save_intermediate_ls_times
@@ -344,17 +330,12 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
 
     def _compute_d(self):
         x = self.x[:, :-1]
-        if self.d_method == "fractal":
-            logger.warning("Using EXPERIMENTAL fractal dimensionality selection.")
-            d = compute_d_factal(x)
-            logger.info(f"Using d={d}.")
-        else:
-            d = compute_d(x)
+        d = compute_d(x)
+        logger.info(f"Using d={d}.")
         if d > 50:
             message = f"""The detected dimensionality of the data is over 50,
             which is likely to cause numerical instability issues.
-            Consider running a dimensionality reduction algorithm, or
-            if this number of dimensions is intended, explicitly pass
+            Consider additional dimensionality reduction, or explicitly specify
             d={self.d} as a parameter."""
             raise ValueError(message)
         return d
@@ -419,7 +400,6 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         _save_intermediate_ls_times = self._save_intermediate_ls_times
         density_estimator_kwargs = {
             "cov_func_curry": self.cov_func_curry,
-            "d_method": self.d_method,
             "d": self.d,
             "optimizer": self.optimizer,
             "ls": self.ls,

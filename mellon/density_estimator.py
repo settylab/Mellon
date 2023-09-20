@@ -12,7 +12,6 @@ from .inference import (
 )
 from .parameters import (
     compute_d,
-    compute_d_factal,
     compute_mu,
     compute_initial_value,
 )
@@ -24,8 +23,6 @@ from .validation import (
     _validate_array,
 )
 
-
-DEFAULT_D_METHOD = "embedding"
 
 logger = logging.getLogger("mellon")
 
@@ -74,13 +71,6 @@ class DensityEstimator(BaseEstimator):
         the `mellon.util.GaussianProcessType` Enum. If a partial match is found with the
         Enum, a warning will be logged, and the closest match will be used.
         Defaults to 'sparse_cholesky'.
-
-    d_method : str
-        The method to compute the intrinsic dimensionality of the data. Implemented options are
-         - 'embedding': uses the embedding dimension `x.shape[1]`
-         - 'fractal': uses the average fractal dimension (experimental)
-
-        Defaults to 'embedding'.
 
     jitter : float
         A small amount added to the diagonal of the covariance matrix to bind eigenvalues
@@ -181,7 +171,6 @@ class DensityEstimator(BaseEstimator):
         n_landmarks=None,
         rank=None,
         gp_type=None,
-        d_method=DEFAULT_D_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -223,9 +212,6 @@ class DensityEstimator(BaseEstimator):
             jit=jit,
             check_rank=check_rank,
         )
-        self.d_method = _validate_string(
-            d_method, "d_method", choices={"fractal", "embedding"}
-        )
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -237,17 +223,12 @@ class DensityEstimator(BaseEstimator):
 
     def _compute_d(self):
         x = self.x
-        if self.d_method == "fractal":
-            logger.warning("Using EXPERIMENTAL fractal dimensionality selection.")
-            d = compute_d_factal(x)
-            logger.info(f"Using d={d}.")
-        else:
-            d = compute_d(x)
+        d = compute_d(x)
+        logger.info(f"Using d={d}.")
         if d > 50:
             message = f"""The detected dimensionality of the data is over 50,
             which is likely to cause numerical instability issues.
-            Consider running a dimensionality reduction algorithm, or
-            if this number of dimensions is intended, explicitly pass
+            Consider additional dimensionality reduction, or explicitly specify
             d={self.d} as a parameter."""
             raise ValueError(message)
         return d

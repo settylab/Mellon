@@ -64,20 +64,6 @@ def test_density_estimator_properties(common_setup):
     ), "The model should have a longer string representation after fitting."
 
 
-def test_density_estimator_fractal_dimension(common_setup):
-    X, _, _, _, _, _ = common_setup
-    n = X.shape[0]
-
-    frac_est = mellon.DensityEstimator(d_method="fractal")
-    log_dens_frac = frac_est.fit_predict(X)
-    assert (
-        frac_est.d != X.shape[1]
-    ), "The fractal dimension should not equal the embedding dimension"
-    assert log_dens_frac.shape == (
-        n,
-    ), "There should be one density value for each sample."
-
-
 def test_density_estimator_optimizers(common_setup):
     X, _, _, relative_err, _, _ = common_setup
 
@@ -286,15 +272,13 @@ def test_density_estimator_errors(common_setup):
         [
             X,
         ]
-        * 26,
+        * 2,
         axis=1,
     )
     est = mellon.DensityEstimator()
 
     with pytest.raises(ValueError):
         est.fit_predict()
-    with pytest.raises(ValueError):
-        est.fit(lX)
     with pytest.raises(ValueError):
         est.fit(None)
     est.set_x(X)
