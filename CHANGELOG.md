@@ -1,3 +1,9 @@
+# v1.4.1
+
+Drop constraint on NumPy version `numpy<1.25.0` which was introdcuded due to
+an incompatibility of `numpy==1.25.0` and `jax<0.4.16`.
+See [Jax Change Log](https://jax.readthedocs.io/en/latest/changelog.html#jax-0-4-16-sept-18-2023).
+
 # v1.4.0
 ## New Features
 ### `with_uncertainty` Parameter
