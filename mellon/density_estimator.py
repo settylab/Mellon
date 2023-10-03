@@ -244,7 +244,7 @@ class DensityEstimator(BaseEstimator):
             d = compute_d(x)
             logger.info(
                 f"Using embedding dimensionality d={d}. "
-                'Use d_method="fractal" instead to enable effective density normalization.'
+                'Use d_method="fractal" to enable effective density normalization.'
             )
         if d > 50:
             message = f"""The detected dimensionality of the data is over 50,

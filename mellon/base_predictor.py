@@ -182,6 +182,9 @@ class Predictor(ABC):
                 )
                 logger.error(message)
                 raise ValueError(message)
+            logger.warn(
+                'The normalization is only effective if the density was trained with d_method="fractal".'
+            )
             return self._mean(x) - log(self.n_obs)
         else:
             return self._mean(x)
@@ -717,6 +720,9 @@ class PredictorTime(Predictor):
                 )
                 logger.error(message)
                 raise ValueError(message)
+            logger.warn(
+                'The normalization is only effective if the density was trained with d_method="fractal".'
+            )
             return self._mean(Xnew) - log(self.n_obs)
         else:
             return self._mean(Xnew)
