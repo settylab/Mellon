@@ -1,11 +1,11 @@
-from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
+import logging
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
     compute_dimensionality_transform,
     compute_dimensionality_loss_func,
     compute_log_density_x,
-    compute_conditional_mean,
-    compute_conditional_mean_explog,
+    compute_conditional,
+    compute_conditional_explog,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_JIT,
@@ -15,12 +15,11 @@ from .parameters import (
     compute_distances,
     compute_mu,
     compute_initial_dimensionalities,
-    DEFAULT_N_LANDMARKS,
 )
 from .util import (
     DEFAULT_JITTER,
-    Log,
     local_dimensionality,
+    object_str,
 )
 from .validation import (
     _validate_positive_int,
@@ -29,7 +28,7 @@ from .validation import (
 )
 
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class DimensionalityEstimator(BaseEstimator):
@@ -47,25 +46,33 @@ class DimensionalityEstimator(BaseEstimator):
         a curry function taking one length scale argument
         and returning a covariance function of the form k(x, y) :math:`\rightarrow` float.
 
-    n_landmarks: int, optional (default=5000)
-        The number of landmark points. If less than 1 or greater than or equal
-        to the number of training points,
-        inducing points are not computed or used.
+    n_landmarks : int, optional (default=5000)
+        The number of landmark/inducing points. Only used if a sparse GP is indicated
+        through gp_type. If 0 or equal to the number of training points, inducing points
+        will not be computed or used.
 
     rank: int or float, optional (default=0.99)
-        The rank of the approximate covariance matrix. When interpreted as an
-        integer, an :math:`n \times` rank matrix
-        :math:`L` is computed such that :math:`L L^\top \approx K`, where
-        :math:`K` is the exact :math:`n \times n` covariance matrix.
-        When interpreted as a float (between 0.0 and 1.0), the rank/size of
-        :math:`L` is chosen such that the included eigenvalues of the covariance
-        between landmark points account for the specified percentage of the total eigenvalues.
+        The rank of the approximate covariance matrix for the Nyström rank reduction.
+        If rank is an int, an :math:`n \times`
+        rank matrix :math:`L` is computed such that :math:`L L^\top \approx K`, where `K` is the
+        exact :math:`n \times n` covariance matrix. If rank is a float 0.0 :math:`\le` rank
+        :math:`\le` 1.0, the rank/size of :math:`L` is selected such that the included eigenvalues
+        of the covariance between landmark points account for the specified percentage of the sum
+        of eigenvalues. It is ignored if gp_type does not indicate a Nyström rank reduction.
 
-    method: str, optional (default='auto')
-        Determines whether the `rank` parameter is interpreted as a fixed
-        number of eigenvectors ('fixed'), a percentage of eigenvalues ('percent'),
-        or determined automatically ('auto'). In 'auto' mode, `rank` is treated
-        as a fixed number if it is an integer, or a percentage if it's a float.
+    gp_type : str or GaussianProcessType, optional (default='sparse_cholesky')
+        The type of sparcification used for the Gaussian Process:
+         - 'full' None-sparse Gaussian Process
+         - 'full_nystroem' Sparse GP with Nyström rank reduction without landmarks,
+            which lowers the computational complexity.
+         - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
+            typically employed to enable scalable GP models.
+         - 'sparse_nystroem' Sparse GP using landmarks or inducing points,
+            along with an improved Nyström rank reduction method.
+
+        The value can be either a string matching one of the above options or an instance of
+        the `mellon.util.GaussianProcessType` Enum. If a partial match is found with the
+        Enum, a warning will be logged, and the closest match will be used.
 
     jitter: float, optional (default=1e-6)
         A small amount added to the diagonal of the covariance matrix to ensure
@@ -118,10 +125,15 @@ class DimensionalityEstimator(BaseEstimator):
         selected. It is used to manually adjust the automatically chosen length
         scale for finer control over the model's sensitivity to variations in the data.
 
-    cov_func: function or None, optional
-        The Gaussian process covariance function of the form k(x, y)
-        :math:`\rightarrow` float. If None, the covariance function is generated
-        automatically as `cov_func = cov_func_curry(ls)`.
+    cov_func : mellon.Covaraince or None
+        The Gaussian process covariance function as instance of :class:`mellon.Covaraince`.
+        If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
+        Defaults to None.
+
+    Lp : array-like or None
+        A matrix such that :math:`L_p L_p^\top = \Sigma_p`, where :math:`\Sigma_p` is the
+        covariance matrix of the inducing points (all cells in non-sparse GP).
+        Not used when Nyström rank reduction is employed. Defaults to None.
 
     L: array-like or None, optional
         A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
@@ -134,16 +146,38 @@ class DimensionalityEstimator(BaseEstimator):
         for density initialization and the neighborhood-based local intrinsic
         dimensionality for dimensionality initialization.
 
+    predictor_with_uncertainty : bool
+        If set to True, computes the predictor instances `.predict` and `.predict_density`
+        with its predictive uncertainty. The uncertainty comes from two sources:
+
+        1) `.predict.mean_covariance`:
+            Uncertainty arising from the posterior distribution of the Bayesian inference.
+            This component quantifies uncertainties inherent in the model's parameters and structure.
+            Available only if `.pre_transformation_std` is defined (e.g., using `optimizer="advi"`),
+            which reflects the standard deviation of the latent variables before transformation.
+
+        2) `.predict.covariance`:
+            Uncertainty for out-of-bag states originating from the compressed function representation
+            in the Gaussian Process. Specifically, this uncertainty corresponds to locations that are
+            not inducing points of the Gaussian Process and represents the covariance of the
+            conditional normal distribution.
+
     jit: bool, optional (default=False)
         If True, use JAX's just-in-time compilation for loss and its gradient during optimization.
+
+    check_rank : bool
+        Weather to check if landmarks allow sufficient complexity by checking the approximate
+        rank of the covariance matrix. This only applies to the non-Nyström gp_types.
+        If set to None the rank check is only performed if n_landmarks >= n_samples/10.
+        Defaults to None.
     """
 
     def __init__(
         self,
         cov_func_curry=DEFAULT_COV_FUNC,
-        n_landmarks=DEFAULT_N_LANDMARKS,
-        rank=DEFAULT_RANK,
-        method=DEFAULT_METHOD,
+        n_landmarks=None,
+        rank=None,
+        gp_type=None,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -157,15 +191,18 @@ class DimensionalityEstimator(BaseEstimator):
         ls=None,
         ls_factor=1,
         cov_func=None,
+        Lp=None,
         L=None,
         initial_value=None,
+        predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
+        check_rank=None,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
             rank=rank,
-            method=method,
+            gp_type=gp_type,
             jitter=jitter,
             optimizer=optimizer,
             n_iter=n_iter,
@@ -177,9 +214,12 @@ class DimensionalityEstimator(BaseEstimator):
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
+            Lp=Lp,
             L=L,
             initial_value=initial_value,
+            predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
+            check_rank=check_rank,
         )
         self.k = _validate_positive_int(k, "k")
         self.mu_dim = _validate_float(mu_dim, "mu_dim")
@@ -190,6 +230,7 @@ class DimensionalityEstimator(BaseEstimator):
         self.opt_state = None
         self.losses = None
         self.pre_transformation = None
+        self.pre_transformation_std = None
         self.local_dim_x = None
         self.log_density_x = None
         self.local_dim_func = None
@@ -197,38 +238,36 @@ class DimensionalityEstimator(BaseEstimator):
 
     def __repr__(self):
         name = self.__class__.__name__
+        landmarks = object_str(self.landmarks, ["landmarks", "dims"])
+        Lp = object_str(self.Lp, ["landmarks", "landmarks"])
+        L = object_str(self.L, ["cells", "ranks"])
+        nn_distances = object_str(self.nn_distances, ["cells"])
+        d = object_str(self.d, ["cells"])
+        initial_value = object_str(self.initial_value, ["functions", "ranks"])
         string = (
             f"{name}("
-            f"cov_func_curry={self.cov_func_curry}, "
-            f"n_landmarks={self.n_landmarks}, "
-            f"rank={self.rank}, "
-            f"method='{self.method}', "
-            f"jitter={self.jitter}, "
-            f"optimizer='{self.optimizer}', "
-            f"n_iter={self.n_iter}, "
-            f"init_learn_rate={self.init_learn_rate}, "
-            f"landmarks={self.landmarks}, "
+            f"\n    cov_func_curry={self.cov_func_curry},"
+            f"\n    n_landmarks={self.n_landmarks},"
+            f"\n    rank={self.rank},"
+            f"\n    gp_type={self.gp_type},"
+            f"\n    jitter={self.jitter}, "
+            f"\n    optimizer={self.optimizer},"
+            f"\n    landmarks={landmarks},"
+            f"\n    nn_distances={nn_distances},"
+            f"\n    d={d},"
+            f"\n    mu_dim={self.mu_dim},"
+            f"\n    mu_dens={self.mu_dens},"
+            f"\n    ls={self.ls},"
+            f"\n    ls_factor={self.ls_factor},"
+            f"\n    cov_func={self.cov_func},"
+            f"\n    Lp={Lp},"
+            f"\n    L={L},"
+            f"\n    initial_value={initial_value},"
+            f"\n    predictor_with_uncertainty={self.predictor_with_uncertainty},"
+            f"\n    jit={self.jit},"
+            f"\n    check_rank={self.check_rank},"
+            "\n)"
         )
-        if self.distances is None:
-            string += "distances=None, "
-        else:
-            string += "distances=distances, "
-        string += (
-            f"d={self.d}, "
-            f"mu_dim={self.mu_dim}, "
-            f"mu_dens={self.mu_dens}, "
-            f"ls={self.ls}, "
-            f"cov_func={self.cov_func}, "
-        )
-        if self.L is None:
-            string += "L=None, "
-        else:
-            string += "L=L, "
-        if self.initial_value is None:
-            string += "initial_value=None, "
-        else:
-            string += "initial_value=initial_value, "
-        string += f"jit={self.jit}" ")"
         return string
 
     def _compute_mu_dens(self):
@@ -291,38 +330,64 @@ class DimensionalityEstimator(BaseEstimator):
     def _set_local_dim_func(self):
         x = self.x
         landmarks = self.landmarks
+        pre_transformation = self.pre_transformation[0, :]
+        pre_transformation_std = self.pre_transformation_std
+        if pre_transformation_std is not None:
+            pre_transformation_std = pre_transformation_std[0, :]
         local_dim_x = self.local_dim_x
         mu = self.mu_dim
         cov_func = self.cov_func
+        L = self.L
+        Lp = self.Lp
         jitter = self.jitter
+        with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive dimensionality function.")
-        log_dim_func = compute_conditional_mean_explog(
+        log_dim_func = compute_conditional_explog(
             x,
             landmarks,
+            pre_transformation,
+            pre_transformation_std,
             local_dim_x,
             mu,
             cov_func,
+            L,
+            Lp,
+            sigma=None,
             jitter=jitter,
+            y_is_mean=True,
+            with_uncertainty=with_uncertainty,
         )
         self.local_dim_func = log_dim_func
 
     def _set_log_density_func(self):
         x = self.x
         landmarks = self.landmarks
-        pre_transformation = self.pre_transformation
+        pre_transformation = self.pre_transformation[1, :]
+        pre_transformation_std = self.pre_transformation_std
+        if pre_transformation_std is not None:
+            pre_transformation_std = pre_transformation_std[1, :]
         log_density_x = self.log_density_x
         mu = self.mu_dens
         cov_func = self.cov_func
+        L = self.L
+        Lp = self.Lp
         jitter = self.jitter
+        with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive density function.")
-        log_density_func = compute_conditional_mean(
+        log_density_func = compute_conditional(
             x,
             landmarks,
             pre_transformation,
+            pre_transformation_std,
             log_density_x,
             mu,
             cov_func,
+            L,
+            Lp,
+            sigma=None,
             jitter=jitter,
+            y_is_mean=True,
+            with_uncertainty=with_uncertainty,
         )
         self.log_density_func = log_density_func
 
@@ -351,6 +416,10 @@ class DimensionalityEstimator(BaseEstimator):
                 raise ValueError(message)
 
         x = self.set_x(x)
+        self._prepare_attribute("n_landmarks")
+        self._prepare_attribute("rank")
+        self._prepare_attribute("gp_type")
+        self._validate_parameter()
         self._prepare_attribute("distances")
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
@@ -358,6 +427,7 @@ class DimensionalityEstimator(BaseEstimator):
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
+        self._prepare_attribute("Lp")
         self._prepare_attribute("L")
         self._prepare_attribute("initial_value")
         self._prepare_attribute("transform")
@@ -439,18 +509,16 @@ class DimensionalityEstimator(BaseEstimator):
     @property
     def predict_density(self):
         """
-        Predicts the log density with an adaptive unit for each data point in `x`.
-        The unit of density depends on the dimensionality of the data.
+        A property that returns an instance of the :class:`mellon.Predictor` class. This predictor can
+        be used to predict the log density for new data points by calling the instance like a function.
 
-        Parameters
-        ----------
-        x : array-like of shape (n_samples, n_features)
-            The new data for which to predict the log density.
+        The predictor instance also supports serialization features, which allow for saving and loading
+        the predictor's state. For more details, refer to the :class:`mellon.Predictor` documentation.
 
         Returns
         -------
-        array-like
-            The predicted log density for each test point in `x`.
+        mellon.Predictor
+            A predictor instance that computes the log density at each new data point.
 
         Example
         -------
@@ -465,22 +533,18 @@ class DimensionalityEstimator(BaseEstimator):
     @property
     def predict(self):
         """
-        Returns an instance of the :class:`mellon.Predictor` class, which predicts the dimensionality
-        at each point in `x`.
+        A property that returns an instance of the :class:`mellon.base_predictor.ExpPredictor` class.
+        This predictor can be used to predict the dimensionality for new data points by calling
+        the instance like a function.
 
-        This instance includes a __call__ method, which can be used to predict the dimensionality.
-        The instance also supports serialization features, allowing for saving and loading the predictor's
-        state. For more details, refer to :class:`mellon.Predictor`.
-
-        Parameters
-        ----------
-        x : array-like of shape (n_samples, n_features)
-            The new data for which to predict the dimensionality.
+        The predictor instance also supports serialization features, which allow for saving and loading
+        the predictor's state. For more details, refer to the :class:`mellon.base_predictor.ExpPredictor`
+        documentation.
 
         Returns
         -------
-        array-like
-            The predicted dimensionality for each test point in `x`.
+        mellon.base_predictor.ExpPredictor
+            A predictor instance that computes the dimensionality at each new data point.
 
         Example
         -------
@@ -519,7 +583,7 @@ class DimensionalityEstimator(BaseEstimator):
         ValueError
             If the argument `x` does not match `self.x` which was already set in a previous operation.
         """
-        if self.x is not None and self.x is not x:
+        if self.x is not None and x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             error = ValueError(message)
             logger.error(error)

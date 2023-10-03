@@ -1,7 +1,7 @@
 from collections import namedtuple
 from functools import partial
 from jax import random, vmap
-from jax.numpy import log, pi, exp, stack, arange, sort, mean, zeros_like
+from jax.numpy import log, pi, exp, stack, arange, sort, mean, zeros_like, any
 from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
 import jax.scipy.stats.norm as norm
@@ -9,14 +9,17 @@ import jax
 from jax.example_libraries.optimizers import adam
 from jaxopt import ScipyMinimize
 from .conditional import (
-    FullConditionalMean,
-    FullConditionalMeanTime,
-    LandmarksConditionalMean,
-    LandmarksConditionalMeanTime,
-    LandmarksConditionalMeanCholesky,
-    LandmarksConditionalMeanCholeskyTime,
+    FullConditional,
+    ExpFullConditional,
+    FullConditionalTime,
+    LandmarksConditional,
+    ExpLandmarksConditional,
+    LandmarksConditionalTime,
+    LandmarksConditionalCholesky,
+    ExpLandmarksConditionalCholesky,
+    LandmarksConditionalCholeskyTime,
 )
-from .util import ensure_2d, Exp, DEFAULT_JITTER
+from .util import ensure_2d, DEFAULT_JITTER
 
 
 DEFAULT_N_ITER = 100
@@ -298,15 +301,38 @@ def compute_log_density_x(pre_transformation, transform):
     return transform(pre_transformation)
 
 
-def compute_conditional_mean(
+def compute_parameter_cov_factor(pre_transformation_std, L):
+    R"""
+    Computes :math:`\Sigma_L` the left factor of the covariance matrix
+    of `log_density_x` the mean function of the Gaussian Process on the
+    training data points. The uncertainty of the mean function comes from
+    the uncertainty of the inferred model parameters quantified by
+    `pre_transformation_std`.
+
+    :param pre_transformation_std: Standard deviation of the parameters, e.g., as inferred by ADVI.
+    :type pre_transformation_std: array-like
+    :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
+        covariance matrix of the Gaussian Process.
+    :type L: array-like
+    :return: sigma_L - The left factor of the covariance matrix of the transformed parameters.
+    """
+    return L * pre_transformation_std[None, :]
+
+
+def compute_conditional(
     x,
     landmarks,
     pre_transformation,
+    pre_transformation_std,
     y,
     mu,
     cov_func,
+    L,
+    Lp=None,
     sigma=0,
     jitter=DEFAULT_JITTER,
+    y_is_mean=False,
+    with_uncertainty=False,
 ):
     R"""
     Builds the mean function of the Gaussian process, conditioned on the
@@ -322,16 +348,32 @@ def compute_conditional_mean(
         Landmarks can be None if not using landmark points.
     pre_transformation : array-like or None
         The pre-transformed latent function representation.
+    pre_transformation_std : array-like or None
+        Standard deviation of the parameters, e.g., as inferred by ADVI.
     y : array-like
         The function values at each point in x.
     mu : float
         The original Gaussian process mean :math:`\mu`.
     cov_func : function
         The Gaussian process covariance function.
+    L : array-like
+        The matrix :math:`L` used to transform the latent function representation to
+        thr Gaussin Process mean. Typically :math:`L L^\top \approx K`, where :math:`K` is the
+        covariance matrix of the Gaussian Process.
+    Lp : array-like, optional
+        A matrix such that :math:`L_p L_p^\top = \Sigma_p`, where :math:`\Sigma_p` is the
+        covariance matrix of the Gaussian Process on the inducing points.
     sigma : float, optional
         White noise variance, by default 0.
     jitter : float, optional
         A small amount to add to the diagonal for stability, by default 1e-6.
+    y_is_mean : bool
+        Wether to consider y the GP mean or a noise measurment
+        subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+        Defaults to False.
+    with_uncertainty : bool
+        Wether to compute covariance functions and predictive uncertainty.
+        Defaults to False.
 
     Returns
     -------
@@ -340,30 +382,54 @@ def compute_conditional_mean(
     """
 
     if landmarks is None:
-        return FullConditionalMean(
+        if with_uncertainty and pre_transformation_std is not None:
+            y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
+        else:
+            y_cov_factor = None
+        return FullConditional(
             x,
             y,
             mu,
             cov_func,
+            Lp,
             sigma=sigma,
             jitter=jitter,
+            y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
     elif (
         pre_transformation is not None
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
         landmarks = ensure_2d(landmarks)
-        return LandmarksConditionalMeanCholesky(
+        if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
+            raise ValueError(
+                "One can specify either `sigma` or `pre_transformation_std` "
+                "to describe uncertainty, but not both."
+            )
+        elif pre_transformation_std is not None:
+            sigma = pre_transformation_std
+        n_obs = x.shape[0]
+        return LandmarksConditionalCholesky(
             landmarks,
             pre_transformation,
             mu,
             cov_func,
+            n_obs,
+            Lp,
             sigma=sigma,
             jitter=jitter,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
     else:
         landmarks = ensure_2d(landmarks)
-        return LandmarksConditionalMean(
+        if with_uncertainty and pre_transformation_std is not None:
+            y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
+        else:
+            y_cov_factor = None
+        return LandmarksConditional(
             x,
             landmarks,
             y,
@@ -371,18 +437,26 @@ def compute_conditional_mean(
             cov_func,
             sigma=sigma,
             jitter=jitter,
+            y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
 
 
-def compute_conditional_mean_times(
+def compute_conditional_times(
     x,
     landmarks,
     pre_transformation,
+    pre_transformation_std,
     y,
     mu,
     cov_func,
+    L,
+    Lp,
     sigma=0,
     jitter=DEFAULT_JITTER,
+    y_is_mean=False,
+    with_uncertainty=False,
 ):
     R"""
     Builds the mean function of the Gaussian process, conditioned on the
@@ -399,16 +473,31 @@ def compute_conditional_mean_times(
         Landmarks can be None if not using landmark points.
     pre_transformation : array-like or None
         The pre-transformed latent function representation.
+    pre_transformation_std : array-like or None
+        Standard deviation of the parameters, e.g., as inferred by ADVI.
     y : array-like
         The function values at each point in x.
     mu : float
         The original Gaussian process mean :math:`\mu`.
     cov_func : function
         The Gaussian process covariance function.
+    L : array-like
+        A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
+        covariance matrix of the Gaussian Process.
+    Lp : array-like, optional
+        A matrix such that :math:`L_p L_p^\top = \Sigma_p`, where :math:`\Sigma_p` is the
+        covariance matrix of the Gaussian Process on the inducing points.
     sigma : float, optional
         White noise variance, by default 0.
     jitter : float, optional
         A small amount to add to the diagonal for stability, by default 1e-6.
+    y_is_mean : bool
+        Wether to consider y the GP mean or a noise measurment
+        subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+        Defaults to False.
+    with_uncertainty : bool
+        Wether to compute covariance functions and predictive uncertainty.
+        Defaults to False.
 
     Returns
     -------
@@ -418,30 +507,54 @@ def compute_conditional_mean_times(
     """
 
     if landmarks is None:
-        return FullConditionalMeanTime(
+        if pre_transformation_std is not None:
+            y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
+        else:
+            y_cov_factor = None
+        return FullConditionalTime(
             x,
             y,
             mu,
             cov_func,
+            Lp,
             sigma=sigma,
             jitter=jitter,
+            y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
     elif (
         pre_transformation is not None
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
         landmarks = ensure_2d(landmarks)
-        return LandmarksConditionalMeanCholeskyTime(
+        if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
+            raise ValueError(
+                "One can specify either `sigma` or `pre_transformation_std` "
+                "to describe uncertainty, but not both."
+            )
+        elif pre_transformation_std is not None:
+            sigma = pre_transformation_std
+        n_obs = x.shape[0]
+        return LandmarksConditionalCholeskyTime(
             landmarks,
             pre_transformation,
             mu,
             cov_func,
+            n_obs,
+            Lp,
             sigma=sigma,
             jitter=jitter,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
     else:
         landmarks = ensure_2d(landmarks)
-        return LandmarksConditionalMeanTime(
+        if pre_transformation_std is not None:
+            y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
+        else:
+            y_cov_factor = None
+        return LandmarksConditionalTime(
             x,
             landmarks,
             y,
@@ -449,64 +562,135 @@ def compute_conditional_mean_times(
             cov_func,
             sigma=sigma,
             jitter=jitter,
+            y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
 
 
-def compute_conditional_mean_explog(
+def compute_conditional_explog(
     x,
     landmarks,
+    pre_transformation,
+    pre_transformation_std,
     y,
     mu,
     cov_func,
+    L,
+    Lp,
     sigma=0,
     jitter=DEFAULT_JITTER,
+    y_is_mean=False,
+    with_uncertainty=False,
 ):
     R"""
-    Builds the mean function of the Gaussian process, conditioned on the
-    function exponential values (e.g., dimensionality) on x.
+    Builds the exp-mean function of the Gaussian process, conditioned on the
+    function log-values (e.g., dimensionality) on x.
     Returns a function that is defined on the whole domain of x.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param landmarks: The landmark points for fast sparse computation.
+    Parameters
+    ----------
+    x : array-like
+        The training instances.
+    landmarks : array-like or None
+        The landmark points for fast sparse computation.
         Landmarks can be None if not using landmark points.
-    :type landmarks: array-like
-    :param y: The function values at each point in x.
-    :type y: array-like
-    :param mu: The original Gaussian process mean :math:`\mu`.
-    :type mu: float
-    :param cov_func: The Gaussian process covariance function.
-    :type cov_func: function
-    :param sigma: White moise veriance. Defaults to 0.
-    :type sigma: float
-    :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
-    :type jitter: float
-    :return: conditional_mean - The conditioned Gaussian process mean function.
-    :rtype: function
+    pre_transformation : array-like or None
+        The pre-transformed latent function representation.
+    pre_transformation_std : array-like or None
+        Standard deviation of the parameters, e.g., as inferred by ADVI.
+    y : array-like
+        The function values at each point in x.
+    mu : float
+        The original Gaussian process mean :math:`\mu`.
+    cov_func : function
+        The Gaussian process covariance function.
+    L : array-like
+        The matrix :math:`L` used to transform the latent function representation to
+        thr Gaussin Process mean. Typically :math:`L L^\top \approx K`, where :math:`K` is the
+        covariance matrix of the Gaussian Process.
+    Lp : array-like, optional
+        A matrix such that :math:`L_p L_p^\top = \Sigma_p`, where :math:`\Sigma_p` is the
+        covariance matrix of the Gaussian Process on the inducing points.
+    sigma : float, optional
+        White noise variance, by default 0.
+    jitter : float, optional
+        A small amount to add to the diagonal for stability, by default 1e-6.
+    y_is_mean : bool
+        Wether to consider y the GP mean or a noise measurment
+        subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+        Defaults to False.
+    with_uncertainty : bool
+        Wether to compute covariance functions and predictive uncertainty.
+        Defaults to False.
+
+    Returns
+    -------
+    mellon.Predictor
+        The conditioned Gaussian process mean function.
     """
+
     if landmarks is None:
-        return Exp(
-            FullConditionalMean(
-                x,
-                log(y),
-                mu,
-                cov_func,
-                sigma=sigma,
-                jitter=jitter,
+        if with_uncertainty and pre_transformation_std is not None:
+            y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
+        else:
+            y_cov_factor = None
+        y = log(y)
+        return ExpFullConditional(
+            x,
+            y,
+            mu,
+            cov_func,
+            Lp,
+            sigma=sigma,
+            jitter=jitter,
+            y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
+        )
+    elif (
+        pre_transformation is not None
+        and pre_transformation.shape[0] == landmarks.shape[0]
+    ):
+        landmarks = ensure_2d(landmarks)
+        if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
+            raise ValueError(
+                "One can specify either `sigma` or `pre_transformation_std` "
+                "to describe uncertainty, but not both."
             )
+        elif pre_transformation_std is not None:
+            sigma = pre_transformation_std
+        n_obs = x.shape[0]
+        return ExpLandmarksConditionalCholesky(
+            landmarks,
+            pre_transformation,
+            mu,
+            cov_func,
+            n_obs,
+            Lp,
+            sigma=sigma,
+            jitter=jitter,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
     else:
         landmarks = ensure_2d(landmarks)
-        return Exp(
-            LandmarksConditionalMean(
-                x,
-                landmarks,
-                log(y),
-                mu,
-                cov_func,
-                sigma=sigma,
-                jitter=jitter,
-            )
+        if with_uncertainty and pre_transformation_std is not None:
+            y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
+        else:
+            y_cov_factor = None
+        y = log(y)
+        return ExpLandmarksConditional(
+            x,
+            landmarks,
+            y,
+            mu,
+            cov_func,
+            sigma=sigma,
+            jitter=jitter,
+            y_cov_factor=y_cov_factor,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
 
 
@@ -582,7 +766,7 @@ def run_advi(
     :type init_learn_rate: float
     :return: parameters, standard deviations, and loss after the optimization
     :return: Results - A named tuple containing pre_transformation,
-        pre_transform_std, losses: The optimized parameters, the optimized
+        pre_transformation_std, losses: The optimized parameters, the optimized
         standard deviations, and a history of ELBO values.
     :rtype: array-like, array-like, Object
     """
@@ -614,7 +798,8 @@ def run_advi(
         opt_state, elbo = update(t, opt_state)
         elbos.append(elbo.item())
 
-    params, stds = get_params(opt_state)
+    params, log_stds = get_params(opt_state)
+    stds = exp(log_stds)
 
     Results = namedtuple("Results", "pre_transformation pre_transformation_std losses")
     return Results(params, stds, elbos)

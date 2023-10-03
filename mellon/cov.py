@@ -259,7 +259,7 @@ class RatQuad(Covariance):
         Default is 1.0.
 
     alpha : float
-        The alpha parameter of the Rational Quadratic kernel.
+        The alpha parameter of the Rational Quadratic kernel. Default is 1.0.
 
     active_dims : array-like, slice or scalar, optional
         The indices of the active dimensions. If specified, the kernel function
@@ -267,7 +267,7 @@ class RatQuad(Covariance):
         all dimensions are active.
     """
 
-    def __init__(self, alpha, ls=1.0, active_dims=None):
+    def __init__(self, alpha=1.0, ls=1.0, active_dims=None):
         super().__init__()
         self.ls = ls
         self.alpha = alpha

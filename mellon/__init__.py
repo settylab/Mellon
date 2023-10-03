@@ -17,7 +17,7 @@ from . import _inference as inference
 from . import _conditional as conditional
 from . import _derivatives as derivatives
 
-__version__ = "1.3.1"
+__version__ = "1.4.0"
 
 __all__ = [
     "DensityEstimator",
@@ -37,6 +37,8 @@ __all__ = [
     "derivatives",
     "__version__",
 ]
+# Set up logger
+Log()
 
 # Set default configuration at import time
 jaxconfig.update("jax_enable_x64", True)

@@ -7,6 +7,7 @@
    :caption: Modules:
 
    Model <model>
+   Predictor <predictor>
    Serialization <serialization>
    Utilities <util>
    Covariance Functions <cov>
@@ -21,7 +22,7 @@
    notebooks/trajectory-trends_tutorial.ipynb
    notebooks/gene_change_analysis_tutorial.ipynb
    notebooks/time-series_tutorial.ipynb
-   
+
 .. include:: ../../README.rst
 
 .. toctree::

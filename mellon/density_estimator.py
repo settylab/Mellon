@@ -1,10 +1,10 @@
-from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
+import logging
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
     compute_transform,
     compute_loss_func,
     compute_log_density_x,
-    compute_conditional_mean,
+    compute_conditional,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_JIT,
@@ -15,11 +15,9 @@ from .parameters import (
     compute_d_factal,
     compute_mu,
     compute_initial_value,
-    DEFAULT_N_LANDMARKS,
 )
 from .util import (
     DEFAULT_JITTER,
-    Log,
 )
 from .validation import (
     _validate_string,
@@ -29,7 +27,7 @@ from .validation import (
 
 DEFAULT_D_METHOD = "embedding"
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class DensityEstimator(BaseEstimator):
@@ -48,24 +46,34 @@ class DensityEstimator(BaseEstimator):
         Defaults to Matern52.
 
     n_landmarks : int
-        The number of landmark points. If less than 1 or greater than or equal to the
-        number of training points, inducing points will not be computed or used.
-        Defaults to 5000.
+        The number of landmark/inducing points. Only used if a sparse GP is indicated
+        through gp_type. If 0 or equal to the number of training points, inducing points
+        will not be computed or used. Defaults to 5000.
 
     rank : int or float
-        The rank of the approximate covariance matrix. If rank is an int, an :math:`n \times`
+        The rank of the approximate covariance matrix for the Nyström rank reduction.
+        If rank is an int, an :math:`n \times`
         rank matrix :math:`L` is computed such that :math:`L L^\top \approx K`, where `K` is the
         exact :math:`n \times n` covariance matrix. If rank is a float 0.0 :math:`\le` rank
         :math:`\le` 1.0, the rank/size of :math:`L` is selected such that the included eigenvalues
         of the covariance between landmark points account for the specified percentage of the sum
-        of eigenvalues. Defaults to 0.99.
+        of eigenvalues. It is ignored if gp_type does not indicate a Nyström rank reduction.
+        Defaults to 0.99.
 
-    method : str
-        Determines how the rank is interpreted: as a fixed number of eigenvectors ('fixed'), a
-        percent of eigenvalues ('percent'), or automatically ('auto'). If 'auto', the rank is
-        interpreted as a fixed number of eigenvectors if it is an int and as a percent of
-        eigenvalues if it is a float. This parameter is provided for clarity in the ambiguous case
-        of 1 vs 1.0. Defaults to 'auto'.
+    gp_type : str or GaussianProcessType
+        The type of sparcification used for the Gaussian Process
+         - 'full' None-sparse Gaussian Process
+         - 'full_nystroem' Sparse GP with Nyström rank reduction without landmarks,
+            which lowers the computational complexity.
+         - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
+            typically employed to enable scalable GP models.
+         - 'sparse_nystroem' Sparse GP using landmarks or inducing points,
+            along with an improved Nyström rank reduction method.
+
+        The value can be either a string matching one of the above options or an instance of
+        the `mellon.util.GaussianProcessType` Enum. If a partial match is found with the
+        Enum, a warning will be logged, and the closest match will be used.
+        Defaults to 'sparse_cholesky'.
 
     d_method : str
         The method to compute the intrinsic dimensionality of the data. Implemented options are
@@ -115,10 +123,20 @@ class DensityEstimator(BaseEstimator):
         the geometric mean of the nearest neighbor distances times a constant. If `cov_func`
         is supplied explicitly, `ls` has no effect. Defaults to None.
 
-    cov_func : function or None
-        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
+    ls_factor : float, optional
+        A scaling factor applied to the length scale when it's automatically
+        selected. It is used to manually adjust the automatically chosen length
+        scale for finer control over the model's sensitivity to variations in the data.
+
+    cov_func : mellon.Covaraince or None
+        The Gaussian process covariance function as instance of :class:`mellon.Covaraince`.
         If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
         Defaults to None.
+
+    Lp : array-like or None
+        A matrix such that :math:`L_p L_p^\top = \Sigma_p`, where :math:`\Sigma_p` is the
+        covariance matrix of the inducing points (all cells in non-sparse GP).
+        Not used when Nyström rank reduction is employed. Defaults to None.
 
     L : array-like or None
         A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
@@ -130,17 +148,39 @@ class DensityEstimator(BaseEstimator):
         - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})` and :math:`d` is the intrinsic
         dimensionality of the data. Defaults to None.
 
+    predictor_with_uncertainty : bool
+        If set to True, computes the predictor instance `.predict` with its predictive uncertainty.
+        The uncertainty comes from two sources:
+
+        1) `.predict.mean_covariance`:
+            Uncertainty arising from the posterior distribution of the Bayesian inference.
+            This component quantifies uncertainties inherent in the model's parameters and structure.
+            Available only if `.pre_transformation_std` is defined (e.g., using `optimizer="advi"`),
+            which reflects the standard deviation of the latent variables before transformation.
+
+        2) `.predict.covariance`:
+            Uncertainty for out-of-bag states originating from the compressed function representation
+            in the Gaussian Process. Specifically, this uncertainty corresponds to locations that are
+            not inducing points of the Gaussian Process and represents the covariance of the
+            conditional normal distribution.
+
     jit : bool
         Use jax just-in-time compilation for loss and its gradient during optimization.
         Defaults to False.
+
+    check_rank : bool
+        Weather to check if landmarks allow sufficient complexity by checking the approximate
+        rank of the covariance matrix. This only applies to the non-Nyström gp_types.
+        If set to None the rank check is only performed if n_landmarks >= n_samples/10.
+        Defaults to None.
     """
 
     def __init__(
         self,
         cov_func_curry=DEFAULT_COV_FUNC,
-        n_landmarks=DEFAULT_N_LANDMARKS,
-        rank=DEFAULT_RANK,
-        method=DEFAULT_METHOD,
+        n_landmarks=None,
+        rank=None,
+        gp_type=None,
         d_method=DEFAULT_D_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
@@ -153,15 +193,19 @@ class DensityEstimator(BaseEstimator):
         ls=None,
         ls_factor=1,
         cov_func=None,
+        Lp=None,
         L=None,
         initial_value=None,
+        predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
+        check_rank=None,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
             rank=rank,
             jitter=jitter,
+            gp_type=gp_type,
             optimizer=optimizer,
             n_iter=n_iter,
             init_learn_rate=init_learn_rate,
@@ -172,9 +216,12 @@ class DensityEstimator(BaseEstimator):
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
+            Lp=Lp,
             L=L,
             initial_value=initial_value,
+            predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
+            check_rank=check_rank,
         )
         self.d_method = _validate_string(
             d_method, "d_method", choices={"fractal", "embedding"}
@@ -184,52 +231,21 @@ class DensityEstimator(BaseEstimator):
         self.opt_state = None
         self.losses = None
         self.pre_transformation = None
+        self.pre_transformation_std = None
         self.log_density_x = None
         self.log_density_func = None
-
-    def __repr__(self):
-        name = self.__class__.__name__
-        string = (
-            f"{name}("
-            f"cov_func_curry={self.cov_func_curry}, "
-            f"n_landmarks={self.n_landmarks}, "
-            f"rank={self.rank}, "
-            f"method='{self.method}', "
-            f"jitter={self.jitter}, "
-            f"optimizer='{self.optimizer}', "
-            f"n_iter={self.n_iter}, "
-            f"init_learn_rate={self.init_learn_rate}, "
-            f"landmarks={self.landmarks}, "
-        )
-        if self.nn_distances is None:
-            string += "nn_distances=None, "
-        else:
-            string += "nn_distances=nn_distances, "
-        string += (
-            f"d={self.d}, "
-            f"mu={self.mu}, "
-            f"ls={self.ls}, "
-            f"cov_func={self.cov_func}, "
-        )
-        if self.L is None:
-            string += "L=None, "
-        else:
-            string += "L=L, "
-        if self.initial_value is None:
-            string += "initial_value=None, "
-        else:
-            string += "initial_value=initial_value, "
-        string += f"jit={self.jit}" ")"
-        return string
 
     def _compute_d(self):
         x = self.x
         if self.d_method == "fractal":
-            logger.warning("Using EXPERIMENTAL fractal dimensionality selection.")
             d = compute_d_factal(x)
             logger.info(f"Using d={d}.")
         else:
             d = compute_d(x)
+            logger.info(
+                f"Using embedding dimensionality d={d}. "
+                'Use d_method="fractal" to enable effective density normalization.'
+            )
         if d > 50:
             message = f"""The detected dimensionality of the data is over 50,
             which is likely to cause numerical instability issues.
@@ -277,19 +293,29 @@ class DensityEstimator(BaseEstimator):
         x = self.x
         landmarks = self.landmarks
         pre_transformation = self.pre_transformation
+        pre_transformation_std = self.pre_transformation_std
         log_density_x = self.log_density_x
         mu = self.mu
         cov_func = self.cov_func
+        L = self.L
+        Lp = self.Lp
         jitter = self.jitter
+        with_uncertainty = self.predictor_with_uncertainty
         logger.info("Computing predictive function.")
-        log_density_func = compute_conditional_mean(
+        log_density_func = compute_conditional(
             x,
             landmarks,
             pre_transformation,
+            pre_transformation_std,
             log_density_x,
             mu,
             cov_func,
+            L,
+            Lp,
+            sigma=None,
             jitter=jitter,
+            y_is_mean=True,
+            with_uncertainty=with_uncertainty,
         )
         self.log_density_func = log_density_func
 
@@ -318,12 +344,17 @@ class DensityEstimator(BaseEstimator):
                 raise ValueError(message)
 
         x = self.set_x(x)
+        self._prepare_attribute("n_landmarks")
+        self._prepare_attribute("rank")
+        self._prepare_attribute("gp_type")
+        self._validate_parameter()
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
         self._prepare_attribute("mu")
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
+        self._prepare_attribute("Lp")
         self._prepare_attribute("L")
         self._prepare_attribute("initial_value")
         self._prepare_attribute("transform")
@@ -449,7 +480,7 @@ class DensityEstimator(BaseEstimator):
         array-like
             The log density at each training point in `x`.
         """
-        if self.x is not None and self.x is not x:
+        if self.x is not None and x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             error = ValueError(message)
             logger.error(error)

@@ -16,7 +16,7 @@ def function_estimator_setup():
     noise = 1e-2 * jnp.sum(jnp.sin(X * 1e16), axis=1)
     noiseless_y = jnp.sum(jnp.sin(X / 2), axis=1)
     y = noiseless_y + noise
-    Y = jnp.stack([y, noiseless_y])
+    Y = jnp.stack([y, noiseless_y], axis=1)
 
     return X, y, Y, noiseless_y
 
@@ -24,7 +24,15 @@ def function_estimator_setup():
 def test_function_estimator_prediction(function_estimator_setup):
     X, y, _, noiseless_y = function_estimator_setup
     n = X.shape[0]
+
+    with pytest.raises(ValueError):
+        mellon.FunctionEstimator(gp_type="sparse_nystroem")
+
     est = mellon.FunctionEstimator(sigma=1e-3)
+
+    with pytest.raises(TypeError):
+        est.fit_predict()
+
     pred = est.fit_predict(X, y)
 
     assert pred.shape == (n,), "There should be a predicted value for each sample."
@@ -34,17 +42,38 @@ def test_function_estimator_prediction(function_estimator_setup):
     err = jnp.std(noiseless_y - pred)
     assert err < 1e-2, "The prediction should be close to the true value."
 
+    pred_self = est(X, y)
+    assert jnp.all(
+        jnp.isclose(pred, pred_self)
+    ), "__call__() shoud return the same as predict()"
+
+    est.compute_conditional(y=y)
+    est.compute_conditional(x=y, y=y)
+
+    with pytest.raises(ValueError):
+        est.compute_conditional(X)
+
+    with pytest.raises(ValueError):
+        est.fit(X, y[:3])
+
+    with pytest.raises(ValueError):
+        est.fit_predict(X[:, :, None], y)
+
+    with pytest.raises(ValueError):
+        est.fit_predict(X[:3, :], y)
+
 
 def test_function_estimator_multi_fit_predict(function_estimator_setup):
     X, y, Y, _ = function_estimator_setup
     n = X.shape[0]
     est = mellon.FunctionEstimator(sigma=1e-3)
 
-    m_pred = est.multi_fit_predict(X, Y, X)
+    m_pred = est.fit_predict(X, Y, X)
     assert m_pred.shape == (
-        2,
         n,
+        2,
     ), "There should be a value for each sample and location."
+    est.multi_fit_predict(X, Y.T, X)
 
 
 @pytest.mark.parametrize("n_landmarks, error_limit", [(0, 1e-4), (10, 1e-1)])

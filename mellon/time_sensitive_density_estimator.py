@@ -1,10 +1,10 @@
-from .decomposition import DEFAULT_RANK, DEFAULT_METHOD
+import logging
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
     compute_transform,
     compute_loss_func,
     compute_log_density_x,
-    compute_conditional_mean_times,
+    compute_conditional_times,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_JIT,
@@ -15,28 +15,28 @@ from .parameters import (
     compute_landmarks_rescale_time,
     compute_cov_func,
     compute_d,
+    compute_ls,
     compute_d_factal,
     compute_mu,
     compute_initial_value,
-    DEFAULT_N_LANDMARKS,
+    compute_average_cell_count,
 )
 from .compute_ls_time import compute_ls_time
 from .util import (
     DEFAULT_JITTER,
-    Log,
+    object_str,
 )
 from .validation import (
     _validate_time_x,
     _validate_positive_float,
     _validate_string,
     _validate_array,
-    _validate_bool,
 )
 
 
 DEFAULT_D_METHOD = "embedding"
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class TimeSensitiveDensityEstimator(BaseEstimator):
@@ -56,24 +56,34 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         Defaults to Matern52.
 
     n_landmarks : int
-        The number of landmark points. If less than 1 or greater than or equal to the
-        number of training points, inducing points will not be computed or used.
-        Defaults to 5000.
+        The number of landmark/inducing points. Only used if a sparse GP is indicated
+        through gp_type. If 0 or equal to the number of training points, inducing points
+        will not be computed or used. Defaults to 5000.
 
     rank : int or float
-        The rank of the approximate covariance matrix. If rank is an int, an :math:`n \times`
+        The rank of the approximate covariance matrix for the Nyström rank reduction.
+        If rank is an int, an :math:`n \times`
         rank matrix :math:`L` is computed such that :math:`L L^\top \approx K`, where `K` is the
         exact :math:`n \times n` covariance matrix. If rank is a float 0.0 :math:`\le` rank
         :math:`\le` 1.0, the rank/size of :math:`L` is selected such that the included eigenvalues
         of the covariance between landmark points account for the specified percentage of the sum
-        of eigenvalues. Defaults to 0.99.
+        of eigenvalues. It is ignored if gp_type does not indicate a Nyström rank reduction.
+        Defaults to 0.99.
 
-    method : str
-        Determines how the rank is interpreted: as a fixed number of eigenvectors ('fixed'), a
-        percent of eigenvalues ('percent'), or automatically ('auto'). If 'auto', the rank is
-        interpreted as a fixed number of eigenvectors if it is an int and as a percent of
-        eigenvalues if it is a float. This parameter is provided for clarity in the ambiguous case
-        of 1 vs 1.0. Defaults to 'auto'.
+    gp_type : str or GaussianProcessType
+        The type of sparcification used for the Gaussian Process:
+         - 'full' None-sparse Gaussian Process
+         - 'full_nystroem' Sparse GP with Nyström rank reduction without landmarks,
+            which lowers the computational complexity.
+         - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
+            typically employed to enable scalable GP models.
+         - 'sparse_nystroem' Sparse GP using landmarks or inducing points,
+            along with an improved Nyström rank reduction method.
+
+        The value can be either a string matching one of the above options or an instance of
+        the `mellon.util.GaussianProcessType` Enum. If a partial match is found with the
+        Enum, a warning will be logged, and the closest match will be used.
+        Defaults to 'sparse_cholesky'.
 
     d_method : str
         The method to compute the intrinsic dimensionality of the data. Implemented options are
@@ -108,13 +118,24 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         distances are computed automatically, using a KDTree if the dimensionality of the data
         is less than 20, or a BallTree otherwise. Defaults to None.
 
-    normalize_per_time_point : bool, optional
-        If True, the computation of nearest neighbor distances incorporates a normalization step
-        based on the number of samples within each time point group. This process mitigates potential
-        bias in the density estimation due to unequal sample distribution across different time points.
-        Note that if `nn_distance` is provided, this parameter is ignored as the provided distances
-        are used directly.
-        Defaults to False.
+    normalize_per_time_point : bool, list, array-like, or dict, optional
+        Controls the normalization for varying cell counts across time points to adjust for sampling bias
+        by modifying the nearest neighbor distances before inference.
+
+        - If True, normalizes to simulate a constant total cell count divided by the number of time points.
+
+        - If False, the raw cell counts per time point is reflected in the density estimation.
+
+        - If a list or array-like, assumes total cell counts for time points, ordered from earliest to latest.
+
+        - If a dict, maps each time point to its total cell count. Must cover all unique time points.
+
+        Note: Relative cell counts are sufficient for comparison within dataset; exact numbers are not required.
+
+        Note: Ignored if `nn_distance` is provided; distances are used as-is and this parameter has no effect.
+
+        Default is False.
+
 
     d : int, array-like or None
         The intrinsic dimensionality of the data, i.e., the dimensionality of the embedded
@@ -157,11 +178,15 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         Default is an empty dictionary ({}).
 
     cov_func : mellon.Covariance or None
-        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
-        Should be an instance of a class that inherits from :class:`mellon.Covariance`.
+        The Gaussian process covariance function as instance of :class:`mellon.Covaraince`.
         If None, the covariance function `cov_func` is automatically generated as
         `cov_func_curry(ls, active_dims=slice(None, -1)) * cov_func_curry(ls_time, active_dims=-1)`.
         Defaults to None.
+
+    Lp : array-like or None
+        A matrix such that :math:`L_p L_p^\top = \Sigma_p`, where :math:`\Sigma_p` is the
+        covariance matrix of the inducing points (all cells in non-sparse GP).
+        Not used when Nyström rank reduction is employed. Defaults to None.
 
     L : array-like or None
         A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the covariance matrix.
@@ -173,23 +198,44 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         - (d/2) \cdot \log(\pi) - d \cdot \log(\text{nn_distances})` and :math:`d` is the intrinsic
         dimensionality of the data. Defaults to None.
 
+    predictor_with_uncertainty : bool
+        If set to True, computes the predictor instance `.predict` with its predictive uncertainty.
+        The uncertainty comes from two sources:
+
+        1) `.predict.mean_covariance`:
+            Uncertainty arising from the posterior distribution of the Bayesian inference.
+            This component quantifies uncertainties inherent in the model's parameters and structure.
+            Available only if `.pre_transformation_std` is defined (e.g., using `optimizer="advi"`),
+            which reflects the standard deviation of the latent variables before transformation.
+
+        2) `.predict.covariance`:
+            Uncertainty for out-of-bag states originating from the compressed function representation
+            in the Gaussian Process. Specifically, this uncertainty corresponds to locations that are
+            not inducing points of the Gaussian Process and represents the covariance of the
+            conditional normal distribution.
+
     _save_intermediate_ls_times : bool
         Determines whether the intermediate results obtained during the computation of `ls_time` are retained for debugging.
         When set to True, the results will be stored in `self.densities`, `self.predictors`, and `self.numeric_stages`.
         Defaults to False.
 
-
     jit : bool
         Use jax just-in-time compilation for loss and its gradient during optimization.
         Defaults to False.
+
+    check_rank : bool
+        Weather to check if landmarks allow sufficient complexity by checking the approximate
+        rank of the covariance matrix. This only applies to the non-Nyström gp_types.
+        If set to None the rank check is only performed if n_landmarks >= n_samples/10.
+        Defaults to None.
     """
 
     def __init__(
         self,
         cov_func_curry=DEFAULT_COV_FUNC,
-        n_landmarks=DEFAULT_N_LANDMARKS,
-        rank=DEFAULT_RANK,
-        method=DEFAULT_METHOD,
+        n_landmarks=None,
+        rank=None,
+        gp_type=None,
         d_method=DEFAULT_D_METHOD,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
@@ -203,19 +249,23 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         ls=None,
         ls_time=None,
         ls_factor=1,
-        ls_factor_times=1,
+        ls_time_factor=1,
         density_estimator_kwargs=dict(),
         cov_func=None,
+        Lp=None,
         L=None,
         initial_value=None,
+        predictor_with_uncertainty=False,
         _save_intermediate_ls_times=False,
         jit=DEFAULT_JIT,
+        check_rank=None,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
             n_landmarks=n_landmarks,
             rank=rank,
             jitter=jitter,
+            gp_type=gp_type,
             optimizer=optimizer,
             n_iter=n_iter,
             init_learn_rate=init_learn_rate,
@@ -226,9 +276,12 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
+            Lp=Lp,
             L=L,
             initial_value=initial_value,
+            predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
+            check_rank=check_rank,
         )
         if not isinstance(density_estimator_kwargs, dict):
             raise ValueError("density_estimator_kwargs needs to be a dictionary.")
@@ -237,55 +290,56 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             d_method, "d_method", choices={"fractal", "embedding"}
         )
         self.ls_time = _validate_positive_float(ls_time, "ls_time", optional=True)
-        self.ls_factor_times = _validate_positive_float(
-            ls_factor_times, "ls_factor_times"
-        )
+        self.ls_time_factor = _validate_positive_float(ls_time_factor, "ls_time_factor")
         self._save_intermediate_ls_times = _save_intermediate_ls_times
-        self.normalize_per_time_point = _validate_bool(
-            normalize_per_time_point, "normalize_per_time_point"
-        )
+        self.normalize_per_time_point = normalize_per_time_point
         self.transform = None
         self.loss_func = None
         self.opt_state = None
         self.losses = None
         self.pre_transformation = None
+        self.pre_transformation_std = None
         self.log_density_x = None
         self.log_density_func = None
 
     def __repr__(self):
         name = self.__class__.__name__
+        landmarks = object_str(self.landmarks, ["landmarks", "dims"])
+        Lp = object_str(self.Lp, ["landmarks", "landmarks"])
+        L = object_str(self.L, ["cells", "ranks"])
+        nn_distances = object_str(self.nn_distances, ["cells"])
+        initial_value = object_str(self.initial_value, ["ranks"])
+        normalize_per_time_point = object_str(
+            self.normalize_per_time_point, ["time points"]
+        )
+        d = object_str(self.d, ["cells"])
         string = (
             f"{name}("
-            f"cov_func_curry={self.cov_func_curry}, "
-            f"n_landmarks={self.n_landmarks}, "
-            f"rank={self.rank}, "
-            f"method='{self.method}', "
-            f"jitter={self.jitter}, "
-            f"optimizer='{self.optimizer}', "
-            f"n_iter={self.n_iter}, "
-            f"init_learn_rate={self.init_learn_rate}, "
-            f"landmarks={self.landmarks}, "
+            f"\n    cov_func_curry={self.cov_func_curry},"
+            f"\n    n_landmarks={self.n_landmarks},"
+            f"\n    rank={self.rank},"
+            f"\n    gp_type={self.gp_type},"
+            f"\n    jitter={self.jitter}, "
+            f"\n    optimizer={self.optimizer},"
+            f"\n    landmarks={landmarks},"
+            f"\n    nn_distances={nn_distances},"
+            f"\n    normalize_per_time_point={normalize_per_time_point},"
+            f"\n    d={d},"
+            f"\n    mu={self.mu},"
+            f"\n    ls={self.ls},"
+            f"\n    ls_time={self.ls_time},"
+            f"\n    ls_factor={self.ls_factor},"
+            f"\n    ls_time_factor={self.ls_time_factor},"
+            f"\n    density_estimator_kwargs={self.density_estimator_kwargs},"
+            f"\n    cov_func={self.cov_func},"
+            f"\n    Lp={Lp},"
+            f"\n    L={L},"
+            f"\n    initial_value={initial_value},"
+            f"\n    predictor_with_uncertainty={self.predictor_with_uncertainty},"
+            f"\n    jit={self.jit},"
+            f"\n    check_rank={self.check_rank},"
+            "\n)"
         )
-        if self.nn_distances is None:
-            string += "nn_distances=None, "
-        else:
-            string += "nn_distances=nn_distances, "
-        string += (
-            f"d={self.d}, "
-            f"mu={self.mu}, "
-            f"ls={self.ls}, "
-            f"ls_time={self.ls_time}, "
-            f"cov_func={self.cov_func}, "
-        )
-        if self.L is None:
-            string += "L=None, "
-        else:
-            string += "L=L, "
-        if self.initial_value is None:
-            string += "initial_value=None, "
-        else:
-            string += "initial_value=initial_value, "
-        string += f"jit={self.jit}" ")"
         return string
 
     def _compute_d(self):
@@ -336,12 +390,27 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
     def _compute_nn_distances(self):
         x = self.x
         normalize_per_time_point = self.normalize_per_time_point
+        d = self.d
         logger.info("Computing nearest neighbor distances within time points.")
         nn_distances = compute_nn_distances_within_time_points(
             x,
+            d=d,
             normalize=normalize_per_time_point,
         )
         return nn_distances
+
+    def _compute_ls(self):
+        nn_distances = self.nn_distances
+        normalized = self.normalize_per_time_point
+        if normalized is not False and normalized is not None:
+            logger.info(
+                "Computing non-normalized nn_distances for length scale heuristic."
+            )
+            x = self.x
+            nn_distances = compute_nn_distances_within_time_points(x, normalize=False)
+        ls = compute_ls(nn_distances)
+        ls *= self.ls_factor
+        return ls
 
     def _compute_ls_time(self):
         nn_distances = self.nn_distances
@@ -375,7 +444,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
                 "Storing `self.densities`, `self.predictors`, and `self.numeric_stages`."
             )
             ls, self.densities, self.predictors, self.numeric_stages = ls
-        ls *= self.ls_factor_times
+        ls *= self.ls_time_factor
         return ls
 
     def _compute_landmarks(self):
@@ -414,20 +483,32 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         x = self.x
         landmarks = self.landmarks
         pre_transformation = self.pre_transformation
+        pre_transformation_std = self.pre_transformation_std
         log_density_x = self.log_density_x
         mu = self.mu
         cov_func = self.cov_func
+        L = self.L
+        Lp = self.Lp
         jitter = self.jitter
+        with_uncertainty = self.predictor_with_uncertainty
+        normalize = self.normalize_per_time_point
         logger.info("Computing predictive function.")
-        log_density_func = compute_conditional_mean_times(
+        log_density_func = compute_conditional_times(
             x,
             landmarks,
             pre_transformation,
+            pre_transformation_std,
             log_density_x,
             mu,
             cov_func,
+            L,
+            Lp,
+            sigma=None,
             jitter=jitter,
+            y_is_mean=True,
+            with_uncertainty=with_uncertainty,
         )
+        log_density_func.n_obs = compute_average_cell_count(x, normalize)
         self.log_density_func = log_density_func
 
     def prepare_inference(self, x, times=None):
@@ -471,13 +552,18 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
                 raise ValueError(message)
 
         x = self.set_x(x)
-        self._prepare_attribute("nn_distances")
+        self._prepare_attribute("n_landmarks")
+        self._prepare_attribute("rank")
+        self._prepare_attribute("gp_type")
+        self._validate_parameter()
         self._prepare_attribute("d")
+        self._prepare_attribute("nn_distances")
         self._prepare_attribute("mu")
         self._prepare_attribute("ls")
         self._prepare_attribute("ls_time")
         self._prepare_attribute("cov_func")
         self._prepare_attribute("landmarks")
+        self._prepare_attribute("Lp")
         self._prepare_attribute("L")
         self._prepare_attribute("initial_value")
         self._prepare_attribute("transform")
@@ -566,23 +652,18 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
     @property
     def predict(self):
         R"""
-        An instance of the :class:`mellon.Predictor` that predicts the log density at each point in x.
+        An instance of the :class:`mellon.base_predictor.PredictorTime` that predicts the
+        log density at each point in x and time point time.
 
         The instance contains a __call__ method which can be used to predict the log density.
         This instance also supports serialization features which allows for saving
-        and loading the predictor state. Refer to mellon.Predictor documentation for more details.
-
-        Note that the last column of the input array `x` should contain the time information.
-
-        Parameters
-        ----------
-        x : array-like
-            The new data to predict, where the last column should contain the time information.
+        and loading the predictor state. Refer to :class:`mellon.base_predictor.PredictorTime`
+        documentation for more details.
 
         Returns
         -------
-        log_density : array-like
-            The log density at each test point in `x`.
+        mellon.base_predictor.PredictorTime
+            A predictor instance that computes the log density at each new data point.
 
         Example
         -------
@@ -604,7 +685,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         """
         if x is not None:
             x = _validate_time_x(x, times)
-        if self.x is not None and self.x is not x:
+        if self.x is not None and x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             error = ValueError(message)
             logger.error(error)

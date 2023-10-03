@@ -1,14 +1,17 @@
 import sys
+import logging
+from jax import vmap
+from jax.numpy import expand_dims, reshape
 from abc import ABC, abstractmethod
 from importlib import import_module
 from datetime import datetime
 import json
 
-from .util import Log, make_serializable, deserialize
+from .util import make_serializable, deserialize
 
 MELLON_NAME = __name__.split(".")[0]
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class Covariance(ABC):
@@ -39,6 +42,30 @@ class Covariance(ABC):
 
     def __call__(self, x, y):
         return self.k(x, y)
+
+    def diag(self, x):
+        """
+        Compute the diagonal of a covariance matrix.
+
+        This function expands the input vectors, maps a function over them,
+        reshapes the result and returns the diagonal of the covariance matrix.
+
+        Parameters
+        ----------
+        x : ndarray
+            Input array where the first dimension is the sample dimension and
+            the second dimension corresponds to the state dimensions of the samples (cells).
+
+        Returns
+        -------
+        diag : ndarray
+            The diagonal of the covariance matrix.
+        """
+
+        x = expand_dims(x, 1)
+        res = vmap(self.k)(x, x)
+        diag = reshape(res, res.shape[:-2])
+        return diag
 
     def __add__(self, other):
         return Add(self, other)

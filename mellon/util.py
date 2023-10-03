@@ -2,7 +2,9 @@ import sys
 import logging
 import functools
 import inspect
+from typing import List
 from inspect import Parameter
+from enum import Enum
 
 from jax.config import config as jaxconfig
 from jax.numpy import (
@@ -23,10 +25,11 @@ from jax.numpy import (
     ndarray,
     array,
     isscalar,
-    exp,
+    where,
 )
 from numpy import integer, floating
 from jax.numpy import sum as arraysum
+from jax.numpy import diag as diagonal
 from jax.numpy.linalg import norm, lstsq, matrix_rank
 from jax.scipy.special import gammaln
 from jax import vmap, jit
@@ -34,19 +37,10 @@ from sklearn.neighbors import BallTree, KDTree
 
 from .validation import _validate_array
 
+logger = logging.getLogger("mellon")
+
 DEFAULT_JITTER = 1e-6
 DEFAULT_RANK_TOL = 5e-1
-
-
-def Exp(func):
-    """
-    Function wrapper, making a function that returns the exponent of the wrapped function.
-    """
-
-    def new_func(x):
-        return exp(func(x))
-
-    return new_func
 
 
 def _None_to_str(v):
@@ -80,6 +74,8 @@ def make_serializable(x):
         return {"type": "slice", "data": dat}
     elif isinstance(x, dict):
         return {"type": "dict", "data": {k: make_serializable(v) for k, v in x.items()}}
+    elif isinstance(x, set):
+        return {"type": "set", "data": [make_serializable(v) for v in x]}
     else:
         return _None_to_str(x)
 
@@ -113,6 +109,8 @@ def deserialize(serializable_x):
             return slice(*dat)
         elif data_type == "dict":
             return {k: deserialize(v) for k, v in serializable_x["data"].items()}
+        elif data_type == "set":
+            return {deserialize(v) for v in serializable_x["data"]}
     else:
         return _str_to_None(serializable_x)
 
@@ -178,14 +176,16 @@ def make_multi_time_argument(func):
 
     Examples
     --------
-    class MyClass:
-        @make_multi_time_argument
-        def method(self, x, time=None):
-            return x + time
+    .. code-block:: python
 
-    my_object = MyClass()
-    print(my_object.method(1, multi_time=np.array([1, 2, 3])))
-    # Output: array([2, 3, 4])
+        class MyClass:
+            @make_multi_time_argument
+            def method(self, x, time=None):
+                return x + time
+
+        my_object = MyClass()
+        print(my_object.method(1, multi_time=np.array([1, 2, 3])))
+        # Output: array([2, 3, 4])
     """
     sig = inspect.signature(func)
     new_params = list(sig.parameters.values()) + [
@@ -229,6 +229,41 @@ def stabilize(A, jitter=DEFAULT_JITTER):
     """
     n = A.shape[0]
     return A + eye(n) * jitter
+
+
+def add_variance(K, M=None, jitter=DEFAULT_JITTER):
+    R"""
+    Computes :math:`K + MM^T` where the diagonal of :math:`MM^T` is
+    at least `jitter`. This function stabilizes :math:`K` for the
+    Cholesky decomposition if not already stable enough through adding :math:`MM^T`.
+
+    Parameters
+    ----------
+    K : array_like, shape (n, n)
+        A covariance matrix.
+    M : array_like, shape (n, p), optional
+        Left factor of additional variance. Default is 0.
+    jitter : float, optional
+        A small number to stabilize the covariance matrix. Defaults to 1e-6.
+
+    Returns
+    -------
+    combined_covariance : array_like, shape (n, n)
+        A combined covariance matrix that is more stably positive definite.
+
+    Notes
+    -----
+    If `M` is None, the function will add the jitter to the diagonal of `K` to
+    make it more stable. Otherwise, it will add :math:`MM^T` and correct the
+    diagonal based on the `jitter` parameter.
+    """
+    if M is None:
+        K = stabilize(K, jitter=jitter)
+    else:
+        noise = M.dot(M.T)
+        diff = where(diagonal(noise) < jitter, jitter - diagonal(noise), 0)
+        K = K + noise + diagonal(diff)
+    return K
 
 
 def mle(nn_distances, d):
@@ -346,6 +381,13 @@ def local_dimensionality(x, k=30, x_query=None, neighbor_idx=None):
     This function computes the local fractal dimension of a dataset at query points.
     It uses nearest neighbors and fits a line in log-log space to estimate the fractal dimension.
     """
+    if k > x.shape[0]:
+        logger.warning(
+            f"Number of nearest neighbors (k={k}) is "
+            f"greater than the number of samples ({x.shape[0]}). "
+            "Setting k to the number of samples."
+        )
+        k = x.shape[0]
     if neighbor_idx is None:
         if x_query is None:
             x_query = x
@@ -379,13 +421,11 @@ class Log(object):
     def __new__(cls):
         """Return the singelton Logger."""
         if not hasattr(cls, "logger"):
-            logger = logging.getLogger(__name__)
             logger.setLevel(logging.INFO)
             cls.handler = logging.StreamHandler(sys.stdout)
             formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
             cls.handler.setFormatter(formatter)
             logger.addHandler(cls.handler)
-            logger.propagate = False
             cls.logger = logger
         return cls.logger
 
@@ -417,3 +457,123 @@ def set_jax_config(enable_x64=True, platform_name="cpu"):
     """
     jaxconfig.update("jax_enable_x64", enable_x64)
     jaxconfig.update("jax_platform_name", platform_name)
+
+
+class GaussianProcessType(Enum):
+    """
+    Defines types of Gaussian Process (GP) computations for various estimators within the mellon library:
+    :class:`mellon.model.DensityEstimator`, :class:`mellon.model.FunctionEstimator`,
+    :class:`mellon.model.DimensionalityEstimator`, :class:`mellon.model.TimeSensitiveDensityEstimator`.
+
+    This enum can be passed through the `gp_type` attribute to the mentioned estimators.
+    If a string representing one of these values is passed alternatively, the
+    :func:`from_string` method is called to convert it to a `GaussianProcessType`.
+
+    Options are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem'.
+    """
+
+    FULL = "full"
+    FULL_NYSTROEM = "full_nystroem"
+    SPARSE_CHOLESKY = "sparse_cholesky"
+    SPARSE_NYSTROEM = "sparse_nystroem"
+
+    @staticmethod
+    def from_string(s: str, optional: bool = False):
+        """
+        Converts a string to a GaussianProcessType object or raises an error.
+
+        Parameters
+        ----------
+        s : str
+            The type of Gaussian Process (GP). Options are:
+             - 'full': None-sparse GP
+             - 'full_nystroem': Sparse GP with Nyström rank reduction
+             - 'sparse_cholesky': Sparse GP using landmarks/inducing points
+             - 'sparse_nystroem': Sparse GP along with an improved Nyström rank reduction
+        optional : bool, optional
+            Specifies if the input is optional. Returns None if True and input is None.
+
+        Returns
+        -------
+        GaussianProcessType
+            Corresponding Gaussian Process type.
+
+        Raises
+        ------
+        ValueError
+            If the input does not correspond to any known Gaussian Process type.
+        """
+
+        if s is None:
+            if optional:
+                return None
+            else:
+                logger.error("Gaussian process type must be specified but is None.")
+                raise ValueError("Gaussian process type must be specified but is None.")
+
+        if isinstance(s, GaussianProcessType):
+            return s
+
+        normalized_input = s.lower().replace(" ", "_")
+
+        # Try to match the exact Enum value
+        for gp_type in GaussianProcessType:
+            if gp_type.value == normalized_input:
+                logger.info(f"Gaussian Process type: {gp_type.value}")
+                return gp_type
+
+        # If no exact match, try partial matching by finding the closest match
+        for gp_type in GaussianProcessType:
+            if normalized_input in gp_type.value:
+                logger.warning(
+                    f"Partial match found for Gaussian Process type: {gp_type.value}. Input was: {s}"
+                )
+                return gp_type
+
+        message = f"Unknown Gaussian Process type: {s}"
+        logger.error(message)
+        raise ValueError(message)
+
+
+def object_str(obj: object, dim_names: List[str] = None) -> str:
+    """
+    Generate a concise string representation of metadata for array-like objects.
+
+    Parameters
+    ----------
+    obj : object
+        Object for which to generate metadata string.
+
+    dim_names : list of str, optional
+        Names for dimensions, used for array-like objects.
+
+    Returns
+    -------
+    str
+        Metadata string.
+
+    Examples
+    --------
+    >>> object_metadata_str(np.array([[1, 2], [3, 4]]), dim_names=['row', 'col'])
+    '<array 2 row x 2 col, dtype=int64>'
+
+    >>> object_metadata_str(np.array([1, 2, 3]), dim_names=['element'])
+    '<array 3 element, dtype=int64>'
+
+    >>> object_metadata_str("hello")
+    'hello'
+    """
+    if hasattr(obj, "shape") and hasattr(obj, "dtype"):
+        dims = obj.shape
+        if dim_names:
+            dim_strs = [f"{dim:,} {name}" for dim, name in zip(dims, dim_names)]
+        else:
+            dim_strs = [f"{dim:,}" for dim in dims]
+
+        for i in range(len(dim_strs), len(dims)):
+            dim_strs.append(f"{dims[i]} dimension {i + 1}")
+
+        dim_str = " x ".join(dim_strs)
+        return f"<array {dim_str}, dtype={obj.dtype}>"
+    else:
+        return str(obj)

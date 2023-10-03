@@ -1,28 +1,26 @@
-from .decomposition import DEFAULT_METHOD
+import logging
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
 from .inference import (
-    compute_conditional_mean,
+    compute_conditional,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_OPTIMIZER,
 )
-from .parameters import (
-    DEFAULT_N_LANDMARKS,
-)
 from .util import (
     DEFAULT_JITTER,
-    Log,
+    GaussianProcessType,
 )
 from .validation import (
-    _validate_positive_float,
+    _validate_float_or_iterable_numerical,
     _validate_float,
     _validate_array,
+    _validate_bool,
 )
 
 
 DEFAULT_D_METHOD = "embedding"
 
-logger = Log()
+logger = logging.getLogger("mellon")
 
 
 class FunctionEstimator(BaseEstimator):
@@ -36,9 +34,21 @@ class FunctionEstimator(BaseEstimator):
         A curry that takes one length scale argument and returns a covariance function
         of the form k(x, y) :math:`\rightarrow` float. Defaults to Matern52.
 
-    n_landmarks : int, optional
-        The number of landmark points. If less than 1 or greater than or equal to the
-        number of training points, inducing points will not be computed or used. Defaults to 5000.
+    n_landmarks : int
+        The number of landmark/inducing points. Only used if a sparse GP is indicated
+        through gp_type. If 0 or equal to the number of training points, inducing points
+        will not be computed or used. Defaults to 5000.
+
+    gp_type : str or GaussianProcessType
+        The type of sparcification used for the Gaussian Process:
+         - 'full' None-sparse Gaussian Process
+         - 'sparse_cholesky' Sparse GP using landmarks/inducing points,
+            typically employed to enable scalable GP models.
+
+        The value can be either a string matching one of the above options or an instance of
+        the `mellon.util.GaussianProcessType` Enum. If a partial match is found with the
+        Enum, a warning will be logged, and the closest match will be used.
+        Defaults to 'sparse_cholesky'.
 
     jitter : float, optional
         A small amount added to the diagonal of the covariance matrix to ensure numerical stability.
@@ -68,13 +78,31 @@ class FunctionEstimator(BaseEstimator):
         selected. It is used to manually adjust the automatically chosen length
         scale for finer control over the model's sensitivity to variations in the data.
 
-    cov_func : function or None, optional
-        The Gaussian process covariance function of the form k(x, y) :math:`\rightarrow` float.
-        If None, automatically generates the covariance function cov_func = cov_func_curry(ls).
+    cov_func : mellon.Covaraince or None
+        The Gaussian process covariance function as instance of :class:`mellon.Covaraince`.
+        If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
         Defaults to None.
 
     sigma : float, optional
         The standard deviation of the white noise. Defaults to 0.
+
+    y_is_mean : bool
+        Wether to consider y the GP mean or a noise measurment
+        subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
+        Defaults to False.
+
+    predictor_with_uncertainty : bool
+        If set to True, computes the predictor instance `.predict` with its predictive uncertainty.
+        The uncertainty comes from two sources:
+
+        1) `.predict.mean_covariance`:
+            Uncertainty arising from the input noise `sigma`.
+
+        2) `.predict.covariance`:
+            Uncertainty for out-of-bag states originating from the compressed function representation
+            in the Gaussian Process. Specifically, this uncertainty corresponds to locations that are
+            not inducing points of the Gaussian Process and represents the covariance of the
+            conditional normal distribution.
 
     jit : bool, optional
         Use JAX just-in-time compilation for the loss function and its gradient during optimization.
@@ -84,8 +112,8 @@ class FunctionEstimator(BaseEstimator):
     def __init__(
         self,
         cov_func_curry=DEFAULT_COV_FUNC,
-        n_landmarks=DEFAULT_N_LANDMARKS,
-        method=DEFAULT_METHOD,
+        n_landmarks=None,
+        gp_type=None,
         jitter=DEFAULT_JITTER,
         optimizer=DEFAULT_OPTIMIZER,
         n_iter=DEFAULT_N_ITER,
@@ -97,6 +125,8 @@ class FunctionEstimator(BaseEstimator):
         ls_factor=1,
         cov_func=None,
         sigma=0,
+        y_is_mean=False,
+        predictor_with_uncertainty=False,
         jit=True,
     ):
         super().__init__(
@@ -104,16 +134,32 @@ class FunctionEstimator(BaseEstimator):
             n_landmarks=n_landmarks,
             rank=1.0,
             jitter=jitter,
+            gp_type=gp_type,
             landmarks=landmarks,
             nn_distances=nn_distances,
             mu=mu,
             ls=ls,
             ls_factor=ls_factor,
             cov_func=cov_func,
+            predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
         )
+        self.y_is_mean = _validate_bool(y_is_mean, "y_is_mean")
         self.mu = _validate_float(mu, "mu")
-        self.sigma = _validate_positive_float(sigma, "sigma")
+        self.sigma = _validate_float_or_iterable_numerical(
+            sigma, "sigma", positive=True
+        )
+        if (
+            self.gp_type == GaussianProcessType.FULL_NYSTROEM
+            or self.gp_type == GaussianProcessType.SPARSE_NYSTROEM
+        ):
+            message = (
+                f"gp_type={gp_type} but the Nyström rank reduction is "
+                "not available for the Function Estimator. "
+                "Use gp_type='cholesky' or gp_type='full' instead."
+            )
+            logger.error(message)
+            raise ValueError(message)
 
     def __call__(self, x=None, y=None):
         """This calls self.fit_predict(x, y):
@@ -143,6 +189,8 @@ class FunctionEstimator(BaseEstimator):
         :rtype: function, array-like
         """
         x = self.set_x(x)
+        self._prepare_attribute("n_landmarks")
+        self._prepare_attribute("gp_type")
         if self.ls is None:
             self._prepare_attribute("nn_distances")
         self._prepare_attribute("ls")
@@ -182,15 +230,22 @@ class FunctionEstimator(BaseEstimator):
         cov_func = self.cov_func
         sigma = self.sigma
         jitter = self.jitter
-        conditional = compute_conditional_mean(
+        y_is_mean = self.y_is_mean
+        with_uncertainty = self.predictor_with_uncertainty
+        conditional = compute_conditional(
             x,
             landmarks,
+            None,
             None,
             y,
             mu,
             cov_func,
+            None,
+            None,
             sigma,
             jitter=jitter,
+            y_is_mean=y_is_mean,
+            with_uncertainty=with_uncertainty,
         )
         self.conditional = conditional
         return conditional
@@ -227,8 +282,8 @@ class FunctionEstimator(BaseEstimator):
         # Check if the number of samples in x and y match
         if y.shape[0] != n_samples:
             raise ValueError(
-                f"X.shape[0] = {n_samples} (n_samples) should equal "
-                "y.shape[0] = {y.shape[0]}."
+                f"X.shape[0] = {n_samples:,} (n_samples) should equal "
+                f"y.shape[0] = {y.shape[0]:,}."
             )
 
         self.prepare_inference(x)
