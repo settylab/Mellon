@@ -5,9 +5,6 @@ Mellon
      :target: https://doi.org/10.5281/zenodo.8404223
 .. image:: https://codecov.io/github/settylab/Mellon/branch/main/graph/badge.svg?token=TKIKXK4MPG 
     :target: https://app.codecov.io/github/settylab/Mellon
-.. image:: https://www.codefactor.io/repository/github/settylab/mellon/badge/main
-      :target: https://www.codefactor.io/repository/github/settylab/mellon/overview/main
-      :alt: CodeFactor
 .. image:: https://badge.fury.io/py/mellon.svg
        :target: https://badge.fury.io/py/mellon
 .. image:: https://anaconda.org/conda-forge/mellon/badges/version.svg
