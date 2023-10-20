@@ -141,7 +141,8 @@ def compute_n_landmarks(gp_type, n_samples, landmarks):
 
 def compute_gp_type(n_landmarks, rank, n_samples):
     """
-    Determines the type of Gaussian Process based on the landmarks, rank, and method values.
+    Determines the type of Gaussian Process based on the landmarks, rank, and
+    number of samples.
 
     Parameters
     ----------
