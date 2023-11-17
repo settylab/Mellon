@@ -5,6 +5,7 @@ import inspect
 from typing import List
 from inspect import Parameter
 from enum import Enum
+from itertools import islice
 
 from jax.config import config as jaxconfig
 from jax.numpy import (
@@ -26,6 +27,7 @@ from jax.numpy import (
     array,
     isscalar,
     where,
+    vstack,
 )
 from numpy import integer, floating
 from jax.numpy import sum as arraysum
@@ -42,6 +44,16 @@ logger = logging.getLogger("mellon")
 DEFAULT_JITTER = 1e-6
 DEFAULT_RANK_TOL = 5e-1
 
+
+def batched_vmap(func, x, *args, batch_size=100):
+    """Apply function in batches to save memory."""
+    n = x.shape[0]
+    out_list = []
+    it = iter(range(n))
+    while idx := tuple(islice(it, batch_size)):
+        batch = x[idx, ...]
+        out_list.append(vmap(func, in_axes=(0, None))(batch, *args))
+    return vstack(out_list)
 
 def _None_to_str(v):
     if v is None:
@@ -150,7 +162,7 @@ def select_active_dims(x, active_dims):
     if active_dims is not None:
         if isscalar(active_dims):
             active_dims = [active_dims]
-        x = x[:, active_dims]
+        x = x[..., active_dims]
     return x
 
 
@@ -294,13 +306,31 @@ def distance(x, y):
     :return: distances - The distance between each point in x and y.
     :rtype: array-like
     """
-    n = x.shape[0]
-    m = y.shape[0]
-    xx = repeat(arraysum(x * x, axis=1)[:, newaxis], m, axis=1)
-    yy = repeat(arraysum(y * y, axis=1)[newaxis, :], n, axis=0)
+    xx = arraysum(x * x, axis=1)[:, newaxis]
+    yy = arraysum(y * y, axis=1)[newaxis, :]
     xy = tensordot(x, y, (1, 1))
     sq = xx - 2 * xy + yy + 1e-12
     return sqrt(maximum(sq, 0))
+
+def distance_grad(x):
+    """
+    Produces a function that computes the distance to x and the
+    gradient of the distance to x with respect to y.
+
+    :param x: A set of points.
+    :type x: array-like
+    :return: grad - A function that computes the gradient of the distance to x.
+    :rtype: function
+    """
+    xx = arraysum(x * x, axis=1)[:, newaxis]
+    def grad(y):
+        yy = arraysum(y * y, axis=1)[newaxis, :]
+        xy = tensordot(x, y, (1, 1))
+        sq = xx - 2 * xy + yy + 1e-12
+        distance = sqrt(maximum(sq, 0))
+        delta = (y[newaxis, :] - x[:, newaxis])
+        return distance, delta / distance[..., newaxis]
+    return grad
 
 
 def test_rank(input, tol=DEFAULT_RANK_TOL, threshold=None):

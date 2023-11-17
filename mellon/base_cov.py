@@ -1,13 +1,13 @@
 import sys
 import logging
-from jax import vmap
+from jax import vmap, jacfwd
 from jax.numpy import expand_dims, reshape
 from abc import ABC, abstractmethod
 from importlib import import_module
 from datetime import datetime
 import json
 
-from .util import make_serializable, deserialize
+from .util import make_serializable, deserialize, select_active_dims
 
 MELLON_NAME = __name__.split(".")[0]
 
@@ -39,6 +39,30 @@ class Covariance(ABC):
     @abstractmethod
     def k(x, y):
         pass
+
+    def k_grad(self, x):
+        """
+        Produce a function that computes the gradient of the kernel function
+        with the left argument x with respect to y.
+        This base class implementation uses jax automatic differentiation.
+        Overwrite this method in the inheriting class if a more efficient
+        implementation is available.
+
+         Parameters
+        ----------
+        x : array-like
+            First input array.
+
+        Returns
+        -------
+        k_grad : callable
+            Function that computes the gradient of the kernel function.
+        """
+        k_func = lambda y: self.k(x, y[None, ])[..., 0]
+        k_grad_pre = vmap(jacfwd(k_func), in_axes=(0,), out_axes=1)
+        def k_grad(y):
+            return select_active_dims(k_grad_pre(y), self.active_dims)
+        return k_grad
 
     def __call__(self, x, y):
         return self.k(x, y)
