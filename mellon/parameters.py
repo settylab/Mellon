@@ -605,6 +605,7 @@ def compute_Lp(
         n_landmarks = n_samples
         landmarks = x
     else:
+        landmarks = ensure_2d(landmarks)
         n_landmarks = landmarks.shape[0]
     gp_type = GaussianProcessType.from_string(gp_type, optional=True)
     if gp_type is None:
@@ -681,7 +682,10 @@ def _validate_compute_L_input(x, cov_func, gp_type, landmarks, Lp, rank, sigma, 
         logger.error(message)
         raise ValueError(message)
 
-    return x, n_landmarks, n_samples, gp_type, rank
+    x = ensure_2d(x)
+    landmarks = ensure_2d(landmarks)
+
+    return x, landmarks, n_landmarks, n_samples, gp_type, rank
 
 
 def compute_L(
@@ -744,7 +748,7 @@ def compute_L(
     ValueError
         If the Gaussian Process type is unknown or if the shape of Lp is incorrect.
     """
-    x, n_landmarks, n_samples, gp_type, rank = _validate_compute_L_input(
+    x, landmarks, n_landmarks, n_samples, gp_type, rank = _validate_compute_L_input(
         x, cov_func, gp_type, landmarks, Lp, rank, sigma, jitter
     )
 
