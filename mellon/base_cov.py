@@ -262,7 +262,7 @@ class CovariancePair(Covariance):
             "type": "mellon.Covariance",
             "left_data": self.left.__getstate__(),
             "right_data": right_data,
-            "active_dims": self.active_dims,
+            "active_dims": make_serializable(self.active_dims),
             "metadata": {
                 "classname": self.__class__.__name__,
                 "module_name": module_name,
@@ -295,7 +295,7 @@ class CovariancePair(Covariance):
             self.right = Covariance.from_dict(state["right_data"])
         else:
             self.right = deserialize(state["right_data"])
-        self.active_dims = state.get("active_dims", None)
+        self.active_dims = deserialize(state.get("active_dims", None))
 
 
 class Add(CovariancePair):
@@ -339,17 +339,16 @@ class Add(CovariancePair):
         left_grad = self.left.k_grad(x)
 
         if callable(self.right):
-
-            def k_grad(y):
-                y = select_active_dims(y, self.active_dims)
-                return left_grad(y)
-
-        else:
             right_grad = self.right.k_grad(x)
 
             def k_grad(y):
                 y = select_active_dims(y, self.active_dims)
                 return left_grad(y) + right_grad(y)
+
+        else:
+            def k_grad(y):
+                y = select_active_dims(y, self.active_dims)
+                return left_grad(y)
 
         return k_grad
 
