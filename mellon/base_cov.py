@@ -19,9 +19,8 @@ class Covariance(ABC):
     Base covariance function.
     """
 
-    @abstractmethod
-    def __init__(self):
-        pass
+    def __init__(self, active_dims=None):
+        self.active_dims = active_dims
 
     def __str__(self):
         return self.__repr__()
@@ -58,10 +57,12 @@ class Covariance(ABC):
         k_grad : callable
             Function that computes the gradient of the kernel function.
         """
-        k_func = lambda y: self.k(x, y[None, ])[..., 0]
+        k_func = lambda y: self.k(x, y[None,])[..., 0]
         k_grad_pre = vmap(jacfwd(k_func), in_axes=(0,), out_axes=1)
+
         def k_grad(y):
             return select_active_dims(k_grad_pre(y), self.active_dims)
+
         return k_grad
 
     def __call__(self, x, y):
@@ -228,9 +229,11 @@ class CovariancePair(Covariance):
     Supports combining two covariance functions with.
     """
 
-    def __init__(self, left, right):
+    def __init__(self, left, right, active_dims=None):
+        super().__init__()
         self.left = left
         self.right = right
+        self.active_dims = active_dims
 
     @classmethod
     def k(self, x, y):
@@ -259,6 +262,7 @@ class CovariancePair(Covariance):
             "type": "mellon.Covariance",
             "left_data": self.left.__getstate__(),
             "right_data": right_data,
+            "active_dims": self.active_dims,
             "metadata": {
                 "classname": self.__class__.__name__,
                 "module_name": module_name,
@@ -291,6 +295,7 @@ class CovariancePair(Covariance):
             self.right = Covariance.from_dict(state["right_data"])
         else:
             self.right = deserialize(state["right_data"])
+        self.active_dims = state.get("active_dims", None)
 
 
 class Add(CovariancePair):
@@ -302,9 +307,51 @@ class Add(CovariancePair):
         return "(" + repr(self.left) + " + " + repr(self.right) + ")"
 
     def k(self, x, y):
+        x = select_active_dims(x, self.active_dims)
+        y = select_active_dims(y, self.active_dims)
+
         if callable(self.right):
             return self.left(x, y) + self.right(x, y)
         return self.left(x, y) + self.right
+
+    def k_grad(self, x):
+        """
+        Generate a function to compute the gradient of the sum of covariance kernels.
+
+        This method returns a callable that, when given an array `y`, computes the gradient
+        with respect to `y`, considering `x` as the fixed input. The computation is
+        restricted to the active dimensions specified in the covariance function instance.
+
+        Parameters
+        ----------
+        x : array-like
+            The fixed input array used as the first argument in the Linear kernel.
+            Its shape should be compatible with the active dimensions of the kernel.
+
+        Returns
+        -------
+        Callable
+            A function that takes an array `y` as input and returns the gradient of the
+            Linear kernel function with respect to `y`, evaluated at the pair `(x, y)`.
+            The gradient is computed only over the active dimensions.
+        """
+        x = select_active_dims(x, self.active_dims)
+        left_grad = self.left.k_grad(x)
+
+        if callable(self.right):
+
+            def k_grad(y):
+                y = select_active_dims(y, self.active_dims)
+                return left_grad(y)
+
+        else:
+            right_grad = self.right.k_grad(x)
+
+            def k_grad(y):
+                y = select_active_dims(y, self.active_dims)
+                return left_grad(y) + right_grad(y)
+
+        return k_grad
 
 
 class Mul(CovariancePair):
@@ -316,9 +363,59 @@ class Mul(CovariancePair):
         return "(" + repr(self.left) + " * " + repr(self.right) + ")"
 
     def k(self, x, y):
+        x = select_active_dims(x, self.active_dims)
+        y = select_active_dims(y, self.active_dims)
+
         if callable(self.right):
             return self.left(x, y) * self.right(x, y)
         return self.left(x, y) * self.right
+
+    def k_grad(self, x):
+        """
+        Generate a function to compute the gradient of the product of covariance kernels.
+
+        This method returns a callable that, when given an array `y`, computes the gradient
+        with respect to `y`, considering `x` as the fixed input. The computation is
+        restricted to the active dimensions specified in the covariance function instance.
+
+        Parameters
+        ----------
+        x : array-like
+            The fixed input array used as the first argument in the covariance function.
+            Its shape should be compatible with the active dimensions of the kernel.
+
+        Returns
+        -------
+        Callable
+            A function that takes an array `y` as input and returns the gradient of the
+            product kernel function with respect to `y`, evaluated at the pair `(x, y)`.
+            The gradient is computed only over the active dimensions.
+        """
+        x = select_active_dims(x, self.active_dims)
+        left_grad_func = self.left.k_grad(x)
+
+        if callable(self.right):
+            right_grad_func = self.right.k_grad(x)
+
+            def k_grad(y):
+                y = select_active_dims(y, self.active_dims)
+
+                left_k = self.left.k(x, y)
+                right_k = self.right.k(x, y)
+                left_grad = left_grad_func(y)
+                right_grad = right_grad_func(y)
+
+                return left_grad * right_k + left_k * right_grad
+
+        else:
+
+            def k_grad(y):
+                y = select_active_dims(y, self.active_dims)
+                left_grad = left_grad_func(y)
+
+                return left_grad * self.right
+
+        return k_grad
 
 
 class Pow(CovariancePair):
@@ -331,3 +428,42 @@ class Pow(CovariancePair):
 
     def k(self, x, y):
         return self.left(x, y) ** self.right
+
+    def k_grad(self, x):
+        """
+        Generate a function to compute the gradient of the covariance kernels to a power.
+
+        This method returns a callable that, when given an array `y`, computes the gradient
+        with respect to `y`, considering `x` as the fixed input. The computation is
+        restricted to the active dimensions specified in the covariance function instance.
+
+        Parameters
+        ----------
+        x : array-like
+            The fixed input array used as the first argument in the covariance function.
+            Its shape should be compatible with the active dimensions of the kernel.
+
+        Returns
+        -------
+        Callable
+            A function that takes an array `y` as input and returns the gradient of the
+            product kernel function with respect to `y`, evaluated at the pair `(x, y)`.
+            The gradient is computed only over the active dimensions.
+        """
+        x = select_active_dims(x, self.active_dims)
+
+        # Obtain the gradient function for the base covariance function
+        base_grad_func = self.left.k_grad(x)
+
+        def k_grad(y):
+            y = select_active_dims(y, self.active_dims)
+            base_k = self.left.k(x, y)
+            base_grad = base_grad_func(y)
+
+            # Compute the gradient of the powered covariance function using the chain rule
+            # (f(x)^n)' = n * f(x)^(n-1) * f'(x)
+            power_grad = self.right * (base_k ** (self.right - 1)) * base_grad
+
+            return power_grad
+
+        return k_grad
