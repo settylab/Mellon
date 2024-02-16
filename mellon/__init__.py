@@ -5,6 +5,7 @@ from .model import (
     FunctionEstimator,
     DimensionalityEstimator,
     TimeSensitiveDensityEstimator,
+    CellDynamicEstimator,
 )
 from .base_predictor import Predictor
 from .cov import Covariance
@@ -17,13 +18,14 @@ from . import _inference as inference
 from . import _conditional as conditional
 from . import _derivatives as derivatives
 
-__version__ = "1.4.0"
+__version__ = "1.4.2"
 
 __all__ = [
     "DensityEstimator",
     "FunctionEstimator",
     "DimensionalityEstimator",
     "TimeSensitiveDensityEstimator",
+    "CellDynamicEstimator",
     "Predictor",
     "Covariance",
     "Log",

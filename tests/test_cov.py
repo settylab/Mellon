@@ -10,6 +10,7 @@ COVARIANCE_CLASSES = [
     mellon.cov.ExpQuad,
     mellon.cov.Exponential,
     mellon.cov.RatQuad,
+    mellon.cov.Linear,
 ]
 
 # Define the active dimensions to be tested

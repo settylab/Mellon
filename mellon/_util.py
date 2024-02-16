@@ -1,6 +1,7 @@
 from .util import (
     mle,
     distance,
+    distance_grad,
     test_rank,
     local_dimensionality,
     Log,
@@ -12,6 +13,7 @@ from .util import (
 __all__ = [
     "mle",
     "distance",
+    "distance_grad",
     "test_rank",
     "local_dimensionality",
     "Log",

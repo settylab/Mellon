@@ -30,7 +30,7 @@ def test_function_estimator_prediction(function_estimator_setup):
 
     est = mellon.FunctionEstimator(sigma=1e-3)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         est.fit_predict()
 
     pred = est.fit_predict(X, y)

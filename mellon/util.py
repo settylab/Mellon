@@ -55,6 +55,7 @@ def batched_vmap(func, x, *args, batch_size=100):
         out_list.append(vmap(func, in_axes=(0, None))(batch, *args))
     return vstack(out_list)
 
+
 def _None_to_str(v):
     if v is None:
         return "None"
@@ -93,7 +94,7 @@ def make_serializable(x):
 
 
 def _str_to_None(v):
-    if v == "None":
+    if isinstance(v, str) and v == "None":
         return None
     return v
 
@@ -312,6 +313,7 @@ def distance(x, y):
     sq = xx - 2 * xy + yy + 1e-12
     return sqrt(maximum(sq, 0))
 
+
 def distance_grad(x):
     """
     Produces a function that computes the distance to x and the
@@ -323,13 +325,15 @@ def distance_grad(x):
     :rtype: function
     """
     xx = arraysum(x * x, axis=1)[:, newaxis]
+
     def grad(y):
         yy = arraysum(y * y, axis=1)[newaxis, :]
         xy = tensordot(x, y, (1, 1))
         sq = xx - 2 * xy + yy + 1e-12
         distance = sqrt(maximum(sq, 0))
-        delta = (y[newaxis, :] - x[:, newaxis])
+        delta = y[newaxis, :] - x[:, newaxis]
         return distance, delta / distance[..., newaxis]
+
     return grad
 
 

@@ -10,6 +10,8 @@ from jax.numpy import (
     ndim,
     asarray,
     ndarray,
+    ones,
+    zeros,
 )
 from jax.numpy import sum as arraysum
 from jax.numpy import any as arrayany
@@ -50,6 +52,35 @@ from .parameter_validation import (
 DEFAULT_N_LANDMARKS = 5000
 
 logger = logging.getLogger("mellon")
+
+
+def compute_initial_zeros(x, L):
+    return zeros((x.shape[0], L.shape[1]))
+
+
+def compute_initial_ones(x, L):
+    return ones(x.shape[0])
+
+
+def compute_time_derivatives(predictor, x, times=None):
+    if hasattr(predictor, "time_derivative"):
+        return predictor.time_derivative(x, times)
+    else:
+        return zeros(x.shape[0])
+
+
+def compute_density_gradient(predictor, x, times=None):
+    if hasattr(predictor, "time_derivative"):
+        return predictor.gradient(x, times)
+    else:
+        return predictor.gradient(x)
+
+
+def compute_density_diffusion(predictor, x, times=None):
+    if hasattr(predictor, "time_derivative"):
+        sign, log_det = predictor.hessian_log_determinant(x, times)
+    else:
+        sign, log_det = predictor.hessian_log_determinant(x)
 
 
 def compute_rank(gp_type):
@@ -683,7 +714,8 @@ def _validate_compute_L_input(x, cov_func, gp_type, landmarks, Lp, rank, sigma, 
         raise ValueError(message)
 
     x = ensure_2d(x)
-    landmarks = ensure_2d(landmarks)
+    if landmarks is not None:
+        landmarks = ensure_2d(landmarks)
 
     return x, landmarks, n_landmarks, n_samples, gp_type, rank
 

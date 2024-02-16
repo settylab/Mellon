@@ -188,6 +188,18 @@ class BaseEstimator:
             a numerical array-like object, or if its shape does not match the required shape
             (n_samples, n_features).
         """
+        if self.x is not None and x is not None and self.x is not x:
+            message = "self.x has been set already, but is not equal to the argument x."
+            error = ValueError(message)
+            logger.error(error)
+            raise error
+        if self.x is None and x is None:
+            message = "Required argument x is missing and self.x has not been set."
+            error = ValueError(message)
+            logger.error(error)
+            raise error
+        if x is None:
+            x = self.x
         self.x = _validate_array(x, "x")
         return self.x
 

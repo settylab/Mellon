@@ -12,7 +12,11 @@ from .parameters import (
     compute_L,
     compute_mu,
     compute_initial_value,
+    compute_initial_zeros,
+    compute_initial_ones,
     compute_initial_dimensionalities,
+    compute_time_derivatives,
+    compute_density_gradient,
 )
 from .compute_ls_time import compute_ls_time
 
@@ -30,6 +34,10 @@ __all__ = [
     "compute_L",
     "compute_mu",
     "compute_initial_value",
+    "compute_initial_zeros",
+    "compute_initial_ones",
     "compute_initial_dimensionalities",
     "compute_ls_time",
+    "compute_time_derivatives",
+    "compute_density_gradient",
 ]

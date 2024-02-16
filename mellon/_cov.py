@@ -4,6 +4,7 @@ from .cov import (
     ExpQuad,
     Exponential,
     RatQuad,
+    Linear,
 )
 from .base_cov import (
     Covariance,
@@ -18,4 +19,5 @@ __all__ = [
     "ExpQuad",
     "Exponential",
     "RatQuad",
+    "Linear",
 ]
