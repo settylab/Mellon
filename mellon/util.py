@@ -12,6 +12,7 @@ from jax.numpy import (
     eye,
     log,
     pi,
+    zeros,
     repeat,
     newaxis,
     tensordot,
@@ -167,6 +168,39 @@ def select_active_dims(x, active_dims):
     return x
 
 
+def set_active_dims(values, target_shape, active_dims):
+    """
+    Create an array of a target shape with values set in the active dimensions and zeros elsewhere.
+
+    Parameters
+    ----------
+    values : jax.numpy.ndarray
+        The values to insert into the active dimensions. The shape of `values`
+        must be compatible with the `target_shape` along the `active_dims`.
+    target_shape : tuple
+        The shape of the target array to be created.
+    active_dims : list or array-like
+        The indices of the dimensions that are active, where `values` will be placed.
+
+    Returns
+    -------
+    jax.numpy.ndarray
+        A new array with the specified target shape, where the active dimensions
+        contain `values` and all other elements are zeros.
+    """
+    result = zeros(target_shape, dtype=values.dtype)
+
+    if isscalar(active_dims):
+        active_dims = [active_dims]
+
+    indices = [
+        slice(None) if dim in active_dims else 0 for dim in range(len(target_shape))
+    ]
+    result = result.at[tuple(indices)].set(values)
+
+    return result
+
+
 def make_multi_time_argument(func):
     """
     Decorator to modify a method to optionally take a multi-time argument.
@@ -314,25 +348,59 @@ def distance(x, y):
     return sqrt(maximum(sq, 0))
 
 
-def distance_grad(x):
+def distance_grad(x, eps=1e-12):
     """
-    Produces a function that computes the distance to x and the
-    gradient of the distance to x with respect to y.
+    Produces a function that computes the Euclidean distance from a fixed set of points `x`
+    to any other set of points `y`, and the gradient of this distance with respect to `y`.
 
-    :param x: A set of points.
-    :type x: array-like
-    :return: grad - A function that computes the gradient of the distance to x.
-    :rtype: function
+    Parameters
+    ----------
+    x : array-like
+        A fixed set of points. The array should have a shape of (n, d), where `n` is the number
+        of points and `d` is the dimensionality of each point.
+    eps : float, optional
+        A small epsilon value added to the distance to avoid division by zero when computing
+        the gradient. Default is 1e-12.
+
+    Returns
+    -------
+    function
+        A function that, when called with an array-like `y` of shape (m, d), returns a tuple
+        containing:
+        - distance : ndarray
+          An array of shape (n, m) representing the Euclidean distances from each point in `x`
+          to each point in `y`.
+        - gradient : ndarray
+          An array of shape (n, m, d) representing the gradient of the distance with respect to
+          each point in `y`.
+
+    Examples
+    --------
+    >>> x = np.array([[0, 0], [1, 1]])
+    >>> dist_grad_func = distance_grad(x)
+    >>> y = np.array([[1, 0], [0, 1]])
+    >>> distance, gradient = dist_grad_func(y)
+    >>> distance.shape
+    (2, 2)
+    >>> gradient.shape
+    (2, 2, 2)
+
+    Notes
+    -----
+    The gradient is computed using the formula for the derivative of the Euclidean distance
+    with respect to the points `y`. The epsilon value is added to the computed squared distances
+    before taking the square root to ensure numerical stability.
     """
     xx = arraysum(x * x, axis=1)[:, newaxis]
 
     def grad(y):
         yy = arraysum(y * y, axis=1)[newaxis, :]
-        xy = tensordot(x, y, (1, 1))
-        sq = xx - 2 * xy + yy + 1e-12
+        xy = tensordot(x, y, axes=(1, 1))
+        sq = xx - 2 * xy + yy + eps
         distance = sqrt(maximum(sq, 0))
         delta = y[newaxis, :] - x[:, newaxis]
-        return distance, delta / distance[..., newaxis]
+        gradient = delta / (distance[..., newaxis] + eps)
+        return distance, gradient
 
     return grad
 
