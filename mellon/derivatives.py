@@ -114,7 +114,7 @@ def hessian(function, x, *args, jit=True):
     hessians = jax.vmap(get_hess, in_axes=in_axes)(x, *args)
     if len(hessians.shape) <= 6:
         return hessians.reshape(out_shape)
-    return jhessians.reshape(hessians.shape[::2])
+    return hessians.reshape(hessians.shape[::2])
 
 
 def hessian_log_determinant(function, x, *args, jit=True):

@@ -517,32 +517,27 @@ def local_dimensionality(x, k=30, x_query=None, neighbor_idx=None):
     return w[:, 0, 0]
 
 
-class Log(object):
-    """Access the Mellon logging/verbosity. Log() returns the singelon logger and
-    Log.off() and Log.on() disable or enable logging respectively."""
+def set_verbosity(verbose: bool):
+    """
+    Adjusts the verbosity of mellon.
 
-    def __new__(cls):
-        """Return the singelton Logger."""
-        if not hasattr(cls, "logger"):
-            logger.setLevel(logging.INFO)
-            cls.handler = logging.StreamHandler(sys.stdout)
-            formatter = logging.Formatter("[%(asctime)s] [%(levelname)-8s] %(message)s")
-            cls.handler.setFormatter(formatter)
-            logger.addHandler(cls.handler)
-            cls.logger = logger
-        return cls.logger
+    :param verbose: If True, sets the logging level to INFO to show detailed logs.
+                    If False, sets it to WARNING to show only important messages.
+    :type verbose: bool
 
-    @classmethod
-    def off(cls):
-        """Turn off all logging."""
-        cls.__new__(cls)
-        cls.logger.setLevel(logging.WARNING + 1)
+    This function provides a simplified interface for controlling logging verbosity,
+    making it more accessible to users who are not familiar with the logging module's levels.
 
-    @classmethod
-    def on(cls):
-        """Turn on logging."""
-        cls.__new__(cls)
-        cls.logger.setLevel(logging.INFO)
+    Example usage:
+
+    .. code-block:: python
+
+        set_verbosity(True)  # Enable detailed debug logs
+        set_verbosity(False) # Show only warnings and errors
+    """
+    level = logging.INFO if verbose else logging.WARNING
+    logger.setLevel(level)
+    logger.info(f"Logging verbosity set to {'INFO' if verbose else 'WARNING'}.")
 
 
 def set_jax_config(enable_x64=True, platform_name="cpu"):

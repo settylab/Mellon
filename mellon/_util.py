@@ -4,9 +4,9 @@ from .util import (
     distance_grad,
     test_rank,
     local_dimensionality,
-    Log,
     set_jax_config,
     GaussianProcessType,
+    set_verbosity,
     object_str,
 )
 
@@ -16,8 +16,8 @@ __all__ = [
     "distance_grad",
     "test_rank",
     "local_dimensionality",
-    "Log",
     "set_jax_config",
     "GaussianProcessType",
+    "set_verbosity",
     "object_str",
 ]
