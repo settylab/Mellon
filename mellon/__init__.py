@@ -27,7 +27,6 @@ __all__ = [
     "TimeSensitiveDensityEstimator",
     "Predictor",
     "Covariance",
-    "Log",
     "util",
     "cov",
     "model",
@@ -70,3 +69,4 @@ LOGGING_CONFIG = {
 }
 
 logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger("mellon")

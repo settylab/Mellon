@@ -13,7 +13,7 @@ ACTIVE_DIMS = [None, slice(2), 1, slice(None, None, 2)]
 )
 def test_Add(active_dims):
     n = 2
-    d = 2
+    d = 3
     cov1 = mellon.cov.Matern32(1.4)
     cov2 = mellon.cov.Exponential(3.4)
 
@@ -24,8 +24,8 @@ def test_Add(active_dims):
     x = jnp.ones((n, d))
     values = cov(x, 2 * x)
     assert values.shape == (
-        d,
-        d,
+        n,
+        n,
     ), "Covariance should be computed for each pair of samples."
 
     cov.active_dims = active_dims
@@ -48,13 +48,9 @@ def test_Add(active_dims):
     expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
 
     # Assert that the gradients are close
-    if active_dims is not None:
-        expected_grad = expected_grad[..., active_dims]
-    if jax.numpy.isscalar(active_dims):
-        expected_grad = expected_grad[..., None]
     assert jnp.allclose(
         computed_grad, expected_grad, atol=1e-6
-    ), f"Gradients do not match in {CovarianceClass.__name__} with active_dims {active_dims}"
+    ), f"Gradients do not match in {cov.__class__.__name__} covariance with active_dims {active_dims}"
 
 
 @pytest.mark.parametrize(
@@ -63,7 +59,7 @@ def test_Add(active_dims):
 )
 def test_Mul(active_dims):
     n = 2
-    d = 2
+    d = 3
     cov1 = mellon.cov.Matern32(1.4)
     cov2 = mellon.cov.Exponential(3.4)
 
@@ -74,8 +70,8 @@ def test_Mul(active_dims):
     x = jnp.ones((n, d))
     values = cov(x, 2 * x)
     assert values.shape == (
-        d,
-        d,
+        n,
+        n,
     ), "Covariance should be computed for each pair of samples."
 
     cov.active_dims = active_dims
@@ -97,14 +93,10 @@ def test_Mul(active_dims):
     k_func = lambda y: cov.k(x, y[None,])[..., 0]
     expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
 
-    # Assert that the gradients are close
-    if active_dims is not None:
-        expected_grad = expected_grad[..., active_dims]
-    if jax.numpy.isscalar(active_dims):
-        expected_grad = expected_grad[..., None]
+    # Assert that the gradients are closn
     assert jnp.allclose(
         computed_grad, expected_grad, atol=1e-6
-    ), f"Gradients do not match in {CovarianceClass.__name__} with active_dims {active_dims}"
+    ), f"Gradients do not match in {cov.__class__.__name__} covariance with active_dims {active_dims}"
 
 
 @pytest.mark.parametrize(
@@ -113,7 +105,7 @@ def test_Mul(active_dims):
 )
 def test_Pow(active_dims):
     n = 2
-    d = 2
+    d = 3
     cov1 = mellon.cov.Matern32(1.4)
 
     cov = cov1**3.2
@@ -123,8 +115,8 @@ def test_Pow(active_dims):
     x = jnp.ones((n, d))
     values = cov(x, 2 * x)
     assert values.shape == (
-        d,
-        d,
+        n,
+        n,
     ), "Covariance should be computed for each pair of samples."
 
     cov.active_dims = active_dims
@@ -147,13 +139,9 @@ def test_Pow(active_dims):
     expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
 
     # Assert that the gradients are close
-    if active_dims is not None:
-        expected_grad = expected_grad[..., active_dims]
-    if jax.numpy.isscalar(active_dims):
-        expected_grad = expected_grad[..., None]
     assert jnp.allclose(
         computed_grad, expected_grad, atol=1e-6
-    ), f"Gradients do not match in {CovarianceClass.__name__} with active_dims {active_dims}"
+    ), f"Gradients do not match in {cov.__class__.__name__} covariance with active_dims {active_dims}"
 
 
 def test_Hirachical():
@@ -183,16 +171,15 @@ def test_Hirachical():
     ), "Serialization + deserialization of added covariance functions must return the same result."
 
     # Compute the gradient using k_grad
-    y = 2 * x
+    y = 2 * x**2
     k_grad_func = cov.k_grad(x)
     computed_grad = k_grad_func(y)
 
     # Compute the gradient using JAX automatic differentiation
     k_func = lambda y: cov.k(x, y[None,])[..., 0]
     expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
-    expected_grad = expected_grad[..., active_dims]
 
     # Assert that the gradients are close
     assert jnp.allclose(
         computed_grad, expected_grad, atol=1e-6
-    ), f"Gradients do not match in hirachical covariance combination."
+    ), f"Gradients do not match in hirachichal covariance."

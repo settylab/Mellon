@@ -13,7 +13,7 @@ def common_setup_time_sensitive(tmp_path):
     d = 2
     seed = 535
     test_file = tmp_path / "predictor.json"
-    logger = mellon.Log()
+    logger = mellon.logger
     key = jax.random.PRNGKey(seed)
     L = jax.random.uniform(key, (d, d))
     cov = L.T.dot(L)

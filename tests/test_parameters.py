@@ -12,6 +12,7 @@ from mellon.parameters import (
     compute_landmarks_rescale_time,
     compute_nn_distances_within_time_points,
     compute_d,
+    compute_d_factal,
     compute_Lp,
     compute_L,
 )
@@ -55,41 +56,41 @@ def test_compute_nn_distances_within_time_points():
     assert jnp.all(result_with_times == result)
 
 
-def test_compute_d(caplog):
+def test_compute_d_factal(caplog):
     # Create a random key for jax.random
     key = random.PRNGKey(0)
 
     # Create a random array using jax.random
     x_2d = random.normal(key, shape=(100, 10))
-    result_2d = compute_d(x_2d)
+    result_2d = compute_d_factal(x_2d)
     assert isinstance(result_2d, float)
 
     # Test with 1D array (should return 1)
     x_1d = random.normal(key, shape=(100,))
-    assert compute_d(x_1d) == 1
+    assert compute_d_factal(x_1d) == 1
 
     # Test with k > number of samples (expect a warning)
     x_small = random.normal(key, shape=(5, 10))
     logger = logging.getLogger("mellon")
     logger.propagate = True
     with caplog.at_level(logging.WARNING, logger="mellon"):
-        compute_d(x_small, k=10)
+        compute_d_factal(x_small, k=10)
     logger.propagate = False
     assert "is greater than the number of samples" in caplog.text
 
     # Test with specific random seed
     x_seed = random.normal(key, shape=(100, 10))
-    result_seed = compute_d(x_seed, seed=432)
+    result_seed = compute_d_factal(x_seed, seed=432)
     assert isinstance(result_seed, float)
 
     # Test with n < number of samples
     x_n = random.normal(key, shape=(1000, 10))
-    result_n = compute_d(x_n, n=500)
+    result_n = compute_d_factal(x_n, n=500)
     assert isinstance(result_n, float)
 
     # Test with invalid input (negative k)
     with pytest.raises(ValueError):
-        compute_d(x_2d, k=-5)
+        compute_d_factal(x_2d, k=-5)
 
 
 def test_compute_Lp():

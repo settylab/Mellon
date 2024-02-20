@@ -1,3 +1,4 @@
+import logging
 import mellon
 import jax
 import jax.numpy as jnp
@@ -69,15 +70,18 @@ def test_local_dimensionality():
     assert dist.shape == (n,), "Local dim should be computed for each point."
 
 
-def test_Log():
-    logger = mellon.util.Log()
-    assert logger is mellon.util.Log(), "Log should be a singelton class."
-    assert hasattr(logger, "debug")
-    assert hasattr(logger, "info")
-    assert hasattr(logger, "warn")
-    assert hasattr(logger, "error")
-    mellon.util.Log.off()
-    mellon.util.Log.on()
+def test_set_verbosity_to_false_changes_level_to_warning(caplog):
+    mellon.util.set_verbosity(False)
+    assert (
+        mellon.logger.getEffectiveLevel() == logging.WARNING
+    ), "Logging level should be set to WARNING when verbosity is False."
+
+
+def test_set_verbosity_to_true_changes_level_to_info(caplog):
+    mellon.util.set_verbosity(True)
+    assert (
+        mellon.logger.getEffectiveLevel() == logging.INFO
+    ), "Logging level should be set to INFO when verbosity is True."
 
 
 def test_set_jax_config():

@@ -413,8 +413,8 @@ class Mul(CovariancePair):
                 y_shape = y.shape
                 y = select_active_dims(y, active_dims)
 
-                left_k = self.left.k(x, y)
-                right_k = self.right.k(x, y)
+                left_k = self.left.k(x, y)[..., None]
+                right_k = self.right.k(x, y)[..., None]
                 left_grad = left_grad_func(y)
                 right_grad = right_grad_func(y)
 
@@ -447,6 +447,9 @@ class Pow(CovariancePair):
         return "(" + repr(self.left) + " ** " + repr(self.right) + ")"
 
     def k(self, x, y):
+        x = select_active_dims(x, self.active_dims)
+        y = select_active_dims(y, self.active_dims)
+
         return self.left(x, y) ** self.right
 
     def k_grad(self, x):
@@ -480,7 +483,7 @@ class Pow(CovariancePair):
         def k_grad(y):
             y_shape = y.shape
             y = select_active_dims(y, active_dims)
-            base_k = self.left.k(x, y)
+            base_k = self.left.k(x, y)[..., None]
             base_grad = base_grad_func(y)
 
             # Compute the gradient of the powered covariance function using the chain rule
