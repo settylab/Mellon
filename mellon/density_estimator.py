@@ -222,8 +222,15 @@ class DensityEstimator(BaseEstimator):
 
     def _compute_d(self):
         x = self.x
-        d = compute_d(x)
-        logger.info(f"Using d={d}.")
+        if self.d_method == "fractal":
+            d = compute_d_factal(x)
+            logger.info(f"Using d={d}.")
+        else:
+            d = compute_d(x)
+            logger.info(
+                f"Using embedding dimensionality d={d}. "
+                'Use d_method="fractal" to enable effective density normalization.'
+            )
         if d > 50:
             message = f"""The detected dimensionality of the data is over 50,
             which is likely to cause numerical instability issues.
