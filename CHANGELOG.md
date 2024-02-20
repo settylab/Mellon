@@ -1,6 +1,8 @@
 # v1.4.2
 
  - Implement gradients for the covariance kernels through the `k_grad` method
+ - Implement `mellon.cov.Linear` covariance kernel
+ - Change logging setup to configuration dict
 
 # v1.4.1
 
