@@ -29,6 +29,8 @@ from jax.numpy import (
     isscalar,
     where,
     vstack,
+    index_exp,
+    broadcast_to,
 )
 from numpy import integer, floating
 from jax.numpy import sum as arraysum
@@ -168,37 +170,36 @@ def select_active_dims(x, active_dims):
     return x
 
 
-def set_active_dims(values, target_shape, active_dims):
+def expand_to_inactive(values, target_shape, active_dims):
     """
-    Create an array of a target shape with values set in the active dimensions and zeros elsewhere.
+    Expand the values to the full target shape with zeros in inactive dimensions,
+    specifically targeting the last dimension based on active_dims.
 
     Parameters
     ----------
     values : jax.numpy.ndarray
-        The values to insert into the active dimensions. The shape of `values`
-        must be compatible with the `target_shape` along the `active_dims`.
+        Gradient values corresponding to the active dimensions.
     target_shape : tuple
-        The shape of the target array to be created.
-    active_dims : list or array-like
-        The indices of the dimensions that are active, where `values` will be placed.
+        The shape of the full gradient array to be constructed.
+    active_dims : slice
+        Specifies the active dimensions as a slice object.
 
     Returns
     -------
     jax.numpy.ndarray
-        A new array with the specified target shape, where the active dimensions
-        contain `values` and all other elements are zeros.
+        An array with the specified target shape, where values are set in active dimensions
+        of the last dimension, and zeros are placed elsewhere.
     """
-    result = zeros(target_shape, dtype=values.dtype)
+    if active_dims is None:
+        return values
 
     if isscalar(active_dims):
         active_dims = [active_dims]
 
-    indices = [
-        slice(None) if dim in active_dims else 0 for dim in range(len(target_shape))
-    ]
-    result = result.at[tuple(indices)].set(values)
+    full_array = zeros(target_shape, dtype=values.dtype)
+    full_array = full_array.at[..., active_dims].set(values)
 
-    return result
+    return full_array
 
 
 def make_multi_time_argument(func):

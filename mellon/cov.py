@@ -1,6 +1,6 @@
 from jax.numpy import sqrt, exp, square, einsum, repeat
 from .base_cov import Covariance
-from .util import distance, select_active_dims, distance_grad
+from .util import distance, select_active_dims, expand_to_inactive, distance_grad
 
 
 class Matern32(Covariance):
@@ -80,17 +80,22 @@ class Matern32(Covariance):
         k_grad : callable
             Function that computes the gradient of the Matern-3/2 kernel function.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
         dist_grad = distance_grad(x)
         factor = sqrt(3.0) / self.ls
 
         def k_grad(y):
-            y = select_active_dims(y, self.active_dims)
+            y_shape = y.shape
+            y = select_active_dims(y, active_dims)
             dist, grad = dist_grad(y)
             r = -factor * dist[..., None]
             dr = factor * grad
             similarity_grad = r * dr * exp(r)
-            return similarity_grad
+            target_shape = x_shape[:-1] + y_shape
+            full_grad = expand_to_inactive(similarity_grad, target_shape, active_dims)
+            return full_grad
 
         return k_grad
 
@@ -177,17 +182,22 @@ class Matern52(Covariance):
             Matern-5/2 kernel function with respect to `y`, evaluated at the pair `(x, y)`.
             The gradient is computed only over the active dimensions.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
         dist_grad = distance_grad(x)
         factor = sqrt(5.0) / self.ls
 
         def k_grad(y):
-            y = select_active_dims(y, self.active_dims)
+            y_shape = y.shape
+            y = select_active_dims(y, active_dims)
             dist, grad = dist_grad(y)
             r = factor * dist[..., None]
             dr = factor * grad
             similarity_grad = -1 / 3 * exp(-r) * r * (r + 1) * dr
-            return similarity_grad
+            target_shape = x_shape[:-1] + y_shape
+            full_grad = expand_to_inactive(similarity_grad, target_shape, active_dims)
+            return full_grad
 
         return k_grad
 
@@ -270,16 +280,21 @@ class ExpQuad(Covariance):
             Exponentiated Quadratic kernel function with respect to `y`, evaluated at the pair `(x, y)`.
             The gradient is computed only over the active dimensions.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
         dist_grad = distance_grad(x)
 
         def k_grad(y):
-            y = select_active_dims(y, self.active_dims)
+            y_shape = y.shape
+            y = select_active_dims(y, active_dims)
             dist, grad = dist_grad(y)
             r = dist[..., None] / self.ls
             dr = grad / self.ls
             similarity_grad = -r * dr * exp(-square(r) / 2)
-            return similarity_grad
+            target_shape = x_shape[:-1] + y_shape
+            full_grad = expand_to_inactive(similarity_grad, target_shape, active_dims)
+            return full_grad
 
         return k_grad
 
@@ -362,16 +377,21 @@ class Exponential(Covariance):
             Rational Quadratic kernel function with respect to `y`, evaluated at the pair `(x, y)`.
             The gradient is computed only over the active dimensions.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
         dist_grad = distance_grad(x)
 
         def k_grad(y):
-            y = select_active_dims(y, self.active_dims)
+            y_shape = y.shape
+            y = select_active_dims(y, active_dims)
             dist, grad = dist_grad(y)
             r = dist[..., None] / self.ls
             dr = grad / self.ls
             similarity_grad = -1 / 2 * dr * exp(-r / 2)
-            return similarity_grad
+            target_shape = x_shape[:-1] + y_shape
+            full_grad = expand_to_inactive(similarity_grad, target_shape, active_dims)
+            return full_grad
 
         return k_grad
 
@@ -458,18 +478,23 @@ class RatQuad(Covariance):
             Matern-3/2 kernel function with respect to `y`, evaluated at the pair `(x, y)`.
             The gradient is computed only over the active dimensions.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
         dist_grad = distance_grad(x)
 
         def k_grad(y):
-            y = select_active_dims(y, self.active_dims)
+            y_shape = y.shape
+            y = select_active_dims(y, active_dims)
             dist, grad = dist_grad(y)
             r = dist[..., None] / self.ls
             dr = grad / self.ls
             similarity_grad = (
                 -r * dr * (square(r) / (2 * self.alpha) + 1) ** (-self.alpha - 1)
             )
-            return similarity_grad
+            target_shape = x_shape[:-1] + y_shape
+            full_grad = expand_to_inactive(similarity_grad, target_shape, active_dims)
+            return full_grad
 
         return k_grad
 
@@ -553,11 +578,16 @@ class Linear(Covariance):
             Linear kernel function with respect to `y`, evaluated at the pair `(x, y)`.
             The gradient is computed only over the active dimensions.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
 
         def k_grad(y):
-            y = select_active_dims(y, self.active_dims)
+            y_shape = y.shape
+            y = select_active_dims(y, active_dims)
             similarity_grad = repeat(x[:, None, :], y.shape[0], axis=1) / self.ls
-            return similarity_grad
+            target_shape = x_shape[:-1] + y_shape
+            full_grad = expand_to_inactive(similarity_grad, target_shape, active_dims)
+            return full_grad
 
         return k_grad

@@ -17,11 +17,12 @@ def test_distances():
     dist = mellon.util.distance(x, x)
     assert dist.shape == (n, n), "Distances should be computed for each pair of points."
 
+
 def test_distance_grad():
     n = 4
     d = 2
     x = jnp.ones((n, d))
-    y = jnp.ones((n-1, d)) * 2
+    y = jnp.ones((n - 1, d)) * 2
     y = y.at[0].set(2)
     y = y.at[1].set(1.5)
 
@@ -29,15 +30,19 @@ def test_distance_grad():
     distance, computed_grad = dist_grad_f(y)
 
     expected_distance = mellon.util.distance(x, y)
-    assert jnp.allclose(distance, expected_distance, atol=1e-6), "Distances do not match"
+    assert jnp.allclose(
+        distance, expected_distance, atol=1e-6
+    ), "Distances do not match"
 
     # Compute the gradient using JAX automatic differentiation
-    k_func = lambda y: mellon.util.distance(x, y[None, ])[..., 0]
+    k_func = lambda y: mellon.util.distance(x, y[None,])[..., 0]
     expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,))(y)
     expected_grad = expected_grad.transpose([1, 0, 2])
 
     # Assert that the gradients are close
-    assert jnp.allclose(computed_grad, expected_grad, atol=1e-6), "Gradients do not match"
+    assert jnp.allclose(
+        computed_grad, expected_grad, atol=1e-6
+    ), "Gradients do not match"
 
 
 def test_test_rank():

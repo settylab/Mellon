@@ -7,7 +7,7 @@ from importlib import import_module
 from datetime import datetime
 import json
 
-from .util import make_serializable, deserialize, select_active_dims
+from .util import make_serializable, deserialize, select_active_dims, expand_to_inactive
 
 MELLON_NAME = __name__.split(".")[0]
 
@@ -61,7 +61,7 @@ class Covariance(ABC):
         k_grad_pre = vmap(jacfwd(k_func), in_axes=(0,), out_axes=1)
 
         def k_grad(y):
-            return select_active_dims(k_grad_pre(y), self.active_dims)
+            return k_grad_pre(y)
 
         return k_grad
 
@@ -335,20 +335,31 @@ class Add(CovariancePair):
             Linear kernel function with respect to `y`, evaluated at the pair `(x, y)`.
             The gradient is computed only over the active dimensions.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
         left_grad = self.left.k_grad(x)
 
         if callable(self.right):
             right_grad = self.right.k_grad(x)
 
             def k_grad(y):
-                y = select_active_dims(y, self.active_dims)
-                return left_grad(y) + right_grad(y)
+                y_shape = y.shape
+                y = select_active_dims(y, active_dims)
+                grad = left_grad(y) + right_grad(y)
+                target_shape = x_shape[:-1] + y_shape
+                full_grad = expand_to_inactive(grad, target_shape, active_dims)
+                return full_grad
 
         else:
+
             def k_grad(y):
+                y_shape = y.shape
                 y = select_active_dims(y, self.active_dims)
-                return left_grad(y)
+                grad = left_grad(y)
+                target_shape = x_shape[:-1] + y_shape
+                full_grad = expand_to_inactive(grad, target_shape, active_dims)
+                return full_grad
 
         return k_grad
 
@@ -390,29 +401,39 @@ class Mul(CovariancePair):
             product kernel function with respect to `y`, evaluated at the pair `(x, y)`.
             The gradient is computed only over the active dimensions.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
         left_grad_func = self.left.k_grad(x)
 
         if callable(self.right):
             right_grad_func = self.right.k_grad(x)
 
             def k_grad(y):
-                y = select_active_dims(y, self.active_dims)
+                y_shape = y.shape
+                y = select_active_dims(y, active_dims)
 
                 left_k = self.left.k(x, y)
                 right_k = self.right.k(x, y)
                 left_grad = left_grad_func(y)
                 right_grad = right_grad_func(y)
 
-                return left_grad * right_k + left_k * right_grad
+                grad = left_grad * right_k + left_k * right_grad
+                target_shape = x_shape[:-1] + y_shape
+                full_grad = expand_to_inactive(grad, target_shape, active_dims)
+                return full_grad
 
         else:
 
             def k_grad(y):
-                y = select_active_dims(y, self.active_dims)
+                y_shape = y.shape
+                y = select_active_dims(y, active_dims)
                 left_grad = left_grad_func(y)
 
-                return left_grad * self.right
+                grad = left_grad * self.right
+                target_shape = x_shape[:-1] + y_shape
+                full_grad = expand_to_inactive(grad, target_shape, active_dims)
+                return full_grad
 
         return k_grad
 
@@ -449,13 +470,16 @@ class Pow(CovariancePair):
             product kernel function with respect to `y`, evaluated at the pair `(x, y)`.
             The gradient is computed only over the active dimensions.
         """
-        x = select_active_dims(x, self.active_dims)
+        x_shape = x.shape
+        active_dims = self.active_dims
+        x = select_active_dims(x, active_dims)
 
         # Obtain the gradient function for the base covariance function
         base_grad_func = self.left.k_grad(x)
 
         def k_grad(y):
-            y = select_active_dims(y, self.active_dims)
+            y_shape = y.shape
+            y = select_active_dims(y, active_dims)
             base_k = self.left.k(x, y)
             base_grad = base_grad_func(y)
 
@@ -463,6 +487,8 @@ class Pow(CovariancePair):
             # (f(x)^n)' = n * f(x)^(n-1) * f'(x)
             power_grad = self.right * (base_k ** (self.right - 1)) * base_grad
 
-            return power_grad
+            target_shape = x_shape[:-1] + y_shape
+            full_grad = expand_to_inactive(power_grad, target_shape, active_dims)
+            return full_grad
 
         return k_grad

@@ -93,7 +93,6 @@ def test_compute_d(caplog):
 
 
 def test_compute_Lp():
-
     # Generate some mock data and landmarks
     x = jnp.array([[1, 2], [3, 4], [5, 6]])
     landmarks = jnp.array([[1, 2], [3, 4]])

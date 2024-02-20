@@ -1,8 +1,17 @@
+import pytest
+import jax
 import jax.numpy as jnp
 import mellon
 
+# Define the active dimensions to be tested
+ACTIVE_DIMS = [None, slice(2), 1, slice(None, None, 2)]
 
-def test_Add():
+
+@pytest.mark.parametrize(
+    "active_dims",
+    ACTIVE_DIMS,
+)
+def test_Add(active_dims):
     n = 2
     d = 2
     cov1 = mellon.cov.Matern32(1.4)
@@ -19,6 +28,9 @@ def test_Add():
         d,
     ), "Covariance should be computed for each pair of samples."
 
+    cov.active_dims = active_dims
+    values = cov(x, 2 * x)
+
     json = cov.to_json()
     recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
@@ -26,8 +38,30 @@ def test_Add():
         jnp.isclose(values, revalues)
     ), "Serialization + deserialization of added covariance functions must return the same result."
 
+    # Compute the gradient using k_grad
+    y = 2 * x
+    k_grad_func = cov.k_grad(x)
+    computed_grad = k_grad_func(y)
 
-def test_Mul():
+    # Compute the gradient using JAX automatic differentiation
+    k_func = lambda y: cov.k(x, y[None,])[..., 0]
+    expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
+
+    # Assert that the gradients are close
+    if active_dims is not None:
+        expected_grad = expected_grad[..., active_dims]
+    if jax.numpy.isscalar(active_dims):
+        expected_grad = expected_grad[..., None]
+    assert jnp.allclose(
+        computed_grad, expected_grad, atol=1e-6
+    ), f"Gradients do not match in {CovarianceClass.__name__} with active_dims {active_dims}"
+
+
+@pytest.mark.parametrize(
+    "active_dims",
+    ACTIVE_DIMS,
+)
+def test_Mul(active_dims):
     n = 2
     d = 2
     cov1 = mellon.cov.Matern32(1.4)
@@ -44,6 +78,9 @@ def test_Mul():
         d,
     ), "Covariance should be computed for each pair of samples."
 
+    cov.active_dims = active_dims
+    values = cov(x, 2 * x)
+
     json = cov.to_json()
     recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
@@ -51,8 +88,30 @@ def test_Mul():
         jnp.isclose(values, revalues)
     ), "Serialization + deserialization of added covariance functions must return the same result."
 
+    # Compute the gradient using k_grad
+    y = 2 * x
+    k_grad_func = cov.k_grad(x)
+    computed_grad = k_grad_func(y)
 
-def test_Pow():
+    # Compute the gradient using JAX automatic differentiation
+    k_func = lambda y: cov.k(x, y[None,])[..., 0]
+    expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
+
+    # Assert that the gradients are close
+    if active_dims is not None:
+        expected_grad = expected_grad[..., active_dims]
+    if jax.numpy.isscalar(active_dims):
+        expected_grad = expected_grad[..., None]
+    assert jnp.allclose(
+        computed_grad, expected_grad, atol=1e-6
+    ), f"Gradients do not match in {CovarianceClass.__name__} with active_dims {active_dims}"
+
+
+@pytest.mark.parametrize(
+    "active_dims",
+    ACTIVE_DIMS,
+)
+def test_Pow(active_dims):
     n = 2
     d = 2
     cov1 = mellon.cov.Matern32(1.4)
@@ -68,12 +127,33 @@ def test_Pow():
         d,
     ), "Covariance should be computed for each pair of samples."
 
+    cov.active_dims = active_dims
+    values = cov(x, 2 * x)
+
     json = cov.to_json()
     recov = mellon.cov.Covariance.from_json(json)
     revalues = recov(x, 2 * x)
     assert jnp.all(
         jnp.isclose(values, revalues)
     ), "Serialization + deserialization of added covariance functions must return the same result."
+
+    # Compute the gradient using k_grad
+    y = 2 * x
+    k_grad_func = cov.k_grad(x)
+    computed_grad = k_grad_func(y)
+
+    # Compute the gradient using JAX automatic differentiation
+    k_func = lambda y: cov.k(x, y[None,])[..., 0]
+    expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
+
+    # Assert that the gradients are close
+    if active_dims is not None:
+        expected_grad = expected_grad[..., active_dims]
+    if jax.numpy.isscalar(active_dims):
+        expected_grad = expected_grad[..., None]
+    assert jnp.allclose(
+        computed_grad, expected_grad, atol=1e-6
+    ), f"Gradients do not match in {CovarianceClass.__name__} with active_dims {active_dims}"
 
 
 def test_Hirachical():
@@ -101,3 +181,18 @@ def test_Hirachical():
     assert jnp.all(
         jnp.isclose(values, revalues)
     ), "Serialization + deserialization of added covariance functions must return the same result."
+
+    # Compute the gradient using k_grad
+    y = 2 * x
+    k_grad_func = cov.k_grad(x)
+    computed_grad = k_grad_func(y)
+
+    # Compute the gradient using JAX automatic differentiation
+    k_func = lambda y: cov.k(x, y[None,])[..., 0]
+    expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
+    expected_grad = expected_grad[..., active_dims]
+
+    # Assert that the gradients are close
+    assert jnp.allclose(
+        computed_grad, expected_grad, atol=1e-6
+    ), f"Gradients do not match in hirachical covariance combination."

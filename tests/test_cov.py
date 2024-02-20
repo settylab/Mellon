@@ -14,7 +14,7 @@ COVARIANCE_CLASSES = [
 ]
 
 # Define the active dimensions to be tested
-ACTIVE_DIMS = [None, slice(2), 1, slice(None, None, 2)]
+ACTIVE_DIMS = [None, slice(2), 1, slice(None, None, 2), [1, 2]]
 
 
 # Parametrize over both covariance classes and active dimensions
@@ -59,10 +59,6 @@ def test_covariance_class(CovarianceClass, active_dims):
     expected_grad = jax.vmap(jax.jacfwd(k_func), in_axes=(0,), out_axes=1)(y)
 
     # Assert that the gradients are close
-    if active_dims is not None:
-        expected_grad = expected_grad[..., active_dims]
-    if jax.numpy.isscalar(active_dims):
-        expected_grad = expected_grad[..., None]
     assert jnp.allclose(
         computed_grad, expected_grad, atol=1e-6
     ), f"Gradients do not match in {CovarianceClass.__name__} with active_dims {active_dims}"
