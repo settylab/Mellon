@@ -3,6 +3,7 @@
  - Implement gradients for the covariance kernels through the `k_grad` method
  - Implement `mellon.cov.Linear` covariance kernel
  - Change logging setup to configuration dict
+ - allow setting `active_dims` for composit kernels, allowing more flexible covariance kernel specifications
 
 # v1.4.1
 
