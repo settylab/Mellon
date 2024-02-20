@@ -1,3 +1,7 @@
+# v1.4.2
+
+ - Implement gradients for the covariance kernels through the `k_grad` method
+
 # v1.4.1
 
 Drop constraint on NumPy version `numpy<1.25.0` which was introdcuded due to
