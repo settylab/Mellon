@@ -5,7 +5,6 @@ from .model import (
     FunctionEstimator,
     DimensionalityEstimator,
     TimeSensitiveDensityEstimator,
-    CellDynamicEstimator,
 )
 from .base_predictor import Predictor
 from .cov import Covariance
@@ -25,7 +24,6 @@ __all__ = [
     "FunctionEstimator",
     "DimensionalityEstimator",
     "TimeSensitiveDensityEstimator",
-    "CellDynamicEstimator",
     "Predictor",
     "Covariance",
     "Log",
