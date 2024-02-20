@@ -518,21 +518,31 @@ def local_dimensionality(x, k=30, x_query=None, neighbor_idx=None):
 
 def set_verbosity(verbose: bool):
     """
-    Adjusts the verbosity of mellon.
+    Adjusts the verbosity of mellon logging.
 
-    :param verbose: If True, sets the logging level to INFO to show detailed logs.
-                    If False, sets it to WARNING to show only important messages.
-    :type verbose: bool
+    Parameters
+    ----------
+    verbose : bool
+        If True, sets the logging level to INFO to show detailed logs.
+        If False, sets it to WARNING to show only important messages.
+    
+    Notes
+    -----
+    This function provides a simplified interface for controlling logging
+    verbosity, making it more accessible to users who are not familiar
+    with the logging module's levels. You can access the mellon logger
+    through `mellon.logger` to perform logging operations throughout the
+    mellon module.
 
-    This function provides a simplified interface for controlling logging verbosity,
-    making it more accessible to users who are not familiar with the logging module's levels.
+    Example
+    -------
+    To enable detailed logging, showing more information:
 
-    Example usage:
+    >>> set_verbosity(True)
 
-    .. code-block:: python
+    To reduce the log output to only include warnings and errors:
 
-        set_verbosity(True)  # Enable detailed debug logs
-        set_verbosity(False) # Show only warnings and errors
+    >>> set_verbosity(False)
     """
     level = logging.INFO if verbose else logging.WARNING
     logger.setLevel(level)
