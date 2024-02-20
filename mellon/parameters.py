@@ -490,7 +490,18 @@ def compute_nn_distances_within_time_points(x, times=None, d=None, normalize=Fal
     return nn_distances
 
 
-def compute_d(x, k=10, n=500, seed=432):
+def compute_d(x):
+    R"""
+    Computes the dimensionality of the data equal to the size of axis 1.
+    :param x: The training instances.
+    :type x: array-like
+    """
+    if len(x.shape) < 2:
+        return 1
+    return x.shape[1]
+
+
+def compute_d_factal(x, k=10, n=500, seed=432):
     """
     Computes the dimensionality of the data based on the average fractal
     dimension around `n` randomly selected cells.
