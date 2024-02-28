@@ -5,6 +5,7 @@
  - Change logging setup to configuration dict
  - allow setting `active_dims` for composit kernels, allowing more flexible covariance kernel specifications
  - update jaxconfig impot for compatibility with newer jax versions
+ - generalize variing sigma in FunctionEstimator for higher dimensional functions
 
 # v1.4.1
 

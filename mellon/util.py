@@ -525,7 +525,7 @@ def set_verbosity(verbose: bool):
     verbose : bool
         If True, sets the logging level to INFO to show detailed logs.
         If False, sets it to WARNING to show only important messages.
-    
+
     Notes
     -----
     This function provides a simplified interface for controlling logging

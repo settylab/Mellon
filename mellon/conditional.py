@@ -1,5 +1,6 @@
 import logging
-from jax.numpy import dot, square, isnan, any, eye
+from jax import vmap
+from jax.numpy import dot, square, isnan, any, eye, zeros, arange, ndim
 from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
 from jax.numpy.linalg import cholesky
@@ -56,11 +57,26 @@ def _sigma_to_y_cov_factor(sigma, y_cov_factor, n):
             "One can specify either `sigma` or `y_cov_factor` to describe input noise, but not both."
         )
 
-    if y_cov_factor is None:
-        try:
-            y_cov_factor = diagonal(sigma)
-        except ValueError:
-            y_cov_factor = eye(n) * sigma
+    if y_cov_factor is not None:
+        return y_cov_factor
+
+    sigma_ndim = ndim(sigma)
+    if sigma_ndim == 0:
+        y_cov_factor = eye(n) * sigma
+    elif sigma_ndim == 1:
+        y_cov_factor = diagonal(sigma)
+    elif sigma_ndim > 1:
+        # Extend sigma to higher dimensions, adding a leading dimension for the diagonal
+        y_cov_factor = zeros((n,) + sigma.shape)
+
+        def update_diag(i, ycf, val):
+            return ycf.at[i, ...].set(val)
+
+        y_cov_factor = vmap(update_diag, in_axes=(0, 0, 0), out_axes=0)(
+            arange(n), y_cov_factor, sigma
+        )
+    else:
+        raise ValueError(f"Unsupported `sigma` dimensions `{sigma_ndim}`.")
 
     return y_cov_factor
 
