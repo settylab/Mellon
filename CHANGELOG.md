@@ -4,6 +4,7 @@
  - Implement `mellon.cov.Linear` covariance kernel
  - Change logging setup to configuration dict
  - allow setting `active_dims` for composit kernels, allowing more flexible covariance kernel specifications
+ - update jaxconfig impot for compatibility with newer jax versions
 
 # v1.4.1
 

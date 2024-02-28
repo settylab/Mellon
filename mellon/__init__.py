@@ -1,6 +1,6 @@
 import logging.config
 import sys
-from jax.config import config as jaxconfig
+from jax import config as jaxconfig
 
 from .model import (
     DensityEstimator,
