@@ -7,7 +7,7 @@ from inspect import Parameter
 from enum import Enum
 from itertools import islice
 
-from jax.config import config as jaxconfig
+from jax import config as jaxconfig
 from jax.numpy import (
     eye,
     log,
