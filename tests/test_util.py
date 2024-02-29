@@ -19,6 +19,16 @@ def test_distances():
     assert dist.shape == (n, n), "Distances should be computed for each pair of points."
 
 
+def test_distance_grad_shapes():
+    x = jnp.array([[0, 0], [1, 1]])
+    y = jnp.array([[1, 0], [0, 1]])
+    dist_grad_func = mellon.util.distance_grad(x)
+    distance, gradient = dist_grad_func(y)
+
+    assert distance.shape == (2, 2), "Distance shape is incorrect"
+    assert gradient.shape == (2, 2, 2), "Gradient shape is incorrect"
+
+
 def test_distance_grad():
     n = 4
     d = 2
