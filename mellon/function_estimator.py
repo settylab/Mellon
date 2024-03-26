@@ -9,6 +9,7 @@ from .inference import (
 from .util import (
     DEFAULT_JITTER,
     GaussianProcessType,
+    object_str,
 )
 from .validation import (
     _validate_float_or_iterable_numerical,
@@ -174,6 +175,41 @@ class FunctionEstimator(BaseEstimator):
         :rtype: array-like
         """
         return self.fit_predict(x=x, y=y)
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        landmarks = object_str(self.landmarks, ["landmarks", "dims"])
+        Lp = object_str(self.Lp, ["landmarks", "landmarks"])
+        L = object_str(self.L, ["cells", "ranks"])
+        nn_distances = object_str(self.nn_distances, ["cells"])
+        initial_value = object_str(self.initial_value, ["ranks"])
+        d = object_str(self.d, ["cells"])
+        string = (
+            f"{name}("
+            f"\n    check_rank={self.check_rank},"
+            f"\n    cov_func={self.cov_func},"
+            f"\n    cov_func_curry={self.cov_func_curry},"
+            f"\n    d={d},"
+            f"\n    gp_type={self.gp_type},"
+            f"\n    initial_value={initial_value},"
+            f"\n    jit={self.jit},"
+            f"\n    jitter={self.jitter},"
+            f"\n    landmarks={landmarks},"
+            f"\n    L={L},"
+            f"\n    Lp={Lp},"
+            f"\n    ls={self.ls},"
+            f"\n    ls_factor={self.ls_factor},"
+            f"\n    mu={self.mu},"
+            f"\n    n_landmarks={self.n_landmarks},"
+            f"\n    nn_distances={nn_distances},"
+            f"\n    optimizer={self.optimizer},"
+            f"\n    predictor_with_uncertainty={self.predictor_with_uncertainty},"
+            f"\n    rank={self.rank},"
+            f"\n    sigma={self.sigma},"
+            f"\n    y_is_mean={self.y_is_mean},"
+            "\n)"
+        )
+        return string
 
     def prepare_inference(self, x):
         R"""
