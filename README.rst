@@ -1,16 +1,7 @@
 Mellon
 ======
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8404223.svg
-     :target: https://doi.org/10.5281/zenodo.8404223
-.. image:: https://codecov.io/github/settylab/Mellon/branch/main/graph/badge.svg?token=TKIKXK4MPG 
-    :target: https://app.codecov.io/github/settylab/Mellon
-.. image:: https://badge.fury.io/py/mellon.svg
-       :target: https://badge.fury.io/py/mellon
-.. image:: https://anaconda.org/conda-forge/mellon/badges/version.svg
-       :target: https://anaconda.org/conda-forge/mellon
-.. image:: https://static.pepy.tech/personalized-badge/mellon?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=Downloads
-    :target: https://pepy.tech/project/mellon
+|zenodo| |codecov| |pypi| |conda| |downloads|
 
 .. image:: https://github.com/settylab/mellon/raw/main/landscape.png?raw=true
    :target: https://github.com/settylab/Mellon
@@ -87,4 +78,16 @@ If you use Mellon for your work, please cite our paper.
         eprint = {https://www.biorxiv.org/content/early/2023/07/10/2023.07.09.548272.full.pdf},
         journal = {bioRxiv}
     }
+
+
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8404223.svg
+     :target: https://doi.org/10.5281/zenodo.8404223
+.. |codecov| image:: https://codecov.io/github/settylab/Mellon/branch/main/graph/badge.svg?token=TKIKXK4MPG 
+    :target: https://app.codecov.io/github/settylab/Mellon
+.. |pypi| image:: https://badge.fury.io/py/mellon.svg
+       :target: https://badge.fury.io/py/mellon
+.. |conda| image:: https://anaconda.org/conda-forge/mellon/badges/version.svg
+       :target: https://anaconda.org/conda-forge/mellon
+.. |downloads| image:: https://static.pepy.tech/personalized-badge/mellon?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=Downloads
+    :target: https://pepy.tech/project/mellon
 
