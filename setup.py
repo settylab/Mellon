@@ -30,6 +30,14 @@ setup(
         "numpy",
         "scikit-learn",
     ],
+    extras_require={
+        'dev': [
+            'flake8',
+            'pytest',
+            'coverage',
+            'typing-extensions'
+        ]
+    },
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
