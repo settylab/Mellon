@@ -35,6 +35,7 @@ from .validation import (
     _validate_bool,
     _validate_array,
     _validate_float_or_iterable_numerical,
+    _validate_nn_distances,
 )
 from .parameter_validation import (
     _validate_params,
@@ -240,6 +241,7 @@ class BaseEstimator:
         x = self.x
         logger.info("Computing nearest neighbor distances.")
         nn_distances = compute_nn_distances(x)
+        nn_distances = _validate_nn_distances(nn_distances)
         return nn_distances
 
     def _compute_ls(self):

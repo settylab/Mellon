@@ -31,6 +31,7 @@ from .validation import (
     _validate_positive_float,
     _validate_string,
     _validate_array,
+    _validate_nn_distances,
 )
 
 
@@ -397,6 +398,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             d=d,
             normalize=normalize_per_time_point,
         )
+        nn_distances = _validate_nn_distances(nn_distances)
         return nn_distances
 
     def _compute_ls(self):

@@ -247,11 +247,6 @@ def test_compute_nn_distances():
     expected_output = jnp.array([jnp.sqrt(2), jnp.sqrt(2), jnp.sqrt(2)])
     assert jnp.allclose(compute_nn_distances(x), expected_output)
 
-    # Test with identical instances and save=True
-    x = jnp.array([[1, 2], [1, 2], [1, 2]])
-    with pytest.raises(ValueError):
-        compute_nn_distances(x)
-
     # Test with some identical instances and save=True
     x = jnp.array([[1, 2], [1, 2], [3, 4]])
     expected_output = jnp.array([jnp.sqrt(8), jnp.sqrt(8), jnp.sqrt(8)])

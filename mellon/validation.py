@@ -1,7 +1,10 @@
 from collections.abc import Iterable
 import logging
 
-from jax.numpy import asarray, concatenate, isscalar, full, ndarray
+from jax.numpy import asarray, concatenate, isscalar, full, ndarray, where, isnan, isinf
+from jax.numpy import sum as arraysum
+from jax.numpy import min as arraymin
+from jax.numpy import all as arrayall
 from jax.errors import ConcretizationTypeError
 
 logger = logging.getLogger(__name__)
@@ -457,3 +460,32 @@ def _validate_1d(x):
         raise ValueError("`x` must be exactly 1-dimensional.")
 
     return x
+
+
+def _validate_nn_distances(nn_distances):
+    good_idx = nn_distances > 0
+    if arrayall(~good_idx):
+        message = "All instances/cells seem to be identical."
+        logger.error(message)
+        raise ValueError(message)
+    min_positive = arraymin(nn_distances[good_idx])
+    n_identical = arraysum(~good_idx)
+    logger.warning(
+        f"Found {n_identical:,} identical cells. Adding {min_positive} to their pairwise distance."
+    )
+    nn_distances = where(good_idx, nn_distances, min_positive)
+
+    # Check for invalid values
+    nan_count = isnan(nn_distances).sum()
+    inf_count = isinf(nn_distances).sum()
+    negative_count = (nn_distances < 0).sum()
+    if nan_count > 0 or inf_count > 0 or negative_count > 0:
+        total_invalid = nan_count + inf_count + negative_count
+        logger.warning(
+            "The computed nearest neighbor distances (`nn_distances` attribute) contain "
+            f"{total_invalid:,} invalid values: "
+            f"{nan_count:,} NaN, {inf_count:,} infinite, {negative_count:,} less than 0. "
+            "Please check the input data."
+        )
+
+    return nn_distances

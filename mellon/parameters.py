@@ -15,8 +15,6 @@ from jax.numpy import (
 )
 from jax.numpy import sum as arraysum
 from jax.numpy import any as arrayany
-from jax.numpy import all as arrayall
-from jax.numpy import min as arraymin
 from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
@@ -374,22 +372,7 @@ def compute_nn_distances(x, save=True):
     ------
     ValueError : if all distances are non-positive and save=True.
     """
-    nn_distances = compute_distances(x, 1)[:, 0]
-
-    if save and arrayany(nn_distances <= 0):
-        good_idx = nn_distances > 0
-        if arrayall(~good_idx):
-            message = "All instances seem to be identical."
-            logger.error(message)
-            raise ValueError(message)
-        min_positive = arraymin(nn_distances[good_idx])
-        n_identical = arraysum(~good_idx)
-        logger.warning(
-            f"Found {n_identical:,} identical cells. Adding {min_positive} to their pairwise distance."
-        )
-        nn_distances = where(good_idx, nn_distances, min_positive)
-
-    return nn_distances
+    return compute_distances(x, 1)[:, 0]
 
 
 def _get_target_cell_count(normalize, time, av_cells_per_tp, unique_times):

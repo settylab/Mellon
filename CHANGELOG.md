@@ -1,3 +1,7 @@
+# v1.4.3rc
+
+ - Detailed logging about invalid `nn_distances`.
+
 # v1.4.2
 
  - Implement gradients for the covariance kernels through the `k_grad` method
