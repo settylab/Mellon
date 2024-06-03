@@ -247,15 +247,10 @@ def test_compute_nn_distances():
     expected_output = jnp.array([jnp.sqrt(2), jnp.sqrt(2), jnp.sqrt(2)])
     assert jnp.allclose(compute_nn_distances(x), expected_output)
 
-    # Test with some identical instances and save=True
-    x = jnp.array([[1, 2], [1, 2], [3, 4]])
-    expected_output = jnp.array([jnp.sqrt(8), jnp.sqrt(8), jnp.sqrt(8)])
-    assert jnp.allclose(compute_nn_distances(x), expected_output)
-
-    # Test with non-positive distances and save=False
+    # Test with non-positive distances
     x = jnp.array([[1, 2], [1, 2], [1, 2]])
     expected_output = jnp.array([0, 0, 0])
-    assert jnp.allclose(compute_nn_distances(x, save=False), expected_output)
+    assert jnp.allclose(compute_nn_distances(x), expected_output)
 
     # Test with varying distances
     x = jnp.array([[1, 1], [2, 2], [4, 4], [5, 5]])

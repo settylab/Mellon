@@ -461,17 +461,37 @@ def _validate_1d(x):
 
     return x
 
-
 def _validate_nn_distances(nn_distances):
+    """
+    Validates and corrects nearest neighbor distances. Ensures all distances are
+    positive and handles invalid values.
+
+    Parameters
+    ----------
+    nn_distances : array-like
+        The input nearest neighbor distances to be validated and corrected.
+
+    Returns
+    -------
+    array-like
+        The validated and corrected nearest neighbor distances. Identical or
+        invalid cells have their distances set to the minimum positive distance found.
+
+    Raises
+    ------
+    ValueError
+        If all instances/cells are found to be identical or invalid.
+    """
     good_idx = nn_distances > 0
     if arrayall(~good_idx):
-        message = "All instances/cells seem to be identical."
+        message = "All instances/cells seem to be identical or invalid."
         logger.error(message)
         raise ValueError(message)
     min_positive = arraymin(nn_distances[good_idx])
     n_identical = arraysum(~good_idx)
     logger.warning(
-        f"Found {n_identical:,} identical cells. Adding {min_positive} to their pairwise distance."
+        f"Found {n_identical:,} identical or invalid cells. "
+        f"Setting their pairwise distance to {min_positive}."
     )
     nn_distances = where(good_idx, nn_distances, min_positive)
 
