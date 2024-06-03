@@ -82,6 +82,10 @@ def test_validate_float_or_int():
     with pytest.raises(ValueError):
         _validate_float_or_int(None, "param", optional=False)
 
+    # Test with nan value
+    with pytest.raises(ValueError):
+        _validate_float_or_int(jnp.nan, "param")
+
 
 def test_validate_positive_float():
     # Test with positive float input
@@ -109,6 +113,10 @@ def test_validate_positive_float():
     with pytest.raises(ValueError):
         _validate_positive_float(None, "param", optional=False)
 
+    # Test with nan value
+    with pytest.raises(ValueError):
+        _validate_positive_float(jnp.nan, "param")
+
 
 def test_validate_positive_int():
     # Test with positive integer input
@@ -128,6 +136,10 @@ def test_validate_positive_int():
     # Test with None input and optional=False
     with pytest.raises(ValueError):
         _validate_positive_int(None, "param", optional=False)
+
+    # Test with nan value
+    with pytest.raises(ValueError):
+        _validate_positive_int(jnp.nan, "param")
 
 
 def test_validate_array():
@@ -342,6 +354,10 @@ def test_validate_float():
     result = _validate_float(2, "param1")
     assert result == 2.0
 
+    # Test with 1x1 array
+    result = _validate_float(jnp.array([2.0]), "param1")
+    assert result == 2.0
+
     # Test with None and optional
     result = _validate_float(None, "param1", optional=True)
     assert result is None
@@ -357,6 +373,10 @@ def test_validate_float():
     # Test with invalid type (non-numeric)
     with pytest.raises(ValueError):
         _validate_float([1, 2, 3], "param1")
+
+    # Test with nan value
+    with pytest.raises(ValueError):
+        _validate_float(jnp.nan, "param1")
 
 
 def test_validate_nn_distances():

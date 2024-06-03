@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 import logging
 
-from jax.numpy import asarray, concatenate, isscalar, full, ndarray, where, isnan, isinf
+from jax.numpy import asarray, concatenate, isscalar, full, ndarray, where, isnan, isinf, squeeze
 from jax.numpy import sum as arraysum
 from jax.numpy import min as arraymin
 from jax.numpy import all as arrayall
@@ -93,7 +93,7 @@ def _validate_time_x(x, times=None, n_features=None, cast_scalar=False):
 
 def _validate_float_or_int(value, param_name, optional=False):
     """
-    Validates whether a given value is a float or an integer.
+    Validates whether a given value is a float or an integer, and not nan.
 
     Parameters
     ----------
@@ -118,20 +118,23 @@ def _validate_float_or_int(value, param_name, optional=False):
     if value is None and optional:
         return None
 
-    if isinstance(value, (float, int)):
-        return value
-    try:
-        return float(value)
-    except TypeError:
-        its_type = type(value)
-        raise ValueError(
-            f"'{param_name}' should be a positive integer or float number but is {its_type}"
-        )
+    if not isinstance(value, (float, int)):
+        try:
+            value = float(value)
+        except TypeError:
+            its_type = type(value)
+            raise ValueError(
+                f"'{param_name}' should be a positive integer or float number but is {its_type}"
+            )
+
+    if isnan(value):
+        raise ValueError(f"'{param_name}' should be a non-NaN float number")
+    return value
 
 
 def _validate_positive_float(value, param_name, optional=False):
     """
-    Validates whether a given value is a positive float.
+    Validates whether a given value is a positive float, and non-NaN.
 
     Parameters
     ----------
@@ -150,7 +153,8 @@ def _validate_positive_float(value, param_name, optional=False):
     Raises
     ------
     ValueError
-        If the value is not a positive float, not convertible to a positive float, and not None when not optional.
+        If the value is not a positive float, not convertible to a positive float, NaN,
+        and not None when not optional.
     """
 
     if value is None and optional:
@@ -158,11 +162,16 @@ def _validate_positive_float(value, param_name, optional=False):
 
     try:
         value = float(value)
-    except TypeError:
+    except (TypeError, ValueError):
         its_type = type(value)
         raise ValueError(f"'{param_name}' should be a float number but is {its_type}")
-    if value < 0:
+
+    if value <= 0:
         raise ValueError(f"'{param_name}' should be a positive float number")
+
+    if isnan(value):
+        raise ValueError(f"'{param_name}' should be a non-NaN float number")
+
     return value
 
 
@@ -200,19 +209,18 @@ def _validate_float(value, param_name, optional=False):
             )
 
     if isinstance(value, ndarray) and value.size == 1:
-        try:
-            value = value.item()
-        except ConcretizationTypeError:
-            # this must be a JAX tracer
-            return value
+        value = squeeze(value)
 
-    if isinstance(value, (float, int)):
-        return value
-    try:
-        return float(value)
-    except TypeError:
-        its_type = type(value)
-        raise ValueError(f"'{param_name}' should be a float number but is {its_type}")
+    if not isinstance(value, (float, int)):
+        try:
+            value = float(value)
+        except TypeError:
+            its_type = type(value)
+            raise ValueError(f"'{param_name}' should be a float number but is {its_type}")
+
+    if isnan(value):
+        raise ValueError(f"'{param_name}' should be a non-NaN float number")
+    return value
 
 
 def _validate_positive_int(value, param_name, optional=False):

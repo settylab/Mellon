@@ -2,6 +2,7 @@
 
  - Detailed logging about invalid `nn_distances`.
  - Validation of `nn_distances` passed at initialization
+ - Validate that passed scalars are not `nan`.
 
 # v1.4.2
 
