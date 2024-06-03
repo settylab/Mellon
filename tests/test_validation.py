@@ -11,6 +11,7 @@ from mellon.validation import (
     _validate_float_or_iterable_numerical,
     _validate_positive_int,
     _validate_1d,
+    _validate_nn_distances,
 )
 from mellon.parameter_validation import (
     _validate_params,
@@ -356,3 +357,50 @@ def test_validate_float():
     # Test with invalid type (non-numeric)
     with pytest.raises(ValueError):
         _validate_float([1, 2, 3], "param1")
+
+
+def test_validate_nn_distances():
+    # Test with all valid distances
+    nn_distances = jnp.array([0.1, 0.5, 1.2, 0.3])
+    result = _validate_nn_distances(nn_distances)
+    assert jnp.all(result == nn_distances), "Valid distances should not be changed."
+
+    # Test with NaN values
+    nn_distances = jnp.array([0.1, jnp.nan, 1.2, 0.3])
+    result = _validate_nn_distances(nn_distances)
+    assert jnp.any(result != nn_distances), "NaN values should be replaced."
+    assert not jnp.isnan(result).any(), "Result should not contain NaN values."
+
+    # Test with infinite values
+    nn_distances = jnp.array([0.1, jnp.inf, 1.2, 0.3])
+    result = _validate_nn_distances(nn_distances)
+    assert jnp.any(result != nn_distances), "Infinite values should be replaced."
+    assert not jnp.isinf(result).any(), "Result should not contain infinite values."
+
+    # Test with negative values
+    nn_distances = jnp.array([0.1, -0.5, 1.2, 0.3])
+    result = _validate_nn_distances(nn_distances)
+    assert jnp.any(result != nn_distances), "Negative values should be replaced."
+    assert jnp.all(result > 0), "Result should not contain negative values."
+
+    # Test with a mix of invalid values
+    nn_distances = jnp.array([0.1, jnp.nan, jnp.inf, -0.5, 1.2])
+    result = _validate_nn_distances(nn_distances)
+    assert jnp.any(result != nn_distances), "Invalid values should be replaced."
+    assert not jnp.isnan(result).any(), "Result should not contain NaN values."
+    assert not jnp.isinf(result).any(), "Result should not contain infinite values."
+    assert jnp.all(result > 0), "Result should not contain negative values."
+
+    # Test with all invalid values
+    nn_distances = jnp.array([jnp.nan, jnp.inf, -0.5])
+    with pytest.raises(ValueError):
+        _validate_nn_distances(nn_distances)
+
+    # Test with optional=True and nn_distances=None
+    assert (
+        _validate_nn_distances(None, optional=True) is None
+    ), "Should return None if optional is True and nn_distances is None."
+
+    # Test with optional=False and nn_distances=None
+    with pytest.raises(ValueError):
+        _validate_nn_distances(None, optional=False)

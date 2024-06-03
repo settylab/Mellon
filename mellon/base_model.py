@@ -91,6 +91,7 @@ class BaseEstimator:
         self.landmarks = _validate_array(landmarks, "landmarks", optional=True)
         self.gp_type = GaussianProcessType.from_string(gp_type, optional=True)
         self.nn_distances = _validate_array(nn_distances, "nn_distances", optional=True)
+        self.nn_distances = _validate_nn_distances(self.nn_distances, optional=True)
         self.mu = _validate_float(mu, "mu", optional=True)
         self.ls = _validate_positive_float(ls, "ls", optional=True)
         self.ls_factor = _validate_positive_float(ls_factor, "ls_factor")

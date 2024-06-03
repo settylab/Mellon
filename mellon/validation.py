@@ -461,51 +461,69 @@ def _validate_1d(x):
 
     return x
 
-def _validate_nn_distances(nn_distances):
+
+def _validate_nn_distances(nn_distances, optional=False):
     """
     Validates and corrects nearest neighbor distances. Ensures all distances are
     positive and handles invalid values.
 
     Parameters
     ----------
-    nn_distances : array-like
-        The input nearest neighbor distances to be validated and corrected.
+    nn_distances : array-like or None
+        The input nearest neighbor distances to be validated and corrected. If None
+        and `optional` is True, the function returns None.
+
+    optional : bool, optional
+        If True, the function accepts `nn_distances` as None and returns None.
 
     Returns
     -------
-    array-like
+    array-like or None
         The validated and corrected nearest neighbor distances. Identical or
-        invalid cells have their distances set to the minimum positive distance found.
+        invalid cells have their distances set to the minimum positive distance
+        found. Returns None if `nn_distances` is None and `optional` is True.
 
     Raises
     ------
     ValueError
         If all instances/cells are found to be identical or invalid.
     """
-    good_idx = nn_distances > 0
-    if arrayall(~good_idx):
-        message = "All instances/cells seem to be identical or invalid."
+    if nn_distances is None and optional:
+        return None
+    elif nn_distances is None:
+        message = "nn_distances are required but None is given."
         logger.error(message)
         raise ValueError(message)
-    min_positive = arraymin(nn_distances[good_idx])
-    n_identical = arraysum(~good_idx)
-    logger.warning(
-        f"Found {n_identical:,} identical or invalid cells. "
-        f"Setting their pairwise distance to {min_positive}."
-    )
-    nn_distances = where(good_idx, nn_distances, min_positive)
 
     # Check for invalid values
-    nan_count = isnan(nn_distances).sum()
-    inf_count = isinf(nn_distances).sum()
-    negative_count = (nn_distances < 0).sum()
-    if nan_count > 0 or inf_count > 0 or negative_count > 0:
-        total_invalid = nan_count + inf_count + negative_count
+    nan_mask = isnan(nn_distances)
+    inf_mask = isinf(nn_distances)
+    non_positive_mask = nn_distances <= 0
+    nan_count = nan_mask.sum()
+    inf_count = inf_mask.sum()
+    negative_count = non_positive_mask.sum()
+    total_invalid = nan_count + inf_count + negative_count
+
+    bad_idx = nan_mask | inf_mask | non_positive_mask
+    if arrayall(bad_idx):
+        message = (
+            f"All {total_invalid:,} computed nearest neighbor distances "
+            "(`nn_distances` attribute) contain invalid values: "
+            f"{nan_count:,} NaN, {inf_count:,} infinite, {negative_count:,} less or equal 0. "
+            "Please check the input data. Setting invalid distances to the minimum positive value found."
+        )
+        logger.error(message)
+        raise ValueError(message)
+
+    min_positive = min(nn_distances[~bad_idx])
+    nn_distances = where(~bad_idx, nn_distances, min_positive)
+
+    if total_invalid > 0:
         logger.warning(
-            "The computed nearest neighbor distances (`nn_distances` attribute) contain "
+            f"The computed nearest neighbor distances (`nn_distances` attribute) contain "
             f"{total_invalid:,} invalid values: "
-            f"{nan_count:,} NaN, {inf_count:,} infinite, {negative_count:,} less than 0. "
-            "Please check the input data."
+            f"{nan_count:,} NaN, {inf_count:,} infinite, {negative_count:,} less or equal 0. "
+            "Please check the input data. Setting invalid distances to the minimum positive value found."
         )
 
     return nn_distances
