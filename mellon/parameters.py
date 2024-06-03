@@ -347,7 +347,7 @@ def compute_distances(x, k):
     return distances
 
 
-def compute_nn_distances(x, save=True):
+def compute_nn_distances(x):
     """
     Compute the distance to the nearest neighbor for each instance in the provided training dataset.
 
@@ -358,8 +358,6 @@ def compute_nn_distances(x, save=True):
     ----------
     x : array-like of shape (n_samples, n_features)
         An array-like object representing the training instances.
-    save : bool, optional
-        Whether to replace non-positive distances with the minimum positive distance. Default is True.
 
     Returns
     -------
