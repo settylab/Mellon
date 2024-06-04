@@ -20,8 +20,8 @@ from .util import (
     DEFAULT_JITTER,
 )
 from .validation import (
-    _validate_string,
-    _validate_array,
+    validate_string,
+    validate_array,
 )
 
 
@@ -223,7 +223,7 @@ class DensityEstimator(BaseEstimator):
             jit=jit,
             check_rank=check_rank,
         )
-        self.d_method = _validate_string(
+        self.d_method = validate_string(
             d_method, "d_method", choices={"fractal", "embedding"}
         )
         self.transform = None
@@ -347,7 +347,7 @@ class DensityEstimator(BaseEstimator):
         self._prepare_attribute("n_landmarks")
         self._prepare_attribute("rank")
         self._prepare_attribute("gp_type")
-        self._validate_parameter()
+        self.validate_parameter()
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
         self._prepare_attribute("mu")
@@ -401,7 +401,7 @@ class DensityEstimator(BaseEstimator):
         :rtype: array-like
         """
         if pre_transformation is not None:
-            self.pre_transformation = _validate_array(
+            self.pre_transformation = validate_array(
                 pre_transformation, "pre_transformation"
             )
         self._set_log_density_x()
@@ -493,7 +493,7 @@ class DensityEstimator(BaseEstimator):
         if x is None:
             x = self.x
         else:
-            x = _validate_array(x, "x")
+            x = validate_array(x, "x")
 
         self.fit(x, build_predict=build_predict)
         return self.log_density_x

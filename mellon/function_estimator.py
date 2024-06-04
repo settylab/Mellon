@@ -12,10 +12,10 @@ from .util import (
     object_str,
 )
 from .validation import (
-    _validate_float_or_iterable_numerical,
-    _validate_float,
-    _validate_array,
-    _validate_bool,
+    validate_float_or_iterable_numerical,
+    validate_float,
+    validate_array,
+    validate_bool,
 )
 
 
@@ -145,9 +145,9 @@ class FunctionEstimator(BaseEstimator):
             predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
         )
-        self.y_is_mean = _validate_bool(y_is_mean, "y_is_mean")
-        self.mu = _validate_float(mu, "mu")
-        self.sigma = _validate_float_or_iterable_numerical(
+        self.y_is_mean = validate_bool(y_is_mean, "y_is_mean")
+        self.mu = validate_float(mu, "mu")
+        self.sigma = validate_float_or_iterable_numerical(
             sigma, "sigma", positive=True
         )
         if (
@@ -248,7 +248,7 @@ class FunctionEstimator(BaseEstimator):
         if x is None:
             x = self.x
         else:
-            x = _validate_array(x, "x")
+            x = validate_array(x, "x")
         if self.x is not None and self.x is not x:
             message = (
                 "self.x has been set already, but is not equal to the argument x. "
@@ -312,7 +312,7 @@ class FunctionEstimator(BaseEstimator):
             This method returns self for chaining.
         """
         x = self.set_x(x)
-        y = _validate_array(y, "y")
+        y = validate_array(y, "y")
 
         n_samples = x.shape[0]
         # Check if the number of samples in x and y match
@@ -382,8 +382,8 @@ class FunctionEstimator(BaseEstimator):
             `Xnew` don't match.
         """
         x = self.set_x(x)
-        y = _validate_array(y, "y")
-        Xnew = _validate_array(Xnew, "Xnew", optional=True)
+        y = validate_array(y, "y")
+        Xnew = validate_array(Xnew, "Xnew", optional=True)
 
         # If Xnew is not provided, default to x
         if Xnew is None:
@@ -443,7 +443,7 @@ class FunctionEstimator(BaseEstimator):
 
         # Set the x and validate inputs
         x = self.set_x(x)
-        Y = _validate_array(Y, "Y")
+        Y = validate_array(Y, "Y")
 
         n_samples = x.shape[0]
 

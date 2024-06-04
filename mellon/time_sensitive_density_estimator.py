@@ -27,11 +27,11 @@ from .util import (
     object_str,
 )
 from .validation import (
-    _validate_time_x,
-    _validate_positive_float,
-    _validate_string,
-    _validate_array,
-    _validate_nn_distances,
+    validate_time_x,
+    validate_positive_float,
+    validate_string,
+    validate_array,
+    validate_nn_distances,
 )
 
 
@@ -287,11 +287,11 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         if not isinstance(density_estimator_kwargs, dict):
             raise ValueError("density_estimator_kwargs needs to be a dictionary.")
         self.density_estimator_kwargs = density_estimator_kwargs
-        self.d_method = _validate_string(
+        self.d_method = validate_string(
             d_method, "d_method", choices={"fractal", "embedding"}
         )
-        self.ls_time = _validate_positive_float(ls_time, "ls_time", optional=True)
-        self.ls_time_factor = _validate_positive_float(ls_time_factor, "ls_time_factor")
+        self.ls_time = validate_positive_float(ls_time, "ls_time", optional=True)
+        self.ls_time_factor = validate_positive_float(ls_time_factor, "ls_time_factor")
         self._save_intermediate_ls_times = _save_intermediate_ls_times
         self.normalize_per_time_point = normalize_per_time_point
         self.transform = None
@@ -398,7 +398,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             d=d,
             normalize=normalize_per_time_point,
         )
-        nn_distances = _validate_nn_distances(nn_distances)
+        nn_distances = validate_nn_distances(nn_distances)
         return nn_distances
 
     def _compute_ls(self):
@@ -546,7 +546,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
                 message = "Required argument x is missing and self.x has not been set."
                 raise ValueError(message)
         else:
-            x = _validate_time_x(x, times)
+            x = validate_time_x(x, times)
             if self.x is not None and self.x is not x:
                 message = (
                     "self.x has been set already, but is not equal to the argument x."
@@ -557,7 +557,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         self._prepare_attribute("n_landmarks")
         self._prepare_attribute("rank")
         self._prepare_attribute("gp_type")
-        self._validate_parameter()
+        self.validate_parameter()
         self._prepare_attribute("d")
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("mu")
@@ -612,7 +612,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         :rtype: array-like
         """
         if pre_transformation is not None:
-            self.pre_transformation = _validate_array(
+            self.pre_transformation = validate_array(
                 pre_transformation, "pre_transformation"
             )
         self._set_log_density_x()
@@ -686,7 +686,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         :return: log_density_x - The log density at each training point in x.
         """
         if x is not None:
-            x = _validate_time_x(x, times)
+            x = validate_time_x(x, times)
         if self.x is not None and x is not None and self.x is not x:
             message = "self.x has been set already, but is not equal to the argument x."
             error = ValueError(message)

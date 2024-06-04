@@ -4,7 +4,7 @@ from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm
 from jaxopt import ScipyMinimize
 from .density_estimator import DensityEstimator
-from .validation import _validate_time_x
+from .validation import validate_time_x
 
 logger = logging.getLogger("mellon")
 
@@ -55,7 +55,7 @@ def compute_ls_time(
         The unique time points in the training instances. Only returned if `return_data` is True.
 
     """
-    x = _validate_time_x(x, times)
+    x = validate_time_x(x, times)
     times = x[:, -1]
     states = x[:, :-1]
     unique_times = unique(times)

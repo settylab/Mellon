@@ -27,20 +27,20 @@ from .util import (
     GaussianProcessType,
 )
 from .validation import (
-    _validate_positive_int,
-    _validate_positive_float,
-    _validate_float_or_int,
-    _validate_float,
-    _validate_string,
-    _validate_bool,
-    _validate_array,
-    _validate_float_or_iterable_numerical,
-    _validate_nn_distances,
+    validate_positive_int,
+    validate_positive_float,
+    validate_float_or_int,
+    validate_float,
+    validate_string,
+    validate_bool,
+    validate_array,
+    validate_float_or_iterable_numerical,
+    validate_nn_distances,
 )
 from .parameter_validation import (
-    _validate_params,
-    _validate_cov_func_curry,
-    _validate_cov_func,
+    validate_params,
+    validate_cov_func_curry,
+    validate_cov_func,
 )
 
 
@@ -80,42 +80,42 @@ class BaseEstimator:
         jit=DEFAULT_JIT,
         check_rank=None,
     ):
-        self.cov_func_curry = _validate_cov_func_curry(
+        self.cov_func_curry = validate_cov_func_curry(
             cov_func_curry, cov_func, "cov_func_curry"
         )
-        self.n_landmarks = _validate_positive_int(
+        self.n_landmarks = validate_positive_int(
             n_landmarks, "n_landmarks", optional=True
         )
-        self.rank = _validate_float_or_int(rank, "rank", optional=True)
-        self.jitter = _validate_positive_float(jitter, "jitter")
-        self.landmarks = _validate_array(landmarks, "landmarks", optional=True)
+        self.rank = validate_float_or_int(rank, "rank", optional=True)
+        self.jitter = validate_positive_float(jitter, "jitter")
+        self.landmarks = validate_array(landmarks, "landmarks", optional=True)
         self.gp_type = GaussianProcessType.from_string(gp_type, optional=True)
-        self.nn_distances = _validate_array(nn_distances, "nn_distances", optional=True)
-        self.nn_distances = _validate_nn_distances(self.nn_distances, optional=True)
-        self.mu = _validate_float(mu, "mu", optional=True)
-        self.ls = _validate_positive_float(ls, "ls", optional=True)
-        self.ls_factor = _validate_positive_float(ls_factor, "ls_factor")
-        self.cov_func = _validate_cov_func(cov_func, "cov_func", optional=True)
-        self.Lp = _validate_array(Lp, "Lp", optional=True)
-        self.L = _validate_array(L, "L", optional=True)
-        self.d = _validate_float_or_iterable_numerical(
+        self.nn_distances = validate_array(nn_distances, "nn_distances", optional=True)
+        self.nn_distances = validate_nn_distances(self.nn_distances, optional=True)
+        self.mu = validate_float(mu, "mu", optional=True)
+        self.ls = validate_positive_float(ls, "ls", optional=True)
+        self.ls_factor = validate_positive_float(ls_factor, "ls_factor")
+        self.cov_func = validate_cov_func(cov_func, "cov_func", optional=True)
+        self.Lp = validate_array(Lp, "Lp", optional=True)
+        self.L = validate_array(L, "L", optional=True)
+        self.d = validate_float_or_iterable_numerical(
             d, "d", optional=True, positive=True
         )
-        self.initial_value = _validate_array(
+        self.initial_value = validate_array(
             initial_value, "initial_value", optional=True
         )
-        self.optimizer = _validate_string(
+        self.optimizer = validate_string(
             optimizer, "optimizer", choices={"adam", "advi", "L-BFGS-B"}
         )
-        self.n_iter = _validate_positive_int(n_iter, "n_iter")
-        self.init_learn_rate = _validate_positive_float(
+        self.n_iter = validate_positive_int(n_iter, "n_iter")
+        self.init_learn_rate = validate_positive_float(
             init_learn_rate, "init_learn_rate"
         )
-        self.predictor_with_uncertainty = _validate_bool(
+        self.predictor_with_uncertainty = validate_bool(
             predictor_with_uncertainty, "predictor_with_uncertainty"
         )
-        self.jit = _validate_bool(jit, "jit")
-        self.check_rank = _validate_bool(check_rank, "check_rank", optional=True)
+        self.jit = validate_bool(jit, "jit")
+        self.check_rank = validate_bool(check_rank, "check_rank", optional=True)
         self.x = None
         self.pre_transformation = None
 
@@ -202,7 +202,7 @@ class BaseEstimator:
             raise error
         if x is None:
             x = self.x
-        self.x = _validate_array(x, "x")
+        self.x = validate_array(x, "x")
         return self.x
 
     def _compute_n_landmarks(self):
@@ -242,7 +242,7 @@ class BaseEstimator:
         x = self.x
         logger.info("Computing nearest neighbor distances.")
         nn_distances = compute_nn_distances(x)
-        nn_distances = _validate_nn_distances(nn_distances)
+        nn_distances = validate_nn_distances(nn_distances)
         return nn_distances
 
     def _compute_ls(self):
@@ -341,7 +341,7 @@ class BaseEstimator:
 
         return L
 
-    def _validate_parameter(self):
+    def validate_parameter(self):
         """
         Make sure there are no contradictions in the parameter settings.
         """
@@ -350,7 +350,7 @@ class BaseEstimator:
         n_samples = self.x.shape[0]
         n_landmarks = self.n_landmarks
         landmarks = self.landmarks
-        _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks)
+        validate_params(rank, gp_type, n_samples, n_landmarks, landmarks)
 
     def _run_inference(self):
         function = self.loss_func

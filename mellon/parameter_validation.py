@@ -3,14 +3,14 @@ from jax.numpy import ndarray
 from .util import GaussianProcessType
 from .base_cov import Covariance
 from .validation import (
-    _validate_positive_int,
-    _validate_float_or_int,
+    validate_positive_int,
+    validate_float_or_int,
 )
 
 logger = logging.getLogger("mellon")
 
 
-def _validate_landmark_params(n_landmarks, landmarks):
+def validate_landmark_params(n_landmarks, landmarks):
     """
     Validates that n_landmarks and landmarks are compatible.
 
@@ -31,7 +31,7 @@ def _validate_landmark_params(n_landmarks, landmarks):
         raise ValueError(message)
 
 
-def _validate_rank_params(gp_type, n_samples, rank, n_landmarks):
+def validate_rank_params(gp_type, n_samples, rank, n_landmarks):
     """
     Validates that rank, n_landmarks, and gp_type are compatible.
 
@@ -93,7 +93,7 @@ def _validate_rank_params(gp_type, n_samples, rank, n_landmarks):
         raise ValueError(message)
 
 
-def _validate_gp_type(gp_type, n_samples, n_landmarks):
+def validate_gp_type(gp_type, n_samples, n_landmarks):
     """
     Validates that gp_type, n_samples, and n_landmarks are compatible.
 
@@ -146,7 +146,7 @@ def _validate_gp_type(gp_type, n_samples, n_landmarks):
             raise ValueError(message)
 
 
-def _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks):
+def validate_params(rank, gp_type, n_samples, n_landmarks, landmarks):
     """
     Validates that rank, gp_type, n_samples, n_landmarks, and landmarks are compatible.
 
@@ -168,8 +168,8 @@ def _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks):
         The given landmarks/inducing points.
     """
 
-    n_landmarks = _validate_positive_int(n_landmarks, "n_landmarks")
-    rank = _validate_float_or_int(rank, "rank")
+    n_landmarks = validate_positive_int(n_landmarks, "n_landmarks")
+    rank = validate_float_or_int(rank, "rank")
 
     if not isinstance(gp_type, GaussianProcessType):
         message = (
@@ -180,19 +180,19 @@ def _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks):
         raise ValueError(message)
 
     # Validation logic for landmarks
-    _validate_landmark_params(n_landmarks, landmarks)
+    validate_landmark_params(n_landmarks, landmarks)
     if n_landmarks > n_samples:
         logger.warning(
             f"n_landmarks={n_landmarks:,} is larger than the number of cells {n_samples:,}."
         )
 
-    _validate_gp_type(gp_type, n_samples, n_landmarks)
+    validate_gp_type(gp_type, n_samples, n_landmarks)
 
     # Validation logic for rank
-    _validate_rank_params(gp_type, n_samples, rank, n_landmarks)
+    validate_rank_params(gp_type, n_samples, rank, n_landmarks)
 
 
-def _validate_cov_func_curry(cov_func_curry, cov_func, param_name):
+def validate_cov_func_curry(cov_func_curry, cov_func, param_name):
     """
     Validates covariance function curry type.
 
@@ -229,7 +229,7 @@ def _validate_cov_func_curry(cov_func_curry, cov_func, param_name):
     return cov_func_curry
 
 
-def _validate_cov_func(cov_func, param_name, optional=False):
+def validate_cov_func(cov_func, param_name, optional=False):
     """
     Validates an instance of a covariance function.
 
@@ -263,7 +263,7 @@ def _validate_cov_func(cov_func, param_name, optional=False):
     return cov_func
 
 
-def _validate_normalize_parameter(normalize, unique_times):
+def validate_normalize_parameter(normalize, unique_times):
     """
     Used in parameters.compute_nn_distances_within_time_points to validate input.
     """

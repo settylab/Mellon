@@ -27,10 +27,10 @@ from .derivatives import (
     hessian_log_determinant,
 )
 from .validation import (
-    _validate_time_x,
-    _validate_float,
-    _validate_array,
-    _validate_bool,
+    validate_time_x,
+    validate_float,
+    validate_array,
+    validate_bool,
 )
 
 
@@ -164,9 +164,9 @@ class Predictor(ABC):
             If the number of features in 'x' does not match the
             number of features the predictor was trained on.
         """
-        x = _validate_array(x, "x")
+        x = validate_array(x, "x")
         x = ensure_2d(x)
-        normalize = _validate_bool(normalize, "normalize")
+        normalize = validate_bool(normalize, "normalize")
 
         if x.shape[1] != self.n_input_features:
             raise ValueError(
@@ -214,7 +214,7 @@ class Predictor(ABC):
         cov : array-like, shape (n_samples, n_samples)
             If diag=False, returns the full covariance matrix between samples.
         """
-        x = _validate_array(x, "x")
+        x = validate_array(x, "x")
         x = ensure_2d(x)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
@@ -247,7 +247,7 @@ class Predictor(ABC):
         cov : array-like, shape (n_samples, n_samples)
             If diag=False, returns the full covariance matrix between samples.
         """
-        x = _validate_array(x, "x")
+        x = validate_array(x, "x")
         x = ensure_2d(x)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
@@ -278,7 +278,7 @@ class Predictor(ABC):
         cov : array-like, shape (n_samples, n_samples) if diag=False
             The full covariance matrix between the samples in the new data points.
         """
-        x = _validate_array(x, "x")
+        x = validate_array(x, "x")
         x = ensure_2d(x)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
@@ -309,7 +309,7 @@ class Predictor(ABC):
             gradients.shape == x.shape
         :rtype: array-like
         """
-        x = _validate_array(x, "x")
+        x = validate_array(x, "x")
         x = ensure_2d(x)
 
         return gradient(self._mean, x, jit=jit)
@@ -326,7 +326,7 @@ class Predictor(ABC):
             hessians.shape == X.shape + X.shape[1:]
         :rtype: array-like
         """
-        x = _validate_array(x, "x")
+        x = validate_array(x, "x")
         x = ensure_2d(x)
         return hessian(self.__call__, x, jit=jit)
 
@@ -344,7 +344,7 @@ class Predictor(ABC):
             signs.shape == log_determinants.shape == x.shape[0]
         :rtype: array-like, array-like
         """
-        x = _validate_array(x, "x")
+        x = validate_array(x, "x")
         x = ensure_2d(x)
         return hessian_log_determinant(self.__call__, x, jit=jit)
 
@@ -574,8 +574,8 @@ class ExpPredictor(Predictor):
             If the number of features in 'x' does not match the
             number of features the predictor was trained on.
         """
-        x = _validate_array(x, "x")
-        logscale = _validate_bool(logscale, "logscale")
+        x = validate_array(x, "x")
+        logscale = validate_bool(logscale, "logscale")
         x = ensure_2d(x)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
@@ -707,10 +707,10 @@ class PredictorTime(Predictor):
             If 'time' is an array and its size does not match 'Xnew'.
         """
         # if time is a scalar, convert it into a 1D array of the same size as Xnew
-        Xnew = _validate_time_x(
+        Xnew = validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
-        normalize = _validate_bool(normalize, "normalize")
+        normalize = validate_bool(normalize, "normalize")
 
         if normalize:
             if self.n_obs is None or self.n_obs == 0:
@@ -756,7 +756,7 @@ class PredictorTime(Predictor):
             If diag=False, returns the full covariance matrix between samples.
         """
         # if time is a scalar, convert it into a 1D array of the same size as Xnew
-        Xnew = _validate_time_x(
+        Xnew = validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
         return self._covariance(Xnew, diag=diag)
@@ -788,7 +788,7 @@ class PredictorTime(Predictor):
             If diag=False, returns the full covariance matrix between samples.
         """
         # if time is a scalar, convert it into a 1D array of the same size as Xnew
-        Xnew = _validate_time_x(
+        Xnew = validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
         return self._mean_covariance(Xnew, diag=diag)
@@ -821,7 +821,7 @@ class PredictorTime(Predictor):
         cov : array-like, shape (n_samples, n_samples) if diag=False
             The full covariance matrix between the samples in the new data points.
         """
-        Xnew = _validate_time_x(
+        Xnew = validate_time_x(
             Xnew, time, n_features=self.n_input_features, cast_scalar=True
         )
         return self._covariance(Xnew, diag=diag) + self._mean_covariance(
@@ -865,7 +865,7 @@ class PredictorTime(Predictor):
             The shape of the output array is the same as `x`.
 
         """
-        Xnew = _validate_time_x(
+        Xnew = validate_time_x(
             x, time, n_features=self.n_input_features, cast_scalar=True
         )
         return super().gradient(Xnew, jit=jit)[:, -1]
@@ -897,7 +897,7 @@ class PredictorTime(Predictor):
             The gradient of the prediction function at each point in `x`.
             The shape of the output array is the same as `x`.
         """
-        Xnew = _validate_time_x(
+        Xnew = validate_time_x(
             x, time, n_features=self.n_input_features, cast_scalar=True
         )
         X, time = Xnew[:, :-1], Xnew[:, -1]
@@ -932,7 +932,7 @@ class PredictorTime(Predictor):
             The Hessian matrix of the prediction function at each point in `x`.
             The shape of the output array is `x.shape + x.shape[1:]`.
         """
-        Xnew = _validate_time_x(
+        Xnew = validate_time_x(
             x, time, n_features=self.n_input_features, cast_scalar=True
         )
         X, time = Xnew[:, :-1], Xnew[:, -1]
@@ -967,7 +967,7 @@ class PredictorTime(Predictor):
             `signs.shape == log_determinants.shape == x.shape[0]`.
         """
 
-        Xnew = _validate_time_x(
+        Xnew = validate_time_x(
             x, time, n_features=self.n_input_features, cast_scalar=True
         )
         X, time = Xnew[:, :-1], Xnew[:, -1]

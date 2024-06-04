@@ -3,6 +3,7 @@
  - Detailed logging about invalid `nn_distances`.
  - Validation of `nn_distances` passed at initialization
  - Validate that passed scalars are not `nan`.
+ - Rename all `_validate` methods to `validate`
 
 # v1.4.2
 

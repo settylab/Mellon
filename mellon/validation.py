@@ -10,7 +10,7 @@ from jax.errors import ConcretizationTypeError
 logger = logging.getLogger(__name__)
 
 
-def _validate_time_x(x, times=None, n_features=None, cast_scalar=False):
+def validate_time_x(x, times=None, n_features=None, cast_scalar=False):
     """
     Validates and concatenates 'x' and 'times' if 'times' is provided.
 
@@ -51,14 +51,14 @@ def _validate_time_x(x, times=None, n_features=None, cast_scalar=False):
         of features.
     """
 
-    x = _validate_array(x, "x", ndim=2)
+    x = validate_array(x, "x", ndim=2)
     if (
         cast_scalar
         and times is not None
         and (isscalar(times) or all(s == 1 for s in times.shape))
     ):
         times = full(x.shape[0], times)
-    times = _validate_array(times, "times", optional=True, ndim=(1, 2))
+    times = validate_array(times, "times", optional=True, ndim=(1, 2))
 
     if times is not None:
         # Validate 'times' shape
@@ -91,7 +91,7 @@ def _validate_time_x(x, times=None, n_features=None, cast_scalar=False):
     return x
 
 
-def _validate_float_or_int(value, param_name, optional=False):
+def validate_float_or_int(value, param_name, optional=False):
     """
     Validates whether a given value is a float or an integer, and not nan.
 
@@ -132,7 +132,7 @@ def _validate_float_or_int(value, param_name, optional=False):
     return value
 
 
-def _validate_positive_float(value, param_name, optional=False):
+def validate_positive_float(value, param_name, optional=False):
     """
     Validates whether a given value is a positive float, and non-NaN.
 
@@ -175,7 +175,7 @@ def _validate_positive_float(value, param_name, optional=False):
     return value
 
 
-def _validate_float(value, param_name, optional=False):
+def validate_float(value, param_name, optional=False):
     """
     Validates if the input is a float or can be converted to a float.
 
@@ -223,7 +223,7 @@ def _validate_float(value, param_name, optional=False):
     return value
 
 
-def _validate_positive_int(value, param_name, optional=False):
+def validate_positive_int(value, param_name, optional=False):
     """
     Validates whether a given value is a positive integer.
 
@@ -254,7 +254,7 @@ def _validate_positive_int(value, param_name, optional=False):
     return value
 
 
-def _validate_array(iterable, name, optional=False, ndim=None):
+def validate_array(iterable, name, optional=False, ndim=None):
     """
     Validates and converts an iterable to a numpy array of type float.
     Allows Jax's JVPTracer objects and avoids explicit conversion in these cases.
@@ -316,7 +316,7 @@ def _validate_array(iterable, name, optional=False, ndim=None):
     return array
 
 
-def _validate_bool(value, name, optional=False):
+def validate_bool(value, name, optional=False):
     """
     Validates whether a given value is a boolean.
 
@@ -355,7 +355,7 @@ def _validate_bool(value, name, optional=False):
     return value
 
 
-def _validate_string(value, name, choices=None):
+def validate_string(value, name, choices=None):
     """
     Validates whether a given value is a string and optionally whether it is in a set of choices.
 
@@ -390,7 +390,7 @@ def _validate_string(value, name, choices=None):
     return value
 
 
-def _validate_float_or_iterable_numerical(value, name, optional=False, positive=False):
+def validate_float_or_iterable_numerical(value, name, optional=False, positive=False):
     """
     Validates whether a given value is a float, integer, or iterable of numerical values,
     with an option to check for non-negativity.
@@ -439,7 +439,7 @@ def _validate_float_or_iterable_numerical(value, name, optional=False, positive=
     )
 
 
-def _validate_1d(x):
+def validate_1d(x):
     """
     Validates that `x` can be cast to a JAX array with exactly 1 dimension and float data type.
 
@@ -470,7 +470,7 @@ def _validate_1d(x):
     return x
 
 
-def _validate_nn_distances(nn_distances, optional=False):
+def validate_nn_distances(nn_distances, optional=False):
     """
     Validates and corrects nearest neighbor distances. Ensures all distances are
     positive and handles invalid values.

@@ -22,9 +22,9 @@ from .util import (
     object_str,
 )
 from .validation import (
-    _validate_positive_int,
-    _validate_float,
-    _validate_array,
+    validate_positive_int,
+    validate_float,
+    validate_array,
 )
 
 
@@ -221,10 +221,10 @@ class DimensionalityEstimator(BaseEstimator):
             jit=jit,
             check_rank=check_rank,
         )
-        self.k = _validate_positive_int(k, "k")
-        self.mu_dim = _validate_float(mu_dim, "mu_dim")
-        self.mu_dens = _validate_float(mu_dens, "mu_dens", optional=True)
-        self.distances = _validate_array(distances, "distances", optional=True)
+        self.k = validate_positive_int(k, "k")
+        self.mu_dim = validate_float(mu_dim, "mu_dim")
+        self.mu_dens = validate_float(mu_dens, "mu_dens", optional=True)
+        self.distances = validate_array(distances, "distances", optional=True)
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -419,7 +419,7 @@ class DimensionalityEstimator(BaseEstimator):
         self._prepare_attribute("n_landmarks")
         self._prepare_attribute("rank")
         self._prepare_attribute("gp_type")
-        self._validate_parameter()
+        self.validate_parameter()
         self._prepare_attribute("distances")
         self._prepare_attribute("nn_distances")
         self._prepare_attribute("d")
@@ -596,7 +596,7 @@ class DimensionalityEstimator(BaseEstimator):
         if x is None:
             x = self.x
         else:
-            x = _validate_array(x, "x")
+            x = validate_array(x, "x")
 
         self.fit(x, build_predict=build_predict)
         return self.local_dim_x

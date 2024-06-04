@@ -35,15 +35,15 @@ from .decomposition import (
     DEFAULT_SIGMA,
 )
 from .validation import (
-    _validate_time_x,
-    _validate_positive_float,
-    _validate_float_or_int,
-    _validate_positive_int,
-    _validate_float_or_iterable_numerical,
+    validate_time_x,
+    validate_positive_float,
+    validate_float_or_int,
+    validate_positive_int,
+    validate_float_or_iterable_numerical,
 )
 from .parameter_validation import (
-    _validate_params,
-    _validate_normalize_parameter,
+    validate_params,
+    validate_normalize_parameter,
 )
 
 
@@ -188,9 +188,9 @@ def compute_gp_type(n_landmarks, rank, n_samples):
         One of the Gaussian Process types defined in the `GaussianProcessType` Enum.
     """
 
-    rank = _validate_float_or_int(rank, "rank", optional=True)
-    n_landmarks = _validate_positive_int(n_landmarks, "n_landmarks")
-    n_samples = _validate_positive_int(n_samples, "n_samples")
+    rank = validate_float_or_int(rank, "rank", optional=True)
+    n_landmarks = validate_positive_int(n_landmarks, "n_landmarks")
+    n_samples = validate_positive_int(n_samples, "n_samples")
 
     if n_landmarks == 0 or n_landmarks >= n_samples:
         # Full model
@@ -313,9 +313,9 @@ def compute_landmarks_rescale_time(
     if n_landmarks == 0:
         return None
 
-    ls = _validate_positive_float(ls, "ls")
-    ls_time = _validate_positive_float(ls_time, "ls_time")
-    x = _validate_time_x(x, times)
+    ls = validate_positive_float(ls, "ls")
+    ls_time = validate_positive_float(ls_time, "ls_time")
+    x = validate_time_x(x, times)
     time_factor = ls / ls_time
     x = x.at[:, -1].set(x[:, -1] * time_factor)
     landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
@@ -424,16 +424,16 @@ def compute_nn_distances_within_time_points(x, times=None, d=None, normalize=Fal
         preserving the order of instances in `x`.
 
     """
-    x = _validate_time_x(x, times)
+    x = validate_time_x(x, times)
     unique_times = unique(x[:, -1])
     nn_distances = empty(x.shape[0])
     n_cells = x.shape[0]
     av_cells_per_tp = n_cells / len(unique_times)
 
-    _validate_normalize_parameter(normalize, unique_times)
+    validate_normalize_parameter(normalize, unique_times)
 
     if normalize is not False and normalize is not None:
-        d = _validate_float_or_iterable_numerical(d, "d", optional=False, positive=True)
+        d = validate_float_or_iterable_numerical(d, "d", optional=False, positive=True)
         if ndim(d) > 0 and len(d) != x.shape[0]:
             ld = len(d)
             raise ValueError(
@@ -650,7 +650,7 @@ def compute_Lp(
         raise ValueError(message)
 
 
-def _validate_compute_L_input(x, cov_func, gp_type, landmarks, Lp, rank, sigma, jitter):
+def validate_compute_L_input(x, cov_func, gp_type, landmarks, Lp, rank, sigma, jitter):
     """
     Validate input for the fuction compute_L.
 
@@ -672,8 +672,8 @@ def _validate_compute_L_input(x, cov_func, gp_type, landmarks, Lp, rank, sigma, 
     ValueError
         If any of the inputs are inconsistent or violate constraints.
     """
-    jitter = _validate_positive_float(jitter, "jitter")
-    rank = _validate_float_or_int(rank, "rank", optional=True)
+    jitter = validate_positive_float(jitter, "jitter")
+    rank = validate_float_or_int(rank, "rank", optional=True)
 
     n_samples = x.shape[0]
     if landmarks is None:
@@ -685,7 +685,7 @@ def _validate_compute_L_input(x, cov_func, gp_type, landmarks, Lp, rank, sigma, 
         rank = compute_rank(gp_type)
     if gp_type is None:
         gp_type = compute_gp_type(n_landmarks, rank, n_samples)
-    _validate_params(rank, gp_type, n_samples, n_landmarks, landmarks)
+    validate_params(rank, gp_type, n_samples, n_landmarks, landmarks)
 
     if (
         gp_type == GaussianProcessType.FULL
@@ -773,7 +773,7 @@ def compute_L(
     ValueError
         If the Gaussian Process type is unknown or if the shape of Lp is incorrect.
     """
-    x, landmarks, n_landmarks, n_samples, gp_type, rank = _validate_compute_L_input(
+    x, landmarks, n_landmarks, n_samples, gp_type, rank = validate_compute_L_input(
         x, cov_func, gp_type, landmarks, Lp, rank, sigma, jitter
     )
 

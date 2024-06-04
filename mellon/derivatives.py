@@ -1,7 +1,7 @@
 import jax
 from jax.numpy import isscalar, atleast_2d
 
-from .validation import _validate_1d, _validate_float
+from .validation import validate_1d, validate_float
 
 
 def derivative(function, x, jit=True):
@@ -35,10 +35,10 @@ def derivative(function, x, jit=True):
         return jax.jacrev(function)(x)
 
     if isscalar(x):
-        x = _validate_float(x, "x")
+        x = validate_float(x, "x")
         return get_grad(x)
 
-    x = _validate_1d(x)
+    x = validate_1d(x)
 
     if jit:
         get_grad = jax.jit(get_grad)

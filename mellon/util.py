@@ -40,7 +40,7 @@ from jax.scipy.special import gammaln
 from jax import vmap, jit
 from sklearn.neighbors import BallTree, KDTree
 
-from .validation import _validate_array
+from .validation import validate_array
 
 logger = logging.getLogger("mellon")
 
@@ -250,7 +250,7 @@ def make_multi_time_argument(func):
                 raise ValueError(
                     "Cannot specify both 'time' and 'multi_time' arguments"
                 )
-            multi_time = _validate_array(multi_time, "multi_time")
+            multi_time = validate_array(multi_time, "multi_time")
 
             def at_time(t):
                 return func(self, *args, **kwargs, time=t)
