@@ -1,7 +1,7 @@
 Mellon
 ======
 
-|zenodo| |codecov| |pypi| |conda| |downloads|
+|zenodo| |codecov| |pypi| |conda|
 
 .. image:: https://github.com/settylab/mellon/raw/main/landscape.png?raw=true
    :target: https://github.com/settylab/Mellon
@@ -87,6 +87,3 @@ If you use Mellon for your work, please cite our paper.
        :target: https://badge.fury.io/py/mellon
 .. |conda| image:: https://anaconda.org/conda-forge/mellon/badges/version.svg
        :target: https://anaconda.org/conda-forge/mellon
-.. |downloads| image:: https://static.pepy.tech/personalized-badge/mellon?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=Downloads
-    :target: https://pepy.tech/project/mellon
-
