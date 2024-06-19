@@ -1,4 +1,4 @@
-# v1.4.3rc
+# v1.4.3
 
  - Detailed logging about invalid `nn_distances`.
  - Validation of `nn_distances` passed at initialization
