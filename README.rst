@@ -67,17 +67,16 @@ If you use Mellon for your work, please cite our paper.
 
 .. code-block:: bibtex
 
-    @article {Otto2023.07.09.548272,
-        author = {Dominik Jenz Otto and Cailin Jordan and Brennan Dury and Christine Dien and Manu Setty},
-        title = {Quantifying Cell-State Densities in Single-Cell Phenotypic Landscapes using Mellon},
-        elocation-id = {2023.07.09.548272},
-        year = {2023},
-        doi = {10.1101/2023.07.09.548272},
-        publisher = {Cold Spring Harbor Laboratory},
-        URL = {https://www.biorxiv.org/content/early/2023/07/10/2023.07.09.548272},
-        eprint = {https://www.biorxiv.org/content/early/2023/07/10/2023.07.09.548272.full.pdf},
-        journal = {bioRxiv}
+    @article{ottoQuantifyingCellstateDensities2024,
+      title = {Quantifying Cell-State Densities in Single-Cell Phenotypic Landscapes Using {{Mellon}}},
+      author = {Otto, Dominik J. and Jordan, Cailin and Dury, Brennan and Dien, Christine and Setty, Manu},
+      date = {2024-06-18},
+      journaltitle = {Nature Methods},
+      issn = {1548-7105},
+      doi = {10.1038/s41592-024-02302-w},
+      url = {https://www.nature.com/articles/s41592-024-02302-w},
     }
+
 
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8404223.svg

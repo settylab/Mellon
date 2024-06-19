@@ -35,9 +35,9 @@ preferred-citation:
   - family-names: "Setty"
     given-names: "Manu"
     orcid: "https://orcid.org/0000-0002-0344-2627"
-  doi: 10.1101/2023.07.09.548272
-  url: "https://www.biorxiv.org/content/10.1101/2023.07.09.548272v1"
-  journal: "bioRxiv"
-  month: 7
+  doi: 10.1038/s41592-024-02302-w
+  url: "{https://www.nature.com/articles/s41592-024-02302-w"
+  journal: "Nature Methods"
+  month: 6
   title: "Quantifying Cell-State Densities in Single-Cell Phenotypic Landscapes using Mellon"
-  year: 2023
+  year: 2024
