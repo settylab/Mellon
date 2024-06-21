@@ -31,8 +31,9 @@ from jax.numpy import (
     vstack,
     index_exp,
     broadcast_to,
+    integer,
+    floating,
 )
-from numpy import integer, floating
 from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
 from jax.numpy.linalg import norm, lstsq, matrix_rank

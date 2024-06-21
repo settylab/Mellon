@@ -27,7 +27,6 @@ setup(
     install_requires=[
         "jax",
         "jaxopt",
-        "numpy",
         "scikit-learn",
     ],
     extras_require={

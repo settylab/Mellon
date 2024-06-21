@@ -1,3 +1,7 @@
+# v1.4.4rc
+
+ - remove `numpy` as direct dependency
+
 # v1.4.3
 
  - Detailed logging about invalid `nn_distances`.
