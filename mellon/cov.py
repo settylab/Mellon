@@ -503,12 +503,11 @@ class Linear(Covariance):
     R"""
     Implementation of the Linear kernel.
 
-    TheL inear kernel function is defined as:
+    The Linear kernel function is defined as:
 
     .. math::
 
-        (1 + \frac{\sqrt{5}||x-y||}{l} + \frac{5||x-y||^2}{3l^2})
-        \cdot e^{-\frac{\sqrt{5}||x-y||}{l}}
+        \frac{x \cdot y}{l}
 
     where `x` and `y` are input vectors and `l` is the length-scale.
 
