@@ -10,6 +10,7 @@
    Predictor <predictor>
    Serialization <serialization>
    Utilities <util>
+   Validation <validation>
    Covariance Functions <cov>
    Parameter Selection <parameters>
    Inference <inference>
