@@ -1,6 +1,7 @@
 # v1.4.4rc
 
  - remove `numpy` as direct dependency
+ - bugfix DimensionalityEstimator dimensionality initialization
 
 # v1.4.3
 

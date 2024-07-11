@@ -12,6 +12,7 @@ from jax.numpy import (
     ndarray,
     ones,
     zeros,
+    full,
 )
 from jax.numpy import sum as arraysum
 from jax.numpy import any as arrayany
@@ -846,6 +847,8 @@ def compute_initial_dimensionalities(x, mu_dim, mu_dens, L, nn_distances, d):
     :rtype: array-like
     """
     target = log(d) - mu_dim
+    if asarray(target).size == 1:
+        target = full(L.shape[0], target)
     initial_dims = Ridge(fit_intercept=False).fit(L, target).coef_
     initial_dens = compute_initial_value(nn_distances, d, mu_dens, L)
     initial_value = stack([initial_dims, initial_dens])
