@@ -62,6 +62,7 @@ Citations
 =========
 
 The Mellon manuscript is available on
+`Nature Methods <https://www.nature.com/articles/s41592-024-02302-w>`_ and
 `bioRxiv <https://www.biorxiv.org/content/10.1101/2023.07.09.548272v1>`_
 If you use Mellon for your work, please cite our paper.
 
