@@ -67,11 +67,6 @@ and a preprint on
 `bioRxiv <https://www.biorxiv.org/content/10.1101/2023.07.09.548272v1>`_.
 If you use Mellon for your work, please cite our paper.
 
- You can find our
- `reproducibility repository <https://github.com/settylab/MellonReproducibility>`_
- to reproduce benchmarks and plots of the paper
- `here <https://github.com/settylab/MellonReproducibility>`_.
-
 .. code-block:: bibtex
 
     @article{ottoQuantifyingCellstateDensities2024,
@@ -84,6 +79,10 @@ If you use Mellon for your work, please cite our paper.
       url = {https://www.nature.com/articles/s41592-024-02302-w},
     }
 
+You can find our
+`reproducibility repository <https://github.com/settylab/MellonReproducibility>`_
+to reproduce benchmarks and plots of the paper
+`here <https://github.com/settylab/MellonReproducibility>`_.
 
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8404223.svg
