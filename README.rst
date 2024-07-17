@@ -79,6 +79,11 @@ If you use Mellon for your work, please cite our paper.
       url = {https://www.nature.com/articles/s41592-024-02302-w},
     }
 
+ You can find our
+ `reproducibility repository <https://github.com/settylab/MellonReproducibility>`_
+ to reproduce benchmarks and plots of the paper
+ `here <https://github.com/settylab/MellonReproducibility>`_.
+
 
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8404223.svg
