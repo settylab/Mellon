@@ -2,6 +2,7 @@
 
  - remove `numpy` as direct dependency
  - bugfix DimensionalityEstimator dimensionality initialization
+ - implement 'fixed' gaussian proces type to allow more inducing points than datapoints
 
 # v1.4.3
 

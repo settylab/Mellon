@@ -577,13 +577,14 @@ class GaussianProcessType(Enum):
     If a string representing one of these values is passed alternatively, the
     :func:`from_string` method is called to convert it to a `GaussianProcessType`.
 
-    Options are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem'.
+    Options are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem', 'fixed'.
     """
 
     FULL = "full"
     FULL_NYSTROEM = "full_nystroem"
     SPARSE_CHOLESKY = "sparse_cholesky"
     SPARSE_NYSTROEM = "sparse_nystroem"
+    FIXED = "fixed"
 
     @staticmethod
     def from_string(s: str, optional: bool = False):
@@ -598,6 +599,7 @@ class GaussianProcessType(Enum):
              - 'full_nystroem': Sparse GP with Nyström rank reduction
              - 'sparse_cholesky': Sparse GP using landmarks/inducing points
              - 'sparse_nystroem': Sparse GP along with an improved Nyström rank reduction
+             - 'fixed': Using landmarks/inducing points even if there are less data points
         optional : bool, optional
             Specifies if the input is optional. Returns None if True and input is None.
 

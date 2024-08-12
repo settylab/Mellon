@@ -216,6 +216,7 @@ class BaseEstimator:
         x = self.x
         n_landmarks = self.n_landmarks
         n_samples = x.shape[0]
+        gp_type = self.gp_type
         if n_samples > 100 * n_landmarks and n_samples > 1e6:
             logger.info(
                 f"Large number of {n_samples:,} cells and "
@@ -223,7 +224,7 @@ class BaseEstimator:
                 "computing k-means on a subset of cells and passing "
                 "the results as 'landmarks' to speed up the process."
             )
-        landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
+        landmarks = compute_landmarks(x, gp_type, n_landmarks=n_landmarks)
         return landmarks
 
     def _compute_rank(self):

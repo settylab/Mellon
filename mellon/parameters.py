@@ -140,7 +140,7 @@ def compute_n_landmarks(gp_type, n_samples, landmarks):
     if landmarks is not None:
         return landmarks.shape[0]
 
-    if gp_type is None:
+    if gp_type is None or gp_type == GaussianProcessType.FIXED:
         n_landmarks = min(n_samples, DEFAULT_N_LANDMARKS)
     elif (
         gp_type == GaussianProcessType.FULL
@@ -237,7 +237,7 @@ def compute_gp_type(n_landmarks, rank, n_samples):
             return GaussianProcessType.SPARSE_NYSTROEM
 
 
-def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
+def compute_landmarks(x, gp_type=None, n_landmarks=DEFAULT_N_LANDMARKS):
     R"""
     Computes the landmark points as k-means centroids.
 
@@ -250,6 +250,9 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     x : array-like
         The input data for which landmarks should be computed.
         Shape must be (n_samples, n_features).
+    gp_type : GaussianProcessType
+        The type of the Gaussian Process. If gp_type is 'fixed' then x
+        is passed through as landmarks if n_landmakrs>=n_samples. Defaults to None.
     n_landmarks : int, optional
         The desired number of landmark points. If less than 2 or greater
         than the number of data points, the function will return None.
@@ -269,6 +272,14 @@ def compute_landmarks(x, n_landmarks=DEFAULT_N_LANDMARKS):
     x = ensure_2d(x)
     assert n_landmarks > 1, "n_landmarks musst be larger 1 or euqual to 0"
     if n_landmarks >= n:
+        if gp_type == GaussianProcessType.FIXED:
+            message = (
+                f"Gaussin process type is {gp_type} and n_landmarks={n_landmarks:,} "
+                f"are requested while only {n:,} datapoints are available. "
+                f"Using all datapoints for {n:,} landmarks instead."
+            )
+            logger.warning(message)
+            return x
         return None
     logger.info(f"Computing {n_landmarks:,} landmarks with k-means clustering.")
     return k_means(x, n_landmarks, n_init=1)[0]
@@ -643,7 +654,10 @@ def compute_Lp(
         return None
     elif gp_type == GaussianProcessType.FULL:
         return _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
-    elif gp_type == GaussianProcessType.SPARSE_CHOLESKY:
+    elif (
+        gp_type == GaussianProcessType.SPARSE_CHOLESKY
+        or gp_type == GaussianProcessType.FIXED
+    ):
         return _full_rank(landmarks, cov_func, sigma=sigma, jitter=jitter)
     else:
         message = f"Unknown Gaussian Process type {gp_type}."
@@ -699,7 +713,10 @@ def validate_compute_L_input(x, cov_func, gp_type, landmarks, Lp, rank, sigma, j
         logger.error(message)
         raise ValueError(message)
     elif (
-        gp_type == GaussianProcessType.SPARSE_CHOLESKY
+        (
+            gp_type == GaussianProcessType.SPARSE_CHOLESKY
+            or gp_type == GaussianProcessType.FIXED
+        )
         and Lp is not None
         and Lp.shape != (n_landmarks, n_landmarks)
     ):
@@ -786,7 +803,10 @@ def compute_L(
         return _full_decomposition_low_rank(
             x, cov_func, rank=rank, sigma=sigma, jitter=jitter
         )
-    elif gp_type == GaussianProcessType.SPARSE_CHOLESKY:
+    elif (
+        gp_type == GaussianProcessType.SPARSE_CHOLESKY
+        or gp_type == GaussianProcessType.FIXED
+    ):
         if Lp is None:
             return _standard_low_rank(
                 x, cov_func, landmarks, sigma=sigma, jitter=jitter

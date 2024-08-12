@@ -140,9 +140,9 @@ def validate_gp_type(gp_type, n_samples, n_landmarks):
             message = (
                 f"Gaussian Process type {gp_type} but n_landmarks={n_landmarks:,} is larger or "
                 f"equal the number of cells {n_samples:,}. Reduce the number of landmarks to use a"
-                "sparse Gaussuian Process or omit gp_type to use a non-sparse one.."
+                "sparse Gaussuian Process or omit gp_type to use a non-sparse one."
             )
-            logger.error(message)
+            logger.warning(message)
             raise ValueError(message)
 
 
@@ -181,7 +181,7 @@ def validate_params(rank, gp_type, n_samples, n_landmarks, landmarks):
 
     # Validation logic for landmarks
     validate_landmark_params(n_landmarks, landmarks)
-    if n_landmarks > n_samples:
+    if n_landmarks > n_samples and gp_type != GaussianProcessType.FIXED:
         logger.warning(
             f"n_landmarks={n_landmarks:,} is larger than the number of cells {n_samples:,}."
         )
