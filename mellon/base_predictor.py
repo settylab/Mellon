@@ -402,6 +402,13 @@ class Predictor(ABC):
             setattr(self, name, val)
         self.cov_func = Covariance.from_dict(state["cov_func"])
 
+    def copy(self):
+        """Create a deep copy of the predictor."""
+        state = self.__getstate__()
+        new_instance = self.__class__.__new__(self.__class__)
+        new_instance.__setstate__(state)
+        return new_instance
+
     def to_json(self, filename=None, compress=None):
         """Serialize the predictor to a JSON file.
 
