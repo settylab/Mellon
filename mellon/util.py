@@ -315,6 +315,33 @@ def add_variance(K, M=None, jitter=DEFAULT_JITTER):
     return K
 
 
+def add_projected_variance(K, A, y_cov_factor, jitter=DEFAULT_JITTER):
+    """
+    Adds the projected observation noise covariance to K and stabilizes it.
+
+    Parameters
+    ----------
+    K : array_like, shape (n_landmarks, n_landmarks)
+        The initial covariance matrix.
+    A : array_like, shape (n_landmarks, n_obs)
+        The projection matrix from observations to inducing points.
+    y_cov_factor : array_like, shape (n_obs, n_obs)
+        The observation noise covariance matrix.
+    jitter : float, optional
+        A small number to stabilize the covariance matrix. Defaults to 1e-6.
+
+    Returns
+    -------
+    stabilized_K : array_like, shape (n_landmarks, n_landmarks)
+        The stabilized covariance matrix with added projected variance.
+    """
+    noise = A @ y_cov_factor @ A.T
+    noise_diag = diagonal(noise)
+    diff = where(noise_diag < jitter, jitter - noise_diag, 0)
+    K = K + noise + diagonal(diff)
+    return K
+
+
 def mle(nn_distances, d):
     R"""
     Nearest Neighbor distribution maximum likelihood estimate for log density
