@@ -5,7 +5,7 @@ from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
 from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular
-from .util import ensure_2d, stabilize, DEFAULT_JITTER, add_variance, add_projected_variance
+from .util import ensure_2d, stabilize, DEFAULT_JITTER, add_variance
 from .base_predictor import Predictor, ExpPredictor, PredictorTime
 from .decomposition import DEFAULT_SIGMA
 
@@ -278,9 +278,9 @@ class _LandmarksConditional:
             LLB = stabilize(LLB, jitter)
         else:
             logger.debug("Assuming y is not the mean of the GP.")
-            y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
+            y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, xu.shape[0])
             sigma = None
-            LLB = add_projected_variance(LLB, A, y_cov_factor, jitter=jitter)
+            LLB = add_variance(LLB, y_cov_factor, jitter=jitter)
 
         L_B = cholesky(LLB)
         r = y - mu
@@ -303,8 +303,6 @@ class _LandmarksConditional:
 
         self.L = L
         self._state_variables.add("L")
-
-        y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, xu.shape[0])
 
         C = solve_triangular(L_B, dot(A, y_cov_factor), lower=True)
         Z = solve_triangular(L_B.T, C)
