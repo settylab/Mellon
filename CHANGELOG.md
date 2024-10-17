@@ -4,7 +4,6 @@
  - bugfix DimensionalityEstimator dimensionality initialization
  - implement 'fixed' gaussian proces type to allow more inducing points than datapoints
  - implement `copy()` method for `Predictor` class
- - fix: uncertainty computation of sparse GP
 
 # v1.4.3
 
