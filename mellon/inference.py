@@ -1,3 +1,4 @@
+import logging
 from collections import namedtuple
 from functools import partial
 from jax import random, vmap
@@ -20,6 +21,8 @@ from .conditional import (
     LandmarksConditionalCholeskyTime,
 )
 from .util import ensure_2d, DEFAULT_JITTER
+
+logger = logging.getLogger("mellon")
 
 
 DEFAULT_N_ITER = 100
@@ -382,6 +385,7 @@ def compute_conditional(
     """
 
     if landmarks is None:
+        logger.debug("Using FullConditional GP.")
         if with_uncertainty and pre_transformation_std is not None:
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
@@ -402,6 +406,7 @@ def compute_conditional(
         pre_transformation is not None
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
+        logger.debug("Using LandmarksConditionalCholesky GP.")
         landmarks = ensure_2d(landmarks)
         if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
@@ -424,6 +429,7 @@ def compute_conditional(
             with_uncertainty=with_uncertainty,
         )
     else:
+        logger.debug("Using LandmarksConditional GP.")
         landmarks = ensure_2d(landmarks)
         if with_uncertainty and pre_transformation_std is not None:
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
@@ -507,6 +513,7 @@ def compute_conditional_times(
     """
 
     if landmarks is None:
+        logger.debug("Using FullConditional GP.")
         if pre_transformation_std is not None:
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
@@ -527,6 +534,7 @@ def compute_conditional_times(
         pre_transformation is not None
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
+        logger.debug("Using LandmarksConditionalCholesky GP.")
         landmarks = ensure_2d(landmarks)
         if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
@@ -549,6 +557,7 @@ def compute_conditional_times(
             with_uncertainty=with_uncertainty,
         )
     else:
+        logger.debug("Using LandmarksConditional GP.")
         landmarks = ensure_2d(landmarks)
         if pre_transformation_std is not None:
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
@@ -631,6 +640,7 @@ def compute_conditional_explog(
     """
 
     if landmarks is None:
+        logger.debug("Using FullConditional GP.")
         if with_uncertainty and pre_transformation_std is not None:
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)
         else:
@@ -652,6 +662,7 @@ def compute_conditional_explog(
         pre_transformation is not None
         and pre_transformation.shape[0] == landmarks.shape[0]
     ):
+        logger.debug("Using LandmarksConditionalCholesky GP.")
         landmarks = ensure_2d(landmarks)
         if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
@@ -674,6 +685,7 @@ def compute_conditional_explog(
             with_uncertainty=with_uncertainty,
         )
     else:
+        logger.debug("Using LandmarksConditional GP.")
         landmarks = ensure_2d(landmarks)
         if with_uncertainty and pre_transformation_std is not None:
             y_cov_factor = compute_parameter_cov_factor(pre_transformation_std, L)

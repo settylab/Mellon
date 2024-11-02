@@ -312,7 +312,7 @@ def add_variance(K, M=None, jitter=DEFAULT_JITTER):
         noise = M.dot(M.T)
         diff = where(diagonal(noise) < jitter, jitter - diagonal(noise), 0)
         K = K + noise + diagonal(diff)
-    return K
+    return K # Ensure the combined matrix is positive definite
 
 
 def mle(nn_distances, d):
