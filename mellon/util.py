@@ -312,7 +312,7 @@ def add_variance(K, M=None, jitter=DEFAULT_JITTER):
         noise = M.dot(M.T)
         diff = where(diagonal(noise) < jitter, jitter - diagonal(noise), 0)
         K = K + noise + diagonal(diff)
-    return K # Ensure the combined matrix is positive definite
+    return K  # Ensure the combined matrix is positive definite
 
 
 def mle(nn_distances, d):
@@ -687,3 +687,53 @@ def object_str(obj: object, dim_names: List[str] = None) -> str:
         return f"<array {dim_str}, dtype={obj.dtype}>"
     else:
         return str(obj)
+
+
+def object_html(obj: object, dim_names: list = None) -> str:
+    """
+    Generate an HTML string representation of metadata for array-like objects.
+
+    Parameters
+    ----------
+    obj : object
+        Object for which to generate metadata HTML.
+
+    dim_names : list of str, optional
+        Names for dimensions, used for array-like objects.
+
+    Returns
+    -------
+    str
+        HTML string with metadata.
+    """
+
+    def escape_html(text):
+        """Escape HTML special characters."""
+        return (
+            str(text)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&#39;")
+        )
+
+    if hasattr(obj, "shape") and hasattr(obj, "dtype"):
+        dims = obj.shape
+        dim_count = len(dims)
+        dim_names = dim_names or []
+
+        # Format dimensions
+        dim_strs = [
+            f"{dim:,} {name}" if name else f"{dim:,}"
+            for dim, name in zip(
+                dims, dim_names + [None] * (dim_count - len(dim_names))
+            )
+        ]
+
+        dim_str = " x ".join(dim_strs)
+        return f"<span>&lt;array {escape_html(dim_str)}, dtype={escape_html(obj.dtype)}&gt;</span>"
+
+    else:
+        # Handle string representation with escaping
+        return f"<span>{escape_html(obj)}</span>"

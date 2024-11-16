@@ -20,6 +20,7 @@ from .util import (
     ensure_2d,
     make_multi_time_argument,
     object_str,
+    object_html,
 )
 from .derivatives import (
     gradient,
@@ -128,6 +129,33 @@ class Predictor(ABC):
             )
         )
         return string
+
+    def _repr_html_(self):
+        """Generate an HTML representation for Jupyter Notebook."""
+        n_obs = "None" if self.n_obs is None else f"{self.n_obs:,}"
+
+        # Summary Section
+        header = f"""
+        <h2>Predictor Object: {self.__class__.__name__}</h2>
+        <p><strong>Covariance Function:</strong> {repr(self.cov_func)}</p>
+        <p><strong>Trained on:</strong> {n_obs} observations</p>
+        <p><strong>Number of Features:</strong> {self.n_input_features:,}</p>
+        """
+
+        # Data Attributes Table
+        data_dict = self._data_dict()
+        rows = ""
+        for key, value in data_dict.items():
+            rows += f"<tr><td>{key}</td><td>{object_html(value)}</td></tr>"
+
+        table = f"""
+        <h3>Data Attributes</h3>
+        <table style="border: 1px solid black; border-collapse: collapse;">
+            <tr><th>Attribute</th><th>Value</th></tr>
+            {rows}
+        </table>
+        """
+        return header + table
 
     @abstractmethod
     def _mean(self, *args, **kwargs):

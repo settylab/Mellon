@@ -10,6 +10,7 @@ from .util import (
     DEFAULT_JITTER,
     GaussianProcessType,
     object_str,
+    object_html,
 )
 from .validation import (
     validate_float_or_iterable_numerical,
@@ -147,9 +148,7 @@ class FunctionEstimator(BaseEstimator):
         )
         self.y_is_mean = validate_bool(y_is_mean, "y_is_mean")
         self.mu = validate_float(mu, "mu")
-        self.sigma = validate_float_or_iterable_numerical(
-            sigma, "sigma", positive=True
-        )
+        self.sigma = validate_float_or_iterable_numerical(sigma, "sigma", positive=True)
         if (
             self.gp_type == GaussianProcessType.FULL_NYSTROEM
             or self.gp_type == GaussianProcessType.SPARSE_NYSTROEM
@@ -210,6 +209,71 @@ class FunctionEstimator(BaseEstimator):
             "\n)"
         )
         return string
+
+    def _repr_html_(self):
+        """
+        Generate an HTML representation for the FunctionEstimator subclass for display in Jupyter.
+        """
+
+        # Header with class name and description
+        header = f"""
+        <h2>Function Estimator: {self.__class__.__name__}</h2>
+        <p><em>Function on all cell states using Gaussian Process and Mellon abstractions.</em></p>
+        """
+
+        # Core attributes as a list
+        core_attributes = f"""
+        <h3>Core Attributes</h3>
+        <ul>
+            <li><strong>Covariance Function:</strong> {object_html(self.cov_func or 'Not Set')}</li>
+            <li><strong>Optimizer:</strong> {self.optimizer}</li>
+            <li><strong>Number of Landmarks:</strong> {self.n_landmarks or 'Not Set'}</li>
+            <li><strong>Gaussian Process Type:</strong> {self.gp_type or 'Not Set'}</li>
+            <li><strong>Predictor with Uncertainty:</strong> {'Yes' if self.predictor_with_uncertainty else 'No'}</li>
+        </ul>
+        """
+
+        # Table of model parameters with compact columns
+        parameters = {
+            "Jitter": self.jitter,
+            "Mean (μ)": self.mu or "Not Set",
+            "Length Scale (ls)": self.ls or "Not Set",
+            "Length-Scale Factor": self.ls_factor,
+            "Noise Standard Deviation (σ)": self.sigma,
+            "y_is_mean": self.y_is_mean,
+            "Nearest Neighbor Distances": self.nn_distances,
+        }
+        parameters_table = f"""
+        <h3>Model Parameters</h3>
+        <table style="border: 1px solid black; border-collapse: collapse; width: auto;">
+            <tr><th style="border: 1px solid black; text-align: left;">Parameter</th><th style="border: 1px solid black; text-align: left;">Value</th></tr>
+            {''.join(f'<tr><td style="border: 1px solid black; text-align: left;">{key}</td><td style="border: 1px solid black; text-align: left;">{object_html(value)}</td></tr>' for key, value in parameters.items())}
+        </table>
+        """
+
+        # Predictor status
+        predictor_status = (
+            "<p style='color:green;'><strong>Predictor:</strong> Available</p>"
+            if hasattr(self, "conditional") and self.conditional
+            else "<p style='color:red;'><strong>Predictor:</strong> Not Yet Computed</p>"
+        )
+
+        # Details about the predictor if available
+        predictor_details = ""
+        if hasattr(self, "conditional") and self.conditional:
+            predictor_details = f"""
+            <h3>Predictor Details</h3>
+            <p><strong>Predictor Instance:</strong> {object_html(self.conditional)}</p>
+            """
+
+        # Combine all sections
+        return (
+            header
+            + core_attributes
+            + parameters_table
+            + predictor_status
+            + predictor_details
+        )
 
     def prepare_inference(self, x):
         R"""

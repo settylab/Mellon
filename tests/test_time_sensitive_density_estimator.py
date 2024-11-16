@@ -37,6 +37,9 @@ def test_time_sensitive_density_estimator_properties(common_setup_time_sensitive
     multi_time = [test_time, test_time, test_time + 1]
     n_times = len(multi_time)
 
+    html_output = est._repr_html_()
+    str_output = str(est)
+
     pred_log_dens = est.predict(X, times)
     assert relative_err(pred_log_dens) < 1e-5, (
         "The predicive function should be consistent with the density on "

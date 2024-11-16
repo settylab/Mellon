@@ -25,6 +25,9 @@ def test_function_estimator_prediction(function_estimator_setup):
     X, y, _, noiseless_y = function_estimator_setup
     n = X.shape[0]
 
+    html_output = est._repr_html_()
+    str_output = str(est)
+
     with pytest.raises(ValueError):
         mellon.FunctionEstimator(gp_type="sparse_nystroem")
 

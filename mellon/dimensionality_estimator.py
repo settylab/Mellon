@@ -20,6 +20,7 @@ from .util import (
     DEFAULT_JITTER,
     local_dimensionality,
     object_str,
+    object_html,
 )
 from .validation import (
     validate_positive_int,
@@ -269,6 +270,74 @@ class DimensionalityEstimator(BaseEstimator):
             "\n)"
         )
         return string
+
+    def _repr_html_(self):
+        """
+        Generate an HTML representation for the DimensionalityEstimator subclass for display in Jupyter.
+        """
+
+        # Header with class name and purpose
+        header = f"""
+        <h2>Dimensionality Estimator: {self.__class__.__name__}</h2>
+        <p><em>A non-parametric method for estimating local dimensionality and density using Gaussian Processes.</em></p>
+        """
+
+        # Core attributes as a list
+        core_attributes = f"""
+        <h3>Core Attributes</h3>
+        <ul>
+            <li><strong>Covariance Function:</strong> {object_html(self.cov_func or 'Not Set')}</li>
+            <li><strong>Optimizer:</strong> {self.optimizer}</li>
+            <li><strong>Number of Landmarks:</strong> {self.n_landmarks or 'Not Set'}</li>
+            <li><strong>Gaussian Process Type:</strong> {self.gp_type or 'Not Set'}</li>
+            <li><strong>Rank Reduction:</strong> {self.rank or 'Not Applicable'}</li>
+            <li><strong>Predictor with Uncertainty:</strong> {'Yes' if self.predictor_with_uncertainty else 'No'}</li>
+        </ul>
+        """
+
+        # Parameters as a table
+        parameters = {
+            "Jitter": self.jitter,
+            "Mean Dimensionality (μ_dim)": self.mu_dim,
+            "Mean Density (μ_dens)": self.mu_dens or "Not Set",
+            "Length Scale (ls)": self.ls or "Not Set",
+            "Length Scale Factor": self.ls_factor,
+            "Intrinsic Dimensionality (d)": self.d,
+            "Number of Nearest Neighbors (k)": self.k,
+            "Distances": self.distances,
+        }
+        parameters_table = f"""
+        <h3>Model Parameters</h3>
+        <table style="border: 1px solid black; border-collapse: collapse; width: auto;">
+            <tr><th style="border: 1px solid black; text-align: left;">Parameter</th><th style="border: 1px solid black; text-align: left;">Value</th></tr>
+            {''.join(f'<tr><td style="border: 1px solid black; text-align: left;">{key}</td><td style="border: 1px solid black; text-align: left;">{object_html(value)}</td></tr>' for key, value in parameters.items())}
+        </table>
+        """
+
+        # Predictor status
+        predictor_status = (
+            "<p style='color:green;'><strong>Predictors:</strong> Available</p>"
+            if self.local_dim_func and self.log_density_func
+            else "<p style='color:red;'><strong>Predictors:</strong> Not Yet Computed</p>"
+        )
+
+        # Predictor details if available
+        predictor_details = ""
+        if self.local_dim_func and self.log_density_func:
+            predictor_details = f"""
+            <h3>Predictor Details</h3>
+            <p><strong>Dimensionality Predictor Instance:</strong> {object_html(self.local_dim_func)}</p>
+            <p><strong>Density Predictor Instance:</strong> {object_html(self.log_density_func)}</p>
+            """
+
+        # Combine all sections
+        return (
+            header
+            + core_attributes
+            + parameters_table
+            + predictor_status
+            + predictor_details
+        )
 
     def _compute_mu_dens(self):
         nn_distances = self.nn_distances

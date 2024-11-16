@@ -31,6 +31,9 @@ def test_dimensionality_estimator_properties(common_setup_dim_estimator):
     X, _, local_dim, relative_err, est, _ = common_setup_dim_estimator
     n, d = X.shape
 
+    html_output = est._repr_html_()
+    str_output = str(est)
+
     pred = est.predict(X)
     assert (
         relative_err(pred) < 1e-4

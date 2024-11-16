@@ -25,6 +25,7 @@ from .compute_ls_time import compute_ls_time
 from .util import (
     DEFAULT_JITTER,
     object_str,
+    object_html,
 )
 from .validation import (
     validate_time_x,
@@ -342,6 +343,74 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             "\n)"
         )
         return string
+
+    def _repr_html_(self):
+        """
+        Generate an HTML representation for the TimeSensitiveDensityEstimator subclass for display in Jupyter.
+        """
+
+        # Header with class name and description
+        header = f"""
+        <h2>Time-Sensitive Density Estimator: {self.__class__.__name__}</h2>
+        <p><em>A non-parametric density estimation model with time sensitivity using Gaussian Processes.</em></p>
+        """
+
+        # Core attributes as a list
+        core_attributes = f"""
+        <h3>Core Attributes</h3>
+        <ul>
+            <li><strong>Covariance Function:</strong> {object_html(self.cov_func or 'Not Set')}</li>
+            <li><strong>Optimizer:</strong> {self.optimizer}</li>
+            <li><strong>Number of Landmarks:</strong> {self.n_landmarks or 'Not Set'}</li>
+            <li><strong>Gaussian Process Type:</strong> {self.gp_type or 'Not Set'}</li>
+            <li><strong>Time Normalization:</strong> {object_html(self.normalize_per_time_point or 'Disabled')}</li>
+            <li><strong>Predictor with Uncertainty:</strong> {'Yes' if self.predictor_with_uncertainty else 'No'}</li>
+        </ul>
+        """
+
+        # Model parameters as a table
+        parameters = {
+            "Jitter": self.jitter,
+            "Mean (μ)": self.mu or "Not Set",
+            "Length Scale (ls)": self.ls or "Not Set",
+            "Length Scale Factor": self.ls_factor,
+            "Time Length Scale (ls_time)": self.ls_time or "Not Set",
+            "Time Length Scale Factor": self.ls_time_factor,
+            "Intrinsic Dimensionality (d)": self.d or "Not Set",
+            "Nearest Neighbor Distances": self.nn_distances,
+        }
+        parameters_table = f"""
+        <h3>Model Parameters</h3>
+        <table style="border: 1px solid black; border-collapse: collapse; width: auto;">
+            <tr><th style="border: 1px solid black; text-align: left;">Parameter</th><th style="border: 1px solid black; text-align: left;">Value</th></tr>
+            {''.join(f'<tr><td style="border: 1px solid black; text-align: left;">{key}</td><td style="border: 1px solid black; text-align: left;">{object_html(value)}</td></tr>' for key, value in parameters.items())}
+        </table>
+        """
+
+        # Predictor status
+        predictor_status = (
+            "<p style='color:green;'><strong>Predictor:</strong> Available</p>"
+            if self.log_density_func
+            else "<p style='color:red;'><strong>Predictor:</strong> Not Yet Computed</p>"
+        )
+
+        # Details about the predictor if available
+        predictor_details = ""
+        if self.log_density_func:
+            predictor_details = f"""
+            <h3>Predictor Details</h3>
+            <p><strong>Predictor Instance:</strong> {object_html(self.log_density_func)}</p>
+            <p><strong>Observed Cell Count:</strong> {self.log_density_func.n_obs or 'Not Available'}</p>
+            """
+
+        # Combine all sections
+        return (
+            header
+            + core_attributes
+            + parameters_table
+            + predictor_status
+            + predictor_details
+        )
 
     def _compute_d(self):
         x = self.x[:, :-1]

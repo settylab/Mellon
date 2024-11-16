@@ -31,6 +31,9 @@ def test_density_estimator_properties(common_setup):
     X, _, _, relative_err, est, _ = common_setup
     n, d = X.shape
 
+    html_output = est._repr_html_()
+    str_output = str(est)
+
     len_str = len(str(mellon.DensityEstimator()))
     assert len_str > 0, "The model should have a string representation."
 

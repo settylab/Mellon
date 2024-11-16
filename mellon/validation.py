@@ -1,7 +1,17 @@
 from collections.abc import Iterable
 import logging
 
-from jax.numpy import asarray, concatenate, isscalar, full, ndarray, where, isnan, isinf, squeeze
+from jax.numpy import (
+    asarray,
+    concatenate,
+    isscalar,
+    full,
+    ndarray,
+    where,
+    isnan,
+    isinf,
+    squeeze,
+)
 from jax.numpy import sum as arraysum
 from jax.numpy import min as arraymin
 from jax.numpy import all as arrayall
@@ -216,7 +226,9 @@ def validate_float(value, param_name, optional=False):
             value = float(value)
         except TypeError:
             its_type = type(value)
-            raise ValueError(f"'{param_name}' should be a float number but is {its_type}")
+            raise ValueError(
+                f"'{param_name}' should be a float number but is {its_type}"
+            )
 
     if isnan(value):
         raise ValueError(f"'{param_name}' should be a non-NaN float number")
