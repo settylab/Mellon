@@ -271,13 +271,7 @@ def test_density_estimator_single_dimension(common_setup):
 
 def test_density_estimator_errors(common_setup):
     X, test_file, _, _, _, _ = common_setup
-    lX = jnp.concatenate(
-        [
-            X,
-        ]
-        * 2,
-        axis=1,
-    )
+    lX = jnp.concatenate([X,] * 2, axis=1)
     est = mellon.DensityEstimator()
 
     with pytest.raises(ValueError):

@@ -1,6 +1,7 @@
 .ipynb_checkpoints
 mellon/.ipynb_checkpoints
 mellon/__pycache__
+notebooks/test.ipynb
 ._.DS_Store
 .DS_Store
 *.egg-info/
