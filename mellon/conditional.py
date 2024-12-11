@@ -1,10 +1,10 @@
 import logging
 from jax import vmap
-from jax.numpy import dot, square, isnan, any, eye, zeros, arange, ndim
+from jax.numpy import dot, square, isnan, any, eye, zeros, arange, ndim, isscalar
 from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
 from jax.numpy.linalg import cholesky
-from jax.scipy.linalg import solve_triangular
+from jax.scipy.linalg import solve_triangular, solve
 from .util import ensure_2d, stabilize, DEFAULT_JITTER, add_variance
 from .base_predictor import Predictor, ExpPredictor, PredictorTime
 from .decomposition import DEFAULT_SIGMA
@@ -81,6 +81,51 @@ def _sigma_to_y_cov_factor(sigma, y_cov_factor, n):
     return y_cov_factor
 
 
+def _process_sigma(sigma, r, A):
+    """
+    Helper function to interpret and process sigma based on its shape and the shape of r.
+
+    Args:
+        sigma: Noise or covariance descriptor (scalar, element-wise, or matrix).
+        r: Residual or target vector/matrix.
+        A: Design or transformation matrix.
+
+    Returns:
+        Tuple (r_l, A_l):
+            - r_l: Adjusted r vector/matrix.
+            - A_l: Adjusted A matrix.
+
+    Raises:
+        NotImplementedError: If the sigma configuration is unsupported.
+    """
+    if isscalar(sigma) or sigma.shape == r.shape and r.ndim <= 1:
+        logger.info("Sigma interpreted as element-wise standard deviation.")
+        sigma2 = square(sigma)
+        r_l = r / sigma2
+        A_l = A / sigma2
+    elif sigma.shape == r.shape and r.ndim > 1:
+        logger.error("Sigma as distinct noise per output is not implemented.")
+        raise NotImplementedError(
+            "FunctionEstimator not implemented for multiple noises."
+        )
+    elif sigma.shape == (r.shape[0],) + r.shape and r.ndim > 1:
+        logger.error(
+            "Sigma as distinct covariance matrix per output is not implemented."
+        )
+        raise NotImplementedError(
+            "FunctionEstimator not implemented for multiple covariance matrices."
+        )
+    elif sigma.shape == (r.shape[0], r.shape[0]):
+        logger.info("Sigma interpreted as full covariance matrix.")
+        L_s = cholesky(stabilize(sigma, jitter))
+        r_l = solve_triangular(L_s.T, solve_triangular(L_s, r, lower=True))
+        A_l = solve_triangular(L_s.T, solve_triangular(L_s, A, lower=True))
+    else:
+        raise ValueError("Unsupported sigma configuration.")
+
+    return r_l, A_l
+
+
 class _FullConditional:
     def __init__(
         self,
@@ -106,7 +151,6 @@ class _FullConditional:
         :type mu: float
         :param cov_func: The GP covariance function.
         :type cov_func: function
-
         :param L : A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
             covariance matrix of the GP.
         :type L : array-like or None
@@ -228,6 +272,8 @@ class _LandmarksConditional:
         y,
         mu,
         cov_func,
+        L=None,
+        Lp=None,
         sigma=DEFAULT_SIGMA,
         jitter=DEFAULT_JITTER,
         y_cov_factor=None,
@@ -248,6 +294,12 @@ class _LandmarksConditional:
         :type mu: float
         :param cov_func: The Gaussian process covariance function.
         :type cov_func: function
+        :param L : A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
+            prior covariance matrix of the GP.
+        :type L : array-like or None
+        :param Lp : A matrix such that :math:`L_p L_p^\top \approx K_p`, where :math:`K_p` is the
+            prior covariance matrix of the GP on the inducing points.
+        :type Lp : array-like or None
         :param sigma: Noise standard deviation of the data we condition on. Defaults to 0.
         :type sigma: float
         :param jitter: A small amount to add to the diagonal for stability. Defaults to 1e-6.
@@ -269,24 +321,22 @@ class _LandmarksConditional:
         x = ensure_2d(x)
         xu = ensure_2d(xu)
         Kuf = cov_func(xu, x)
-        L = _get_L(xu, cov_func, jitter)
-        A = solve_triangular(L, Kuf, lower=True)
 
-        LLB = dot(A, A.T)
-        if y_is_mean:
-            logger.debug("Assuming y is the mean of the GP.")
-            LLB = stabilize(LLB, jitter)
-        else:
-            logger.debug("Assuming y is not the mean of the GP.")
-            y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, xu.shape[0])
-            sigma = None
-            LLB = add_variance(LLB, y_cov_factor, jitter=jitter)
+        if Lp is None:
+            Lp = _get_L(xu, cov_func, jitter)
 
-        L_B = cholesky(LLB)
+        A = solve_triangular(Lp, Kuf, lower=True)
+
         r = y - mu
-        c = solve_triangular(L_B, dot(A, r), lower=True)
-        z = solve_triangular(L_B.T, c)
-        weights = solve_triangular(L.T, z)
+        if y_is_mean:
+            r_l, A_l = r, A
+        else:
+            r_l, A_l = _process_sigma(sigma, r, A)
+        LBB = stabilize(dot(A_l, A.T), 1)
+        L_B = cholesky(LBB)
+
+        c = solve_triangular(L_B, dot(A, r_l), lower=True)
+        weights = solve_triangular(Lp.T, solve_triangular(L_B.T, c))
 
         self.cov_func = cov_func
         self.landmarks = xu
@@ -301,12 +351,20 @@ class _LandmarksConditional:
         if not with_uncertainty:
             return
 
-        self.L = L
+        self.L = Lp
         self._state_variables.add("L")
 
-        C = solve_triangular(L_B, dot(A, y_cov_factor), lower=True)
+        Cs = dot(Lp, L_B)
+        self.Cs = Cs
+        self._state_variables.add("Cs")
+
+        if not y_is_mean:
+            return
+
+        y_l = y_cov_factor
+        C = solve_triangular(L_B, dot(A, y_l), lower=True)
         Z = solve_triangular(L_B.T, C)
-        W = solve_triangular(L.T, Z)
+        W = solve_triangular(Lp.T, Z)
         self.W = W
         self._state_variables.add("W")
 
@@ -322,18 +380,20 @@ class _LandmarksConditional:
     def _covariance(self, Xnew, diag=False):
         _check_covariance(self)
         cov_func = self.cov_func
-        landmarks = self.landmarks
+        xu = self.landmarks
         L = self.L
+        Cs = self.Cs
 
-        K = cov_func(landmarks, Xnew)
-        A = solve_triangular(L, K, lower=True)
+        Kus = cov_func(xu, Xnew)
+        C = solve_triangular(Cs, Kus, lower=True)
+        As = solve_triangular(L, Kus, lower=True)
 
         if diag:
             Kss = cov_func.diag(Xnew)
-            var = Kss - arraysum(square(A), axis=0)
+            var = Kss - arraysum(square(As), axis=0) + arraysum(square(C), axis=0)
             return var
         else:
-            cov = cov_func(Xnew, Xnew) - dot(A.T, A)
+            cov = cov_func(Xnew, Xnew) - dot(As.T, As) + dot(C.T, C)
             return cov
 
     def _mean_covariance(self, Xnew, diag=True):

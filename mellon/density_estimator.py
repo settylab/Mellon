@@ -243,8 +243,8 @@ class DensityEstimator(BaseEstimator):
 
         # Header with class name and description
         header = f"""
-        <h2>Density Estimator: {self.__class__.__name__}</h2>
-        <p><em>A non-parametric density estimation model using Gaussian Processes and Nearest Neighbor likelihood.</em></p>
+        <h2>Density Estimator</h2>
+        <p><em>A non-parametric density estimation model using Gaussian Processes and Nearest Neighbor Distance Distribution.</em></p>
         """
 
         # Core attributes as a list

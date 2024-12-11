@@ -441,6 +441,7 @@ def compute_conditional(
             y,
             mu,
             cov_func,
+            L,
             sigma=sigma,
             jitter=jitter,
             y_cov_factor=y_cov_factor,

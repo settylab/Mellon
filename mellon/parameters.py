@@ -653,6 +653,7 @@ def compute_Lp(
     ):
         return None
     elif gp_type == GaussianProcessType.FULL:
+        logger.info("Computing Lp.")
         return _full_rank(x, cov_func, sigma=sigma, jitter=jitter)
     elif (
         gp_type == GaussianProcessType.SPARSE_CHOLESKY

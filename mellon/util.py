@@ -266,6 +266,20 @@ def make_multi_time_argument(func):
     return wrapper
 
 
+def add_diagonal(A, value):
+    R"""
+    Add a value to the diagonal of matrix :math:`A`.
+
+    :param A: A square matrix.
+    :param value: The amount to add to the diagonal.
+    :type value: float
+    :return: :math:`A'` - The matrix :math:`A` with a value added to the diagonal.
+    :rtype: array-like
+    """
+    n = A.shape[0]
+    return A + eye(n) * value
+
+
 def stabilize(A, jitter=DEFAULT_JITTER):
     R"""
     Add a small jitter to the diagonal for numerical stability.
@@ -276,8 +290,7 @@ def stabilize(A, jitter=DEFAULT_JITTER):
     :return: :math:`A'` - The matrix :math:`A` with a small jitter added to the diagonal.
     :rtype: array-like
     """
-    n = A.shape[0]
-    return A + eye(n) * jitter
+    return add_diagonal(A, jitter)
 
 
 def add_variance(K, M=None, jitter=DEFAULT_JITTER):
@@ -308,6 +321,9 @@ def add_variance(K, M=None, jitter=DEFAULT_JITTER):
     """
     if M is None:
         K = stabilize(K, jitter=jitter)
+    elif isscalar(M):
+        sigma2 = max(jitter, M**2)
+        K = add_diagonal(K, sigma2)
     else:
         noise = M.dot(M.T)
         diff = where(diagonal(noise) < jitter, jitter - diagonal(noise), 0)
