@@ -81,7 +81,7 @@ def _sigma_to_y_cov_factor(sigma, y_cov_factor, n):
     return y_cov_factor
 
 
-def _process_sigma(sigma, r, A):
+def _process_sigma(sigma, r, A, jitter=DEFAULT_JITTER):
     """
     Helper function to interpret and process sigma based on its shape and the shape of r.
 
@@ -331,7 +331,7 @@ class _LandmarksConditional:
         if y_is_mean:
             r_l, A_l = r, A
         else:
-            r_l, A_l = _process_sigma(sigma, r, A)
+            r_l, A_l = _process_sigma(sigma, r, A, jitter=jitter)
         LBB = stabilize(dot(A_l, A.T), 1)
         L_B = cholesky(LBB)
 
