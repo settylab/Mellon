@@ -1,10 +1,11 @@
-# v1.4.4rc
+# v1.5.0
 
  - remove `numpy` as direct dependency
  - bugfix DimensionalityEstimator dimensionality initialization
  - implement 'fixed' gaussian proces type to allow more inducing points than datapoints
  - implement `copy()` method for `Predictor` class
  - html representation for major objects
+ - `covariance` of sparse `FunctionEstimator`
 
 # v1.4.3
 
