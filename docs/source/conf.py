@@ -51,6 +51,9 @@ extensions = [
 if os.environ.get('READTHEDOCS') == 'True':
     extensions.append("sphinx_github_style")
 
+# sphinx_github_style config
+linkcode_url = "https://github.com/settylab/Mellon"
+
 source_suffix = [".rst", ".md"]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -385,15 +385,18 @@ def distance_grad(x, eps=1e-12):
     function
         A function that, when called with an array-like `y` of shape (m, d), returns a tuple
         containing:
-        - distance : ndarray
-          An array of shape (n, m) representing the Euclidean distances from each point in `x`
-          to each point in `y`.
-        - gradient : ndarray
-          An array of shape (n, m, d) representing the gradient of the distance with respect to
-          each point in `y`.
+
+        - **distance** : ndarray
+            An array of shape (n, m) representing the Euclidean distances from each point in `x`
+            to each point in `y`.
+
+        - **gradient** : ndarray
+            An array of shape (n, m, d) representing the gradient of the distance with respect to
+            each point in `y`.
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[0, 0], [1, 1]])
     >>> dist_grad_func = distance_grad(x)
     >>> y = np.array([[1, 0], [0, 1]])

@@ -70,7 +70,7 @@ class Matern32(Covariance):
         Produce a function that computes the gradient of the Matern-3/2 kernel function
         with the left argument set to x with respect to y for the active_dims.
 
-         Parameters
+        Parameters
         ----------
         x : array-like
             First input array.
