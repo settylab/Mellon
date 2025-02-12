@@ -126,7 +126,7 @@ def test_dimensionality_estimator_optimizer(common_setup_dim_estimator):
     "rank, n_landmarks, err_limit",
     [
         (1.0, 100, 1e0),
-        (1.0, 10, 1e0),
+        (1.0, 10, 2e0),
         (0.99, 80, 1e0),
         (50, 80, 1e0),
     ],

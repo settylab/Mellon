@@ -58,13 +58,29 @@ def test_distance_grad():
 
 def test_test_rank():
     seed = 423
-    shape = (5, 10)
     key = jax.random.PRNGKey(seed)
-    L = jax.random.uniform(key, shape=shape)
+
+    # Define a controlled singular value spectrum
+    shape = (5, 10)
+    singular_values = jnp.array([3.0, 2.0, 1.5, 1.0, 0.4])  # Controlled decay
+    U, _ = jnp.linalg.qr(
+        jax.random.normal(key, (shape[0], shape[0]))
+    )  # Orthogonal matrix
+    V, _ = jnp.linalg.qr(
+        jax.random.normal(key, (shape[1], shape[1]))
+    )  # Orthogonal matrix
+
+    # Construct matrix with controlled singular values
+    S = jnp.zeros((shape[0], shape[1]))
+    S = S.at[: len(singular_values), : len(singular_values)].set(
+        jnp.diag(singular_values)
+    )
+    L = U @ S @ V.T  # Controlled rank approximation
 
     mellon.util.test_rank(L)
     rank = mellon.util.test_rank(L, tol=0.5)
-    assert rank == 4, "The approx. rank with tol=.5 of the test matrix should be 4."
+    assert rank == 4, "The approx. rank with tol=0.5 of the test matrix should be 4."
+
     mellon.util.test_rank(L, threshold=0.5)
     mellon.util.test_rank(L, tol=1, threshold=0.5)
 

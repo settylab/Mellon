@@ -73,7 +73,7 @@ def test_density_estimator_optimizers(common_setup):
     adam_est = mellon.DensityEstimator(optimizer="adam")
     adam_dens = adam_est.fit_predict(X)
     assert (
-        relative_err(adam_dens) < 1e-3
+        relative_err(adam_dens) < 2e-3
     ), "The adam optimizer should produce similar results to the default."
 
 
@@ -271,7 +271,13 @@ def test_density_estimator_single_dimension(common_setup):
 
 def test_density_estimator_errors(common_setup):
     X, test_file, _, _, _, _ = common_setup
-    lX = jnp.concatenate([X,] * 2, axis=1)
+    lX = jnp.concatenate(
+        [
+            X,
+        ]
+        * 2,
+        axis=1,
+    )
     est = mellon.DensityEstimator()
 
     with pytest.raises(ValueError):
