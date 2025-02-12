@@ -19,7 +19,7 @@ from jax.numpy import any as arrayany
 from jax import random
 from sklearn.cluster import k_means
 from sklearn.linear_model import Ridge
-from sklearn.neighbors import BallTree, KDTree
+import pynndescent
 from .util import (
     mle,
     local_dimensionality,
@@ -41,6 +41,7 @@ from .validation import (
     validate_float_or_int,
     validate_positive_int,
     validate_float_or_iterable_numerical,
+    validate_k,
 )
 from .parameter_validation import (
     validate_params,
@@ -49,6 +50,7 @@ from .parameter_validation import (
 
 
 DEFAULT_N_LANDMARKS = 5000
+DEFAULT_RANDOM_SEED = 42
 
 logger = logging.getLogger("mellon")
 
@@ -340,36 +342,69 @@ def compute_landmarks_rescale_time(
     return landmarks
 
 
-def compute_distances(x, k):
-    R"""
-    Computes the distance to the k nearest neighbor for each training instance.
+def compute_distances(x, k, seed=DEFAULT_RANDOM_SEED):
+    """
+    Compute the distance to the k nearest neighbor for each training instance.
 
-    :param x: The training instances.
-    :type x: array-like
-    :param k: The number of nearest neighbors to consider.
-    :return: distances - The k observed nearest neighbor distances.
-    :rtype: array-like
+    Parameters
+    ----------
+    x : array-like, shape (n_samples, n_features)
+        The training instances.
+    k : int
+        The number of nearest neighbors to consider. Must be a positive integer and strictly less
+        than the number of samples.
+    seed : int, optional (default=42)
+        The seed for random number generation used during index initialization.
+
+    Returns
+    -------
+    distances : array-like, shape (n_samples, k)
+        The distances to the k nearest neighbors for each training instance.
+        Note that the nearest neighbor of a point is itself, so the first neighbor (distance 0)
+        is discarded.
+
+    Raises
+    ------
+    ValueError
+        If `x` is empty, if `k` is not an integer, if `k` is less than 1, or if `k` is greater
+        than or equal to the number of samples.
+
+    Notes
+    -----
+    Internally, NNDescent computes k+1 neighbors because every instance is its own nearest neighbor.
+    The returned result discards the self-distance (first column). The `seed` parameter controls
+    the random state used to initialize the NNDescent index.
     """
     x = ensure_2d(x)
-    if x.shape[1] >= 20:
-        tree = BallTree(x, metric="euclidean")
-    else:
-        tree = KDTree(x, metric="euclidean")
-    distances = tree.query(x, k=k + 1)[0][:, 1:]
-    return distances
+    n_samples = x.shape[0]
+
+    if n_samples == 0:
+        message = "Input data x is empty."
+        logger.error(message)
+        raise ValueError(message)
+
+    validate_k(k, n_samples)
+
+    # The nearest neighbor of a point is itself, so request k+1 neighbors.
+    index = pynndescent.NNDescent(
+        x, n_neighbors=k + 1, metric="euclidean", random_state=seed
+    )
+    _, distances = index.neighbor_graph
+    return distances[:, 1:]
 
 
-def compute_nn_distances(x):
+def compute_nn_distances(x, seed=DEFAULT_RANDOM_SEED):
     """
     Compute the distance to the nearest neighbor for each instance in the provided training dataset.
 
     This function calculates the Euclidean distance between each instance in the dataset and its closest neighbor.
-    If save=True, any non-positive distances will be replaced with the minimum positive distance.
 
     Parameters
     ----------
     x : array-like of shape (n_samples, n_features)
         An array-like object representing the training instances.
+    seed : int, optional (default=42)
+        The seed for random number generation used during the NNDescent index initialization.
 
     Returns
     -------
@@ -380,9 +415,11 @@ def compute_nn_distances(x):
 
     Raises
     ------
-    ValueError : if all distances are non-positive and save=True.
+    ValueError
+        If there is an error in computing the nearest neighbor distances.
     """
-    return compute_distances(x, 1)[:, 0]
+    # Forward the seed parameter to compute_distances.
+    return compute_distances(x, 1, seed=seed)[:, 0]
 
 
 def _get_target_cell_count(normalize, time, av_cells_per_tp, unique_times):

@@ -547,3 +547,22 @@ def validate_nn_distances(nn_distances, optional=False):
         )
 
     return nn_distances
+
+
+def validate_k(k, n_samples):
+    """Validate that k is an integer, at least 1, and strictly less than n_samples."""
+    if not isinstance(k, int):
+        message = f"Parameter k must be an integer, got {type(k).__name__} instead."
+        logger.error(message)
+        raise ValueError(message)
+    if k < 1:
+        message = f"Parameter k must be at least 1, got {k}."
+        logger.error(message)
+        raise ValueError(message)
+    if k >= n_samples:
+        message = (
+            "Parameter k must be smaller than the number of samples. "
+            f"Got k={k:,} with {n_samples:,} samples."
+        )
+        logger.error(message)
+        raise ValueError(message)

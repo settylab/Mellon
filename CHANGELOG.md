@@ -1,3 +1,7 @@
+# v1.6.0
+
+ - use [PyNNDescent](https://github.com/lmcinnes/pynndescent) for faster nearest neighbor distance computation
+
 # v1.5.0
 
  - remove `numpy` as direct dependency

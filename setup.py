@@ -28,6 +28,7 @@ setup(
         "jax",
         "jaxopt",
         "scikit-learn",
+        "pynndescent",
     ],
     extras_require={
         'dev': [
