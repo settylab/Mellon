@@ -1,6 +1,7 @@
 # v1.6.0
 
  - use [PyNNDescent](https://github.com/lmcinnes/pynndescent) for faster nearest neighbor distance computation
+ - update deprecated `tol` argument of `jax.numpy.linalg.matrix_rank` to `rtol`
 
 # v1.5.0
 

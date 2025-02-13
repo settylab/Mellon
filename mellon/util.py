@@ -458,7 +458,7 @@ def test_rank(input, tol=DEFAULT_RANK_TOL, threshold=None):
     if len(L.shape) != 2:
         raise ValueError("Matrix L must be 2D.")
 
-    approx_rank = matrix_rank(L, tol=tol)
+    approx_rank = matrix_rank(L, rtol=tol)
     max_rank = min(L.shape)
     rank_fraction = approx_rank / max_rank
 
