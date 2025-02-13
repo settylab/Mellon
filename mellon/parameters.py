@@ -391,6 +391,7 @@ def compute_distances(x, k, seed=DEFAULT_RANDOM_SEED):
     index = pynndescent.NNDescent(
         x, n_neighbors=k + 1,
         metric="euclidean",
+        random_state=seed,
     )
 
     _, distances = index.neighbor_graph
