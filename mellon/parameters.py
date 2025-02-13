@@ -36,6 +36,7 @@ from .decomposition import (
     DEFAULT_SIGMA,
 )
 from .validation import (
+    validate_array,
     validate_time_x,
     validate_positive_float,
     validate_float_or_int,
@@ -375,6 +376,7 @@ def compute_distances(x, k, seed=DEFAULT_RANDOM_SEED):
     The returned result discards the self-distance (first column). The `seed` parameter controls
     the random state used to initialize the NNDescent index.
     """
+    x = validate_array(x, "x")
     x = ensure_2d(x)
     n_samples = x.shape[0]
 
@@ -387,8 +389,10 @@ def compute_distances(x, k, seed=DEFAULT_RANDOM_SEED):
 
     # The nearest neighbor of a point is itself, so request k+1 neighbors.
     index = pynndescent.NNDescent(
-        x, n_neighbors=k + 1, metric="euclidean", random_state=seed
+        x, n_neighbors=k + 1,
+        metric="euclidean",
     )
+
     _, distances = index.neighbor_graph
     return distances[:, 1:]
 
