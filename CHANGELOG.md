@@ -1,3 +1,7 @@
+# 1.6.1
+
+ - forward randome state to k-means to compute landmarks
+
 # v1.6.0
 
  - use [PyNNDescent](https://github.com/lmcinnes/pynndescent) for faster nearest neighbor distance computation

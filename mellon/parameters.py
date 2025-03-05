@@ -240,7 +240,7 @@ def compute_gp_type(n_landmarks, rank, n_samples):
             return GaussianProcessType.SPARSE_NYSTROEM
 
 
-def compute_landmarks(x, gp_type=None, n_landmarks=DEFAULT_N_LANDMARKS):
+def compute_landmarks(x, gp_type=None, n_landmarks=DEFAULT_N_LANDMARKS, random_state=DEFAULT_RANDOM_SEED):
     R"""
     Computes the landmark points as k-means centroids.
 
@@ -260,6 +260,9 @@ def compute_landmarks(x, gp_type=None, n_landmarks=DEFAULT_N_LANDMARKS):
         The desired number of landmark points. If less than 2 or greater
         than the number of data points, the function will return None.
         Defaults to DEFAULT_N_LANDMARKS.
+    random_state : int, optional
+        Random seed for the k-means algorithm to ensure reproducible landmark selection.
+        Defaults to DEFAULT_RANDOM_SEED (42).
 
     Returns
     -------
@@ -284,12 +287,12 @@ def compute_landmarks(x, gp_type=None, n_landmarks=DEFAULT_N_LANDMARKS):
             logger.warning(message)
             return x
         return None
-    logger.info(f"Computing {n_landmarks:,} landmarks with k-means clustering.")
-    return k_means(x, n_landmarks, n_init=1)[0]
+    logger.info(f"Computing {n_landmarks:,} landmarks with k-means clustering (random_state={random_state}).")
+    return k_means(x, n_landmarks, n_init=1, random_state=random_state)[0]
 
 
 def compute_landmarks_rescale_time(
-    x, ls, ls_time, times=None, n_landmarks=DEFAULT_N_LANDMARKS
+    x, ls, ls_time, times=None, n_landmarks=DEFAULT_N_LANDMARKS, random_state=DEFAULT_RANDOM_SEED
 ):
     R"""
     Computes landmark points for time-rescaled input data using k-means centroids.
@@ -315,6 +318,9 @@ def compute_landmarks_rescale_time(
         Shape must be either (n_samples,) or (n_samples, 1).
     n_landmarks : int, optional
         The desired number of landmark points. Defaults to DEFAULT_N_LANDMARKS.
+    random_state : int, optional
+        Random seed for the k-means algorithm to ensure reproducible landmark selection.
+        Defaults to DEFAULT_RANDOM_SEED (42).
 
     Returns
     -------
@@ -333,7 +339,7 @@ def compute_landmarks_rescale_time(
     x = validate_time_x(x, times)
     time_factor = ls / ls_time
     x = x.at[:, -1].set(x[:, -1] * time_factor)
-    landmarks = compute_landmarks(x, n_landmarks=n_landmarks)
+    landmarks = compute_landmarks(x, n_landmarks=n_landmarks, random_state=random_state)
     if landmarks is not None:
         try:
             landmarks = landmarks.at[:, -1].set(landmarks[:, -1] / time_factor)
