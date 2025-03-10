@@ -35,7 +35,7 @@ copyright = "2022, Setty Lab"
 author = "Setty Lab"
 
 # The full version, including alpha/beta/rc tags
-release = get_version("../../mellon/__init__.py")
+release = get_version("../../mellon/version.py")
 
 
 # -- General configuration ---------------------------------------------------

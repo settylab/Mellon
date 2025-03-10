@@ -18,8 +18,7 @@ from . import _inference as inference
 from . import _conditional as conditional
 from . import _derivatives as derivatives
 from . import validation
-
-__version__ = "1.6.0"
+from .version import __version__
 
 __all__ = [
     "DensityEstimator",
@@ -37,13 +36,30 @@ __all__ = [
     "decomposition",
     "derivatives",
     "__version__",
+    "setup_jax",
+    "setup_logging",
 ]
 
-# Set default configuration at import time
-jaxconfig.update("jax_enable_x64", True)
-jaxconfig.update("jax_platform_name", "cpu")
 
-# configure logging
+def setup_jax(enable_x64=True, platform="cpu"):
+    """Set up JAX configuration.
+
+    Parameters
+    ----------
+    enable_x64 : bool, default=True
+        Whether to enable 64-bit precision.
+    platform : str, default="cpu"
+        Platform to use for JAX computation.
+    """
+    jaxconfig.update("jax_enable_x64", enable_x64)
+    jaxconfig.update("jax_platform_name", platform)
+
+
+# Default JAX configuration
+setup_jax()
+
+
+# Logging configuration
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -69,5 +85,21 @@ LOGGING_CONFIG = {
     },
 }
 
-logging.config.dictConfig(LOGGING_CONFIG)
-logger = logging.getLogger("mellon")
+
+def setup_logging(config=None):
+    """Set up logging configuration.
+
+    Parameters
+    ----------
+    config : dict, optional
+        Logging configuration dictionary. If None, the default
+        configuration is used.
+    """
+    if config is None:
+        config = LOGGING_CONFIG
+    logging.config.dictConfig(config)
+    return logging.getLogger("mellon")
+
+
+# Configure default logging
+logger = setup_logging()

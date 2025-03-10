@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mellon"
-version = "1.6.0"
+dynamic = ["version"]
 description = "Non-parametric density estimator."
 authors = [
     {name = "Setty Lab", email = "dominik.otto@gmail.com"}
@@ -28,6 +28,9 @@ Homepage = "https://github.com/settylab/mellon"
 
 [tool.setuptools]
 packages = ["mellon"]
+
+[tool.setuptools.dynamic]
+version = {attr = "mellon.version.__version__"}
 
 [project.optional-dependencies]
 dev = [

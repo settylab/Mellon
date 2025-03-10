@@ -3,7 +3,8 @@
  - use [PyNNDescent](https://github.com/lmcinnes/pynndescent) for faster nearest neighbor distance computation
  - update deprecated `tol` argument of `jax.numpy.linalg.matrix_rank` to `rtol`
  - forward random state to k-means to compute landmarks
- - modernize build system using pyproject.toml instead of setup.py
+ - modernize build system using `pyproject.toml` instead of setup.py
+ - centralize version in `mellon/version.py` with dynamic versioning in pyproject.toml
 
 # v1.5.0
 
