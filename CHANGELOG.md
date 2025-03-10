@@ -1,11 +1,9 @@
-# 1.6.1
-
- - forward randome state to k-means to compute landmarks
-
 # v1.6.0
 
  - use [PyNNDescent](https://github.com/lmcinnes/pynndescent) for faster nearest neighbor distance computation
  - update deprecated `tol` argument of `jax.numpy.linalg.matrix_rank` to `rtol`
+ - forward random state to k-means to compute landmarks
+ - modernize build system using pyproject.toml instead of setup.py
 
 # v1.5.0
 

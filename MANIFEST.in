@@ -1,0 +1,9 @@
+include LICENSE
+include README.rst
+include CHANGELOG.md
+include CITATION.cff
+include pyproject.toml
+include pytest.ini
+
+recursive-include tests *.py
+recursive-include docs *.py *.rst *.txt *.ico

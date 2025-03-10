@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mellon"
+version = "1.6.0"
+description = "Non-parametric density estimator."
+authors = [
+    {name = "Setty Lab", email = "dominik.otto@gmail.com"}
+]
+readme = "README.rst"
+license = {text = "GNU General Public License v3.0"}
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "jax",
+    "jaxopt",
+    "scikit-learn",
+    "pynndescent",
+]
+
+[project.urls]
+Homepage = "https://github.com/settylab/mellon"
+
+[tool.setuptools]
+packages = ["mellon"]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+    "pytest",
+    "pytest-cov",
+    "typing-extensions",
+]
+docs = [
+    "sphinxcontrib-autoprogram",
+    "sphinxcontrib-napoleon",
+    "sphinx-autodocgen",
+    "sphinx-github-style>=1.2.2",
+    "sphinx-mdinclude",
+    "m2r2",
+    "nbsphinx",
+    "furo",
+    "typing-extensions",
+    "IPython",
+]
+
+[project.scripts]
+mellon-test = "pytest:main"
+
+[tool.pytest]
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 88
+target-version = ["py36", "py37", "py38", "py39"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
