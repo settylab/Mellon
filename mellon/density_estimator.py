@@ -224,9 +224,14 @@ class DensityEstimator(BaseEstimator):
             jit=jit,
             check_rank=check_rank,
         )
-        self.d_method = validate_string(
-            d_method, "d_method", choices={"fractal", "embedding"}
-        )
+        # If d is explicitly provided, set d_method to "manual"
+        if d is not None:
+            self.d_method = "manual"
+            logger.info(f"Explicitly provided d={d}, setting d_method to 'manual'.")
+        else:
+            self.d_method = validate_string(
+                d_method, "d_method", choices={"fractal", "embedding", "manual"}
+            )
         self.transform = None
         self.loss_func = None
         self.opt_state = None
@@ -305,7 +310,12 @@ class DensityEstimator(BaseEstimator):
         if self.d_method == "fractal":
             d = compute_d_factal(x)
             logger.info(f"Using d={d}.")
+        elif self.d_method == "manual":
+            # For manual method, d is already set, so we don't need to compute it
+            d = self.d
+            logger.info(f"Using manually set d={d}.")
         else:
+            # embedding method uses the number of dimensions
             d = compute_d(x)
             logger.info(
                 f"Using embedding dimensionality d={d}. "
@@ -382,6 +392,10 @@ class DensityEstimator(BaseEstimator):
             y_is_mean=True,
             with_uncertainty=with_uncertainty,
         )
+        log_density_func.n_obs = self.x.shape[0]
+        # Store d and d_method for warning purposes
+        log_density_func.d = self.d
+        log_density_func.d_method = self.d_method
         self.log_density_func = log_density_func
 
     def prepare_inference(self, x):

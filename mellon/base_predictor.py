@@ -92,6 +92,14 @@ class Predictor(ABC):
     n_input_features : int
         The number of features/dimensions of the cell-state representation the predictor was
         trained on. This is used for validation of input data.
+        
+    d : int or None
+        The intrinsic dimensionality of the data used to create this predictor.
+        Only stored to provide appropriate warnings for normalization.
+        
+    d_method : str or None
+        The method used to compute the intrinsic dimensionality of the data.
+        Only stored to provide appropriate warnings for normalization.
     """
 
     # number of features of input data (x.shape[1]) to be specified in __init__
@@ -99,6 +107,12 @@ class Predictor(ABC):
 
     # number of observations trained on (x.shape[0]) to be specified in __init__
     n_obs: int
+    
+    # intrinsic dimensionality of the data, stored only for warning purposes
+    d: int = None
+    
+    # method used to compute the intrinsic dimensionality, stored only for warning purposes
+    d_method: str = None
 
     # a set of attribute names that should be saved to reconstruct the object
     _state_variables: Union[Set, List]
@@ -210,9 +224,30 @@ class Predictor(ABC):
                 )
                 logger.error(message)
                 raise ValueError(message)
-            logger.warning(
-                'The normalization is only effective if the density was trained with d_method="fractal".'
-            )
+            # Check conditions for warning about normalization
+            if self.d_method == "fractal":
+                # No warning needed for fractal method
+                pass
+            elif self.d_method == "manual":
+                # For manual d, show info message
+                logger.info(
+                    f"Using normalization with manually set d={self.d}. "
+                    "Note: Normalization is most effective when d approximates the intrinsic dimensionality of the data."
+                )
+            elif self.d_method is None and isinstance(self.d, (int, float)) and float(self.d).is_integer():
+                # For None d_method with integer d, show warning
+                logger.warning(
+                    f"The normalization is only effective if d approximates the intrinsic dimensionality. "
+                    f"Current values: d_method={self.d_method}, d={self.d}. "
+                    f'Consider using d_method="fractal" for more accurate results.'
+                )
+            elif self.d_method == "embedding":
+                # For embedding method, show warning
+                logger.warning(
+                    f"The normalization is only effective if d approximates the intrinsic dimensionality. "
+                    f"Current values: d_method={self.d_method}, d={self.d}. "
+                    f'Consider using d_method="fractal" for more accurate results.'
+                )
             return self._mean(x) - log(self.n_obs)
         else:
             return self._mean(x)
@@ -396,6 +431,8 @@ class Predictor(ABC):
             {
                 "n_input_features": self.n_input_features,
                 "n_obs": self.n_obs,
+                "d": self.d,
+                "d_method": self.d_method,
                 "_state_variables": self._state_variables,
             }
         )
@@ -755,9 +792,30 @@ class PredictorTime(Predictor):
                 )
                 logger.error(message)
                 raise ValueError(message)
-            logger.warning(
-                'The normalization is only effective if the density was trained with d_method="fractal".'
-            )
+            # Check conditions for warning about normalization
+            if self.d_method == "fractal":
+                # No warning needed for fractal method
+                pass
+            elif self.d_method == "manual":
+                # For manual d, show info message
+                logger.info(
+                    f"Using normalization with manually set d={self.d}. "
+                    "Note: Normalization is most effective when d approximates the intrinsic dimensionality of the data."
+                )
+            elif self.d_method is None and isinstance(self.d, (int, float)) and float(self.d).is_integer():
+                # For None d_method with integer d, show warning
+                logger.warning(
+                    f"The normalization is only effective if d approximates the intrinsic dimensionality. "
+                    f"Current values: d_method={self.d_method}, d={self.d}. "
+                    f'Consider using d_method="fractal" for more accurate results.'
+                )
+            elif self.d_method == "embedding":
+                # For embedding method, show warning
+                logger.warning(
+                    f"The normalization is only effective if d approximates the intrinsic dimensionality. "
+                    f"Current values: d_method={self.d_method}, d={self.d}. "
+                    f'Consider using d_method="fractal" for more accurate results.'
+                )
             return self._mean(Xnew) - log(self.n_obs)
         else:
             return self._mean(Xnew)

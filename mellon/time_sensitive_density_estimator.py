@@ -288,9 +288,14 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         if not isinstance(density_estimator_kwargs, dict):
             raise ValueError("density_estimator_kwargs needs to be a dictionary.")
         self.density_estimator_kwargs = density_estimator_kwargs
-        self.d_method = validate_string(
-            d_method, "d_method", choices={"fractal", "embedding"}
-        )
+        # If d is explicitly provided, set d_method to "manual"
+        if d is not None:
+            self.d_method = "manual"
+            logger.info(f"Explicitly provided d={d}, setting d_method to 'manual'.")
+        else:
+            self.d_method = validate_string(
+                d_method, "d_method", choices={"fractal", "embedding", "manual"}
+            )
         self.ls_time = validate_positive_float(ls_time, "ls_time", optional=True)
         self.ls_time_factor = validate_positive_float(ls_time_factor, "ls_time_factor")
         self._save_intermediate_ls_times = _save_intermediate_ls_times
@@ -418,8 +423,17 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             logger.warning("Using EXPERIMENTAL fractal dimensionality selection.")
             d = compute_d_factal(x)
             logger.info(f"Using d={d}.")
+        elif self.d_method == "manual":
+            # For manual method, d is already set, so we don't need to compute it
+            d = self.d
+            logger.info(f"Using manually set d={d}.")
         else:
+            # embedding method uses the number of dimensions
             d = compute_d(x)
+            logger.info(
+                f"Using embedding dimensionality d={d}. "
+                'Use d_method="fractal" to enable effective density normalization.'
+            )
         if d > 50:
             message = f"""The detected dimensionality of the data is over 50,
             which is likely to cause numerical instability issues.
@@ -580,6 +594,9 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             with_uncertainty=with_uncertainty,
         )
         log_density_func.n_obs = compute_average_cell_count(x, normalize)
+        # Store d and d_method for warning purposes
+        log_density_func.d = self.d
+        log_density_func.d_method = self.d_method
         self.log_density_func = log_density_func
 
     def prepare_inference(self, x, times=None):
