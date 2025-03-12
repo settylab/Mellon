@@ -1,10 +1,7 @@
 # v1.6.1
 
  - improve normalization warning to only show when appropriate
- - introduce "manual" d_method for explicitly provided d values
- - include detailed information in normalization warnings and messages
- - store d and d_method in predictors for better warning behavior
- - automatically set d_method to "manual" when d is explicitly provided
+ - introduce "manual" `d_method` for explicitly provided `d` values
 
 # v1.6.0
 
