@@ -200,9 +200,9 @@ def compute_gp_type(n_landmarks, rank, n_samples):
         # Full model
         if (
             rank is None
-            or type(rank) is int
+            or isinstance(rank, int)
             and (rank >= n_samples)
-            or type(rank) is float
+            or isinstance(rank, float)
             and rank >= 1.0
             or rank == 0
         ):
@@ -221,9 +221,9 @@ def compute_gp_type(n_landmarks, rank, n_samples):
         # Sparse model
         if (
             rank is None
-            or type(rank) is int
+            or isinstance(rank, int)
             and (rank >= n_landmarks)
-            or type(rank) is float
+            or isinstance(rank, float)
             and rank >= 1.0
             or rank == 0
         ):

@@ -424,3 +424,78 @@ def testvalidate_nn_distances():
     # Test with optional=False and nn_distances=None
     with pytest.raises(ValueError):
         validate_nn_distances(None, optional=False)
+
+
+def test_validation_with_jax_scalar_types():
+    """Test that validation functions accept JAX scalar types (similar to numpy scalars)"""
+    
+    # Test JAX scalar types that should be accepted
+    jax_float32 = jnp.float32(1.5)
+    jax_float64 = jnp.float64(2.5)
+    jax_int32 = jnp.int32(3)
+    jax_int64 = jnp.int64(4)
+    
+    # Test validate_float_or_iterable_numerical with JAX scalars
+    result = validate_float_or_iterable_numerical(jax_float32, "test_param")
+    assert isinstance(result, float)
+    assert result == 1.5
+    
+    result = validate_float_or_iterable_numerical(jax_int32, "test_param")
+    assert isinstance(result, float)
+    assert result == 3.0
+    
+    # Test validate_float_or_int with JAX scalars
+    result = validate_float_or_int(jax_float64, "test_param")
+    assert isinstance(result, float)
+    assert result == 2.5
+    
+    result = validate_float_or_int(jax_int64, "test_param")
+    assert isinstance(result, int)
+    assert result == 4
+    
+    # Test validate_positive_float with JAX scalars
+    result = validate_positive_float(jax_float32, "test_param")
+    assert isinstance(result, float)
+    assert result == 1.5
+    
+    result = validate_positive_float(jax_int32, "test_param")
+    assert isinstance(result, float)
+    assert result == 3.0
+    
+    # Test validate_float with JAX scalars
+    result = validate_float(jax_float64, "test_param")
+    assert isinstance(result, float)
+    assert result == 2.5
+    
+    result = validate_float(jax_int32, "test_param")
+    assert isinstance(result, int)
+    assert result == 3
+    
+    # Test validate_positive_int with JAX integer scalars
+    result = validate_positive_int(jax_int32, "test_param")
+    assert isinstance(result, int)
+    assert result == 3
+    
+    result = validate_positive_int(jax_int64, "test_param")
+    assert isinstance(result, int)
+    assert result == 4
+
+
+def test_validation_with_jax_array_item():
+    """Test that validation functions work with .item() calls on JAX arrays"""
+    
+    # Create JAX arrays and extract scalars using .item()
+    float_array = jnp.array([2.5])
+    int_array = jnp.array([3])
+    
+    float_scalar = float_array.item()
+    int_scalar = int_array.item()
+    
+    # These should work the same as regular Python types
+    result = validate_float_or_iterable_numerical(float_scalar, "test_param")
+    assert isinstance(result, float)
+    assert result == 2.5
+    
+    result = validate_positive_int(int_scalar, "test_param")
+    assert isinstance(result, int)
+    assert result == 3

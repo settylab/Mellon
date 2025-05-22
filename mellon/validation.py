@@ -128,6 +128,14 @@ def validate_float_or_int(value, param_name, optional=False):
     if value is None and optional:
         return None
 
+    # Convert numpy/JAX scalars to Python types for consistent type checking
+    if hasattr(value, 'item') and callable(getattr(value, 'item')):
+        try:
+            value = value.item()
+        except (ValueError, TypeError):
+            # If .item() fails, continue with original value
+            pass
+
     if not isinstance(value, (float, int)):
         try:
             value = float(value)
@@ -169,6 +177,14 @@ def validate_positive_float(value, param_name, optional=False):
 
     if value is None and optional:
         return None
+
+    # Convert numpy/JAX scalars to Python types for consistent type checking
+    if hasattr(value, 'item') and callable(getattr(value, 'item')):
+        try:
+            value = value.item()
+        except (ValueError, TypeError):
+            # If .item() fails, continue with original value
+            pass
 
     try:
         value = float(value)
@@ -221,6 +237,14 @@ def validate_float(value, param_name, optional=False):
     if isinstance(value, ndarray) and value.size == 1:
         value = squeeze(value)
 
+    # Convert numpy/JAX scalars to Python types for consistent type checking
+    if hasattr(value, 'item') and callable(getattr(value, 'item')):
+        try:
+            value = value.item()
+        except (ValueError, TypeError):
+            # If .item() fails, continue with original value
+            pass
+
     if not isinstance(value, (float, int)):
         try:
             value = float(value)
@@ -261,6 +285,15 @@ def validate_positive_int(value, param_name, optional=False):
 
     if optional and value is None:
         return None
+
+    # Convert numpy/JAX scalars to Python types for consistent type checking
+    if hasattr(value, 'item') and callable(getattr(value, 'item')):
+        try:
+            value = value.item()
+        except (ValueError, TypeError):
+            # If .item() fails, continue with original value
+            pass
+
     if not isinstance(value, int) or value < 0:
         raise ValueError(f"'{param_name}' should be a positive integer number")
     return value
@@ -433,6 +466,16 @@ def validate_float_or_iterable_numerical(value, name, optional=False, positive=F
 
     if value is None and optional:
         return None
+
+    # Convert numpy/JAX scalars (ndim=0) to Python types for consistent type checking
+    # Only apply .item() to scalar values, not arrays
+    if (hasattr(value, 'item') and callable(getattr(value, 'item')) and 
+        hasattr(value, 'ndim') and value.ndim == 0):
+        try:
+            value = value.item()
+        except (ValueError, TypeError):
+            # If .item() fails, continue with original value
+            pass
 
     if isinstance(value, (int, float)):
         value = float(value)
