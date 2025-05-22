@@ -2,6 +2,7 @@
 
  - improve normalization warning to only show when appropriate
  - introduce "manual" `d_method` for explicitly provided `d` values
+ - accept 23 bit floats for most scalars
 
 # v1.6.0
 
