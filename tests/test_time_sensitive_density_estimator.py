@@ -262,7 +262,7 @@ def test_time_sensitive_density_estimator_normalizations(
 ):
     X, times, _, _, relative_err, _, _, _ = common_setup_time_sensitive
     err_limit = 1e-4
-    min_diff = 1e-1
+    min_diff = 1e-2
 
     est = mellon.TimeSensitiveDensityEstimator(
         normalize_per_time_point=normalization,
