@@ -299,7 +299,7 @@ class FunctionEstimator(BaseEstimator):
         x = self.set_x(x)
         self._prepare_attribute("n_landmarks")
         self._prepare_attribute("gp_type")
-        if self.ls is None:
+        if self.ls is None and self.cov_func is None:
             self._prepare_attribute("nn_distances")
         self._prepare_attribute("ls")
         self._prepare_attribute("cov_func")

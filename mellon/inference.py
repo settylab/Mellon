@@ -372,7 +372,7 @@ def compute_conditional(
     jitter : float, optional
         A small amount to add to the diagonal for stability, by default 1e-6.
     y_is_mean : bool
-        Wether to consider y the GP mean or a noise measurment
+        Wether to consider y the GP mean or a noisy measurment
         subject to `sigma` or `y_cov_factor`. Has no effect if `L` is passed.
         Defaults to False.
     with_uncertainty : bool

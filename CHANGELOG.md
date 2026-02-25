@@ -1,5 +1,6 @@
 # v1.7.0
 
+ - bugfix: `FunctionEstimator` does not need `ls` if `cov_func` is given
  - new `obs_variance` parameter on `FunctionEstimator` and `fit()` to estimate input-dependent observation noise
  - new `Predictor.obs_variance(x)` returns a smoothed observation noise surface at any location
  - new `Predictor.leverage(x, sigma)` returns the GP leverage (hat matrix diagonal) for each point
@@ -46,7 +47,6 @@
  - allow setting `active_dims` for composit kernels, allowing more flexible covariance kernel specifications
  - update jaxconfig impot for compatibility with newer jax versions
  - generalize variing sigma in FunctionEstimator for higher dimensional functions
-
 # v1.4.1
 
 Drop constraint on NumPy version `numpy<1.25.0` which was introdcuded due to
