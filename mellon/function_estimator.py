@@ -106,6 +106,12 @@ class FunctionEstimator(BaseEstimator):
             not inducing points of the Gaussian Process and represents the covariance of the
             conditional normal distribution.
 
+    obs_variance : bool
+        If set to True, computes the smoothed observation variance surface.
+        This estimates the spatially-varying observation noise (aleatoric uncertainty)
+        by smoothing leverage-corrected squared residuals with a second GP.
+        Defaults to False.
+
     jit : bool, optional
         Use JAX just-in-time compilation for the loss function and its gradient during optimization.
         Defaults to False.
@@ -129,6 +135,7 @@ class FunctionEstimator(BaseEstimator):
         sigma=0,
         y_is_mean=False,
         predictor_with_uncertainty=False,
+        obs_variance=False,
         jit=True,
     ):
         super().__init__(
@@ -149,6 +156,7 @@ class FunctionEstimator(BaseEstimator):
         self.y_is_mean = validate_bool(y_is_mean, "y_is_mean")
         self.mu = validate_float(mu, "mu")
         self.sigma = validate_float_or_iterable_numerical(sigma, "sigma", positive=True)
+        self.obs_variance = validate_bool(obs_variance, "obs_variance")
         if (
             self.gp_type == GaussianProcessType.FULL_NYSTROEM
             or self.gp_type == GaussianProcessType.SPARSE_NYSTROEM
@@ -298,7 +306,7 @@ class FunctionEstimator(BaseEstimator):
         self._prepare_attribute("landmarks")
         return
 
-    def compute_conditional(self, x=None, y=None):
+    def compute_conditional(self, x=None, y=None, obs_variance=None):
         R"""
         Compute and return the conditional mean function.
 
@@ -306,6 +314,9 @@ class FunctionEstimator(BaseEstimator):
         :type x: array-like
         :param y: The training function values on cell states.
         :type y: array-like
+        :param obs_variance: Whether to compute smoothed observation variance.
+            If None, uses the value from the constructor.
+        :type obs_variance: bool or None
         :return: condition_mean_function - The conditional mean function.
         :rtype: array-like
         """
@@ -325,6 +336,8 @@ class FunctionEstimator(BaseEstimator):
         if y is None:
             message = "Required argument y is missing."
             raise ValueError(message)
+        if obs_variance is None:
+            obs_variance = self.obs_variance
         landmarks = self.landmarks
         mu = self.mu
         cov_func = self.cov_func
@@ -346,11 +359,12 @@ class FunctionEstimator(BaseEstimator):
             jitter=jitter,
             y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
+            obs_variance=obs_variance,
         )
         self.conditional = conditional
         return conditional
 
-    def fit(self, x=None, y=None):
+    def fit(self, x=None, y=None, obs_variance=None):
         """
         Trains the model using the provided training data and function values. This includes preparing
         the model for inference and computing the conditional distribution for the given data.
@@ -364,6 +378,10 @@ class FunctionEstimator(BaseEstimator):
         y : array-like of shape (n_samples, n_output_features), default=None
             The function values of the training instances. `n_samples` is the number of samples and
             `n_output_features` is the number of function values at each sample.
+
+        obs_variance : bool or None, default=None
+            Whether to compute smoothed observation variance. If None, uses the
+            value from the constructor.
 
         Raises
         ------
@@ -387,7 +405,7 @@ class FunctionEstimator(BaseEstimator):
             )
 
         self.prepare_inference(x)
-        self.compute_conditional(x, y)
+        self.compute_conditional(x, y, obs_variance=obs_variance)
         return self
 
     @property
@@ -411,6 +429,63 @@ class FunctionEstimator(BaseEstimator):
 
         """
         return self.conditional
+
+    def leverage(self, X=None):
+        """Leverage using the fitted sigma.
+
+        Parameters
+        ----------
+        X : array-like of shape (n, d), optional
+            Points at which to evaluate leverage. If None, uses the
+            training points.
+
+        Returns
+        -------
+        h : array of shape (n,)
+            Leverage values in [0, 1).
+        """
+        if X is None:
+            X = self.x
+        return self.predict.leverage(X, sigma=self.sigma)
+
+    def empirical_variance(self, X=None, y=None):
+        """HC3 / leave-one-out-equivalent pointwise variance estimate.
+
+        Computes sigma_hat_i^2 = r_i^2 / (1 - h_i)^2.
+
+        Parameters
+        ----------
+        X : array-like of shape (n, d), optional
+            Points at which to evaluate. If None, uses the training points.
+        y : array-like of shape (n,) or (n, p), optional
+            Observed values. Required if X is not None.
+
+        Returns
+        -------
+        var : array of shape (n,) or (n, p)
+            Unbiased pointwise variance estimates.
+        """
+        if X is None:
+            X = self.x
+        return self.predict.empirical_variance(X, y, sigma=self.sigma)
+
+    def get_obs_variance(self, X=None):
+        """Smoothed observation variance from the fitted predictor.
+
+        Parameters
+        ----------
+        X : array-like of shape (n, d), optional
+            Points at which to evaluate observation variance.
+            If None, uses the training points.
+
+        Returns
+        -------
+        var : array of shape (n,)
+            Estimated observation variance at each point.
+        """
+        if X is None:
+            X = self.x
+        return self.predict.obs_variance(X)
 
     def fit_predict(self, x=None, y=None, Xnew=None):
         """

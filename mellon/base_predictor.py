@@ -30,6 +30,7 @@ from .derivatives import (
 from .validation import (
     validate_time_x,
     validate_float,
+    validate_positive_float,
     validate_array,
     validate_bool,
 )
@@ -253,6 +254,106 @@ class Predictor(ABC):
             return self._mean(x)
 
     __call__ = mean
+
+    @abstractmethod
+    def _leverage(self, Xnew, sigma):
+        """Compute the leverage. Must be overridden by subclasses."""
+
+    def leverage(self, x, sigma=1.0):
+        """Diagonal of the GP hat matrix H = K(K + sigma^2 I)^{-1}.
+
+        The leverage h_i measures how much the observation y_i influences
+        its own prediction f_hat(x_i).  Useful for computing unbiased
+        variance estimates: sigma_hat^2 = r^2 / (1 - h)^2.
+
+        Parameters
+        ----------
+        x : array-like of shape (n, d)
+            Points at which to evaluate leverage.
+        sigma : float
+            GP noise standard deviation used during fitting.
+
+        Returns
+        -------
+        h : array of shape (n,)
+            Leverage values in [0, 1).
+        """
+        x = validate_array(x, "x")
+        x = ensure_2d(x)
+        sigma = validate_positive_float(sigma, "sigma")
+        if x.shape[1] != self.n_input_features:
+            raise ValueError(
+                f"The predictor was trained on data with {self.n_input_features} features. "
+                f"However, the provided input data has {x.shape[1]} features. "
+                "Please ensure that the input data has the same number of features as the training data."
+            )
+        return self._leverage(x, sigma)
+
+    def empirical_variance(self, x, y, sigma=1.0):
+        """HC3 / leave-one-out-equivalent pointwise variance estimate.
+
+        Computes sigma_hat_i^2 = r_i^2 / (1 - h_i)^2, where r_i is the
+        residual y_i - f_hat(x_i) and h_i is the leverage.
+
+        Parameters
+        ----------
+        x : array-like of shape (n, d)
+            Points at which to evaluate the variance.
+        y : array-like of shape (n,) or (n, p)
+            Observed values.
+        sigma : float
+            GP noise standard deviation used during fitting.
+
+        Returns
+        -------
+        var : array of shape (n,) or (n, p)
+            Unbiased pointwise variance estimates.
+        """
+        x = validate_array(x, "x")
+        y = validate_array(y, "y")
+        x = ensure_2d(x)
+        sigma = validate_positive_float(sigma, "sigma")
+        if x.shape[1] != self.n_input_features:
+            raise ValueError(
+                f"The predictor was trained on data with {self.n_input_features} features. "
+                f"However, the provided input data has {x.shape[1]} features. "
+                "Please ensure that the input data has the same number of features as the training data."
+            )
+        prediction = self._mean(x)
+        residual = y - prediction
+        h = self._leverage(x, sigma)
+        return residual**2 / (1 - h) ** 2
+
+    @abstractmethod
+    def _obs_variance(self, Xnew):
+        """Compute the observation variance. Must be overridden by subclasses."""
+
+    def obs_variance(self, x):
+        """Smoothed observation noise variance estimate.
+
+        Returns a GP-smoothed surface of corrected squared residuals
+        r_i^2 / (1 - h_i)^2, providing a spatially-varying estimate
+        of the observation noise variance (aleatoric uncertainty).
+
+        Parameters
+        ----------
+        x : array-like of shape (n, d)
+            Points at which to evaluate the observation variance.
+
+        Returns
+        -------
+        var : array of shape (n,)
+            Estimated observation variance at each point.
+        """
+        x = validate_array(x, "x")
+        x = ensure_2d(x)
+        if x.shape[1] != self.n_input_features:
+            raise ValueError(
+                f"The predictor was trained on data with {self.n_input_features} features. "
+                f"However, the provided input data has {x.shape[1]} features. "
+                "Please ensure that the input data has the same number of features as the training data."
+            )
+        return self._obs_variance(x)
 
     @abstractmethod
     def _covariance(self, *args, **kwars):

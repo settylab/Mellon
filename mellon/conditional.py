@@ -3,11 +3,19 @@ from jax import vmap
 from jax.numpy import dot, square, isnan, any, eye, zeros, arange, ndim, isscalar
 from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
-from jax.numpy.linalg import cholesky
+from jax.numpy.linalg import cholesky, inv
 from jax.scipy.linalg import solve_triangular, solve
 from .util import ensure_2d, stabilize, DEFAULT_JITTER, add_variance
 from .base_predictor import Predictor, ExpPredictor, PredictorTime
 from .decomposition import DEFAULT_SIGMA
+
+
+def _check_obs_variance(obj):
+    if not hasattr(obj, "variance_weights"):
+        raise ValueError(
+            "The predictor was computed without obs_variance. "
+            "Recompute setting `obs_variance=True`."
+        )
 
 
 logger = logging.getLogger("mellon")
@@ -139,6 +147,7 @@ class _FullConditional:
         y_cov_factor=None,
         y_is_mean=False,
         with_uncertainty=False,
+        obs_variance=False,
     ):
         R"""
         The mean function of the conditioned Gaussian process (GP).
@@ -169,10 +178,14 @@ class _FullConditional:
         :param with_uncertainty: Wether to compute covariance functions and
             predictive uncertainty. Defaults to False.
         :type with_uncertainty: bool
+        :param obs_variance: Whether to compute smoothed observation variance.
+            Defaults to False.
+        :type obs_variance: bool
         :return: conditional_mean - The conditioned GP mean function.
         :rtype: function
         """
         x = ensure_2d(x)
+        original_sigma = sigma
 
         if L is None:
             logger.info("Recomputing covariance decomposition for predictive function.")
@@ -197,6 +210,11 @@ class _FullConditional:
 
         self._state_variables = {"x", "weights", "mu", "jitter"}
 
+        if obs_variance:
+            self._compute_obs_variance(
+                x, y, mu, cov_func, original_sigma, jitter, weights
+            )
+
         if not with_uncertainty:
             return
 
@@ -209,6 +227,30 @@ class _FullConditional:
         self.W = W
         self._state_variables.add("W")
 
+    def _compute_obs_variance(self, x, y, mu, cov_func, sigma, jitter, weights):
+        """Compute smoothed observation variance using corrected residuals."""
+        # Prediction at training points
+        prediction = mu + dot(cov_func(x, x), weights)
+
+        # Leverage at training points
+        h = self._leverage(x, sigma)
+
+        # Corrected squared residuals
+        residual = y - prediction
+        corrected_r2 = residual**2 / (1 - h) ** 2
+
+        # Fit second GP to corrected_r2 using y_is_mean=True (no noise)
+        L_var = _get_L(x, cov_func, jitter)
+        variance_mu = 0.0
+        variance_weights = solve_triangular(
+            L_var.T, solve_triangular(L_var, corrected_r2 - variance_mu, lower=True)
+        )
+
+        self.variance_weights = variance_weights
+        self.variance_mu = variance_mu
+        self._state_variables.add("variance_weights")
+        self._state_variables.add("variance_mu")
+
     def _mean(self, Xnew):
         cov_func = self.cov_func
         x = self.x
@@ -217,6 +259,29 @@ class _FullConditional:
 
         Kus = cov_func(Xnew, x)
         return mu + dot(Kus, weights)
+
+    def _leverage(self, Xnew, sigma):
+        cov_func = self.cov_func
+        x = self.x
+        jitter = self.jitter
+        n = x.shape[0]
+
+        # Hat matrix H = K (K + σ²I)^{-1}, leverage h = diag(H).
+        # Using H = I - σ²(K + σ²I)^{-1}:
+        #   h = 1 - σ² diag((K + σ²I)^{-1})
+        # With Cholesky L of (K + σ²I):
+        #   diag((K + σ²I)^{-1}) = diag(L^{-T} L^{-1}) = sum(L^{-1}², axis=0)
+        K_train = cov_func(x, x)
+        L = cholesky(stabilize(K_train + sigma**2 * eye(n), jitter))
+        Linv = solve_triangular(L, eye(n), lower=True)
+        return 1 - sigma**2 * arraysum(square(Linv), axis=0)
+
+    def _obs_variance(self, Xnew):
+        _check_obs_variance(self)
+        cov_func = self.cov_func
+        x = self.x
+        Kus = cov_func(Xnew, x)
+        return self.variance_mu + dot(Kus, self.variance_weights)
 
     def _covariance(self, Xnew, diag=True):
         _check_covariance(self)
@@ -279,6 +344,7 @@ class _LandmarksConditional:
         y_cov_factor=None,
         y_is_mean=False,
         with_uncertainty=False,
+        obs_variance=False,
     ):
         R"""
         The mean function of the conditioned low rank gp, where rank
@@ -315,6 +381,9 @@ class _LandmarksConditional:
         :param with_uncertainty: Wether to compute predictive uncertainty and
             intermediate covariance functions. Defaults to False.
         :type with_uncertainty: bool
+        :param obs_variance: Whether to compute smoothed observation variance.
+            Defaults to False.
+        :type obs_variance: bool
         :return: conditional_mean - The conditioned Gaussian process mean function.
         :rtype: function
         """
@@ -348,6 +417,9 @@ class _LandmarksConditional:
 
         self._state_variables = {"landmarks", "weights", "mu", "jitter"}
 
+        if obs_variance:
+            self._compute_obs_variance(x, y, xu, mu, cov_func, sigma, jitter, weights)
+
         if not with_uncertainty:
             return
 
@@ -368,6 +440,37 @@ class _LandmarksConditional:
         self.W = W
         self._state_variables.add("W")
 
+    def _compute_obs_variance(self, x, y, xu, mu, cov_func, sigma, jitter, weights):
+        """Compute smoothed observation variance using corrected residuals."""
+        # Prediction at training points
+        Kxu = cov_func(x, xu)
+        prediction = mu + dot(Kxu, weights)
+
+        # Leverage at training points
+        h = self._leverage(x, sigma)
+
+        # Corrected squared residuals
+        residual = y - prediction
+        corrected_r2 = residual**2 / (1 - h) ** 2
+
+        # Fit second GP on landmarks to corrected_r2 using y_is_mean=True
+        Lp_var = _get_L(xu, cov_func, jitter)
+        Kuf_var = cov_func(xu, x)
+        A_var = solve_triangular(Lp_var, Kuf_var, lower=True)
+        variance_mu = 0.0
+        r_var = corrected_r2 - variance_mu
+        LBB_var = stabilize(dot(A_var, A_var.T), 1)
+        L_B_var = cholesky(LBB_var)
+        c_var = solve_triangular(L_B_var, dot(A_var, r_var), lower=True)
+        variance_weights = solve_triangular(
+            Lp_var.T, solve_triangular(L_B_var.T, c_var)
+        )
+
+        self.variance_weights = variance_weights
+        self.variance_mu = variance_mu
+        self._state_variables.add("variance_weights")
+        self._state_variables.add("variance_mu")
+
     def _mean(self, Xnew):
         cov_func = self.cov_func
         xu = self.landmarks
@@ -376,6 +479,28 @@ class _LandmarksConditional:
 
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
+
+    def _leverage(self, Xnew, sigma):
+        cov_func = self.cov_func
+        xu = self.landmarks
+        jitter = self.jitter
+
+        B = cov_func(Xnew, xu)  # n_new x m
+        if hasattr(self, "L") and self.L is not None:
+            K_uu = self.L @ self.L.T
+        else:
+            K_uu = cov_func(xu, xu)
+        M = sigma**2 * K_uu + B.T @ B  # m x m
+        M = stabilize(M, jitter)
+        BM = B @ inv(M)  # n_new x m
+        return arraysum(BM * B, axis=1)  # n_new
+
+    def _obs_variance(self, Xnew):
+        _check_obs_variance(self)
+        cov_func = self.cov_func
+        xu = self.landmarks
+        Kus = cov_func(Xnew, xu)
+        return self.variance_mu + dot(Kus, self.variance_weights)
 
     def _covariance(self, Xnew, diag=False):
         _check_covariance(self)
@@ -438,6 +563,9 @@ class _LandmarksConditionalCholesky:
         jitter=DEFAULT_JITTER,
         y_is_mean=False,
         with_uncertainty=False,
+        obs_variance=False,
+        obs_x=None,
+        obs_y=None,
     ):
         """
         The mean function of the conditioned low rank gp, where rank
@@ -467,6 +595,13 @@ class _LandmarksConditionalCholesky:
         :param with_uncertainty: Wether to compute predictive uncertainty and
             intermediate covariance functions. Defaults to False.
         :type with_uncertainty: bool
+        :param obs_variance: Whether to compute smoothed observation variance.
+            Defaults to False.
+        :type obs_variance: bool
+        :param obs_x: Training points, only needed when obs_variance=True.
+        :type obs_x: array-like or None
+        :param obs_y: Training values, only needed when obs_variance=True.
+        :type obs_y: array-like or None
         :return: conditional_mean - The conditioned Gaussian process mean function.
         :rtype: function
         """
@@ -494,6 +629,16 @@ class _LandmarksConditionalCholesky:
 
         self._state_variables = {"landmarks", "weights", "mu", "jitter"}
 
+        if obs_variance:
+            if obs_x is None or obs_y is None:
+                raise ValueError(
+                    "obs_x and obs_y are required when obs_variance=True "
+                    "for LandmarksConditionalCholesky."
+                )
+            self._compute_obs_variance(
+                obs_x, obs_y, xu, mu, cov_func, sigma, jitter, weights
+            )
+
         if not with_uncertainty:
             return
 
@@ -510,6 +655,38 @@ class _LandmarksConditionalCholesky:
         self.W = W
         self._state_variables.add("W")
 
+    def _compute_obs_variance(self, x, y, xu, mu, cov_func, sigma, jitter, weights):
+        """Compute smoothed observation variance using corrected residuals."""
+        x = ensure_2d(x)
+        # Prediction at training points
+        Kxu = cov_func(x, xu)
+        prediction = mu + dot(Kxu, weights)
+
+        # Leverage at training points
+        h = self._leverage(x, sigma)
+
+        # Corrected squared residuals
+        residual = y - prediction
+        corrected_r2 = residual**2 / (1 - h) ** 2
+
+        # Fit second GP on landmarks to corrected_r2 using y_is_mean=True
+        Lp_var = _get_L(xu, cov_func, jitter)
+        Kuf_var = cov_func(xu, x)
+        A_var = solve_triangular(Lp_var, Kuf_var, lower=True)
+        variance_mu = 0.0
+        r_var = corrected_r2 - variance_mu
+        LBB_var = stabilize(dot(A_var, A_var.T), 1)
+        L_B_var = cholesky(LBB_var)
+        c_var = solve_triangular(L_B_var, dot(A_var, r_var), lower=True)
+        variance_weights = solve_triangular(
+            Lp_var.T, solve_triangular(L_B_var.T, c_var)
+        )
+
+        self.variance_weights = variance_weights
+        self.variance_mu = variance_mu
+        self._state_variables.add("variance_weights")
+        self._state_variables.add("variance_mu")
+
     def _mean(self, Xnew):
         cov_func = self.cov_func
         xu = self.landmarks
@@ -518,6 +695,28 @@ class _LandmarksConditionalCholesky:
 
         Kus = cov_func(Xnew, xu)
         return mu + dot(Kus, weights)
+
+    def _leverage(self, Xnew, sigma):
+        cov_func = self.cov_func
+        xu = self.landmarks
+        jitter = self.jitter
+
+        B = cov_func(Xnew, xu)  # n_new x m
+        if hasattr(self, "L") and self.L is not None:
+            K_uu = self.L @ self.L.T
+        else:
+            K_uu = cov_func(xu, xu)
+        M = sigma**2 * K_uu + B.T @ B  # m x m
+        M = stabilize(M, jitter)
+        BM = B @ inv(M)  # n_new x m
+        return arraysum(BM * B, axis=1)  # n_new
+
+    def _obs_variance(self, Xnew):
+        _check_obs_variance(self)
+        cov_func = self.cov_func
+        xu = self.landmarks
+        Kus = cov_func(Xnew, xu)
+        return self.variance_mu + dot(Kus, self.variance_weights)
 
     def _covariance(self, Xnew, diag=True):
         _check_covariance(self)

@@ -15,8 +15,12 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.10"
 dependencies = [
+    # Most constrained first — uv resolves in listed order, so packages
+    # with tight transitive chains (jax/jaxlib) must come before
+    # flexible foundations to avoid broken resolutions.
+    # See: https://github.com/astral-sh/uv/issues/5161
     "jax",
     "jaxopt",
     "scikit-learn",
@@ -63,7 +67,7 @@ testpaths = ["tests"]
 
 [tool.black]
 line-length = 88
-target-version = ["py36", "py37", "py38", "py39"]
+target-version = ["py310", "py311", "py312"]
 include = '\.pyi?$'
 
 [tool.isort]

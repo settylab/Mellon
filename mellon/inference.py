@@ -336,6 +336,7 @@ def compute_conditional(
     jitter=DEFAULT_JITTER,
     y_is_mean=False,
     with_uncertainty=False,
+    obs_variance=False,
 ):
     R"""
     Builds the mean function of the Gaussian process, conditioned on the
@@ -377,6 +378,8 @@ def compute_conditional(
     with_uncertainty : bool
         Wether to compute covariance functions and predictive uncertainty.
         Defaults to False.
+    obs_variance : bool
+        Whether to compute smoothed observation variance. Defaults to False.
 
     Returns
     -------
@@ -401,6 +404,7 @@ def compute_conditional(
             y_cov_factor=y_cov_factor,
             y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
+            obs_variance=obs_variance,
         )
     elif (
         pre_transformation is not None
@@ -427,6 +431,9 @@ def compute_conditional(
             jitter=jitter,
             y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
+            obs_variance=obs_variance,
+            obs_x=x if obs_variance else None,
+            obs_y=y if obs_variance else None,
         )
     else:
         logger.debug("Using LandmarksConditional GP.")
@@ -447,6 +454,7 @@ def compute_conditional(
             y_cov_factor=y_cov_factor,
             y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
+            obs_variance=obs_variance,
         )
 
 
