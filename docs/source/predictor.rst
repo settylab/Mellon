@@ -23,8 +23,8 @@ predictor and call it like a function:
     predicted_values = predictor(Xnew)  # Generate predictions for new locations
 
 
-Uncertainy
-------------
+Uncertainty
+-----------
 
 If the predictor was generated with
 uncertainty estimates (typically by passing `predictor_with_uncertainty=True`
@@ -32,10 +32,42 @@ and `optimizer="advi"` to the model class, e.g., :class:`mellon.model.DensityEst
 then it provides methods for computing variance at these locations, and co-variance to any other
 location.
 
-- Variance Methods:
+- Epistemic uncertainty (what the model doesn't know about the function):
     - :meth:`mellon.Predictor.covariance`
     - :meth:`mellon.Predictor.mean_covariance`
     - :meth:`mellon.Predictor.uncertainty`
+
+Observation Variance
+--------------------
+
+When using :class:`mellon.model.FunctionEstimator` with ``obs_variance=True``,
+the predictor can estimate the input-dependent observation noise (aleatoric
+uncertainty). This is the irreducible noise in the observations, as opposed to
+the epistemic uncertainty above which decreases with more data.
+
+The procedure leverages the GP hat matrix to correct for the bias in
+in-sample residuals, then smooths the corrected squared residuals with a
+second GP to produce a stable variance surface.
+
+.. code-block:: python
+   :caption: Estimating observation noise with :class:`mellon.model.FunctionEstimator`
+
+    est = mellon.FunctionEstimator(sigma=1.0, obs_variance=True)
+    est.fit(X, y)
+
+    # Smoothed observation variance at new locations
+    obs_var = est.predict.obs_variance(Xnew)
+
+    # Leverage (hat matrix diagonal) at any locations
+    h = est.predict.leverage(X, sigma=1.0)
+
+    # Raw leverage-corrected squared residuals (not smoothed)
+    raw_var = est.predict.empirical_variance(X, y, sigma=1.0)
+
+- Observation variance methods (requires ``obs_variance=True`` on :class:`~mellon.model.FunctionEstimator`):
+    - :meth:`mellon.Predictor.obs_variance` -- smoothed observation noise estimate
+    - :meth:`mellon.Predictor.leverage` -- GP hat matrix diagonal
+    - :meth:`mellon.Predictor.empirical_variance` -- raw leverage-corrected squared residuals
 
 Sub-Classes
 -----------
