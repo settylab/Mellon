@@ -322,6 +322,8 @@ class Predictor(ABC):
         prediction = self._mean(x)
         residual = y - prediction
         h = self._leverage(x, sigma)
+        if residual.ndim > h.ndim:
+            h = h[..., None]
         return residual**2 / (1 - h) ** 2
 
     @abstractmethod

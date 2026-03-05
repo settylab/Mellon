@@ -130,6 +130,22 @@ def test_empirical_variance(setup_data):
     assert jnp.allclose(var, expected, atol=1e-6), "Empirical variance mismatch."
 
 
+def test_empirical_variance_multi_output():
+    """Empirical variance should handle (n, p) multi-output observations."""
+    n, d, p = 80, 3, 4
+    key = jax.random.PRNGKey(42)
+    k1, k2 = jax.random.split(key)
+    X = jax.random.normal(k1, (n, d))
+    y = jax.random.normal(k2, (n, p))
+
+    est = mellon.FunctionEstimator(n_landmarks=20, sigma=1.0)
+    est.fit(X, y)
+
+    var = est.predict.empirical_variance(X, y, sigma=1.0)
+    assert var.shape == (n, p), f"Expected ({n}, {p}), got {var.shape}"
+    assert jnp.all(var >= 0), "Variance should be non-negative."
+
+
 def test_estimator_empirical_variance(setup_data):
     """estimator.empirical_variance should match predictor.empirical_variance."""
     X, y = setup_data
