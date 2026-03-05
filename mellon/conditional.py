@@ -237,6 +237,8 @@ class _FullConditional:
 
         # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
+        if residual.ndim > h.ndim:
+            h = h[..., None]
         corrected_r2 = residual**2 / (1 - h) ** 2
 
         # Fit second GP to corrected_r2 with noise regularization sigma.
@@ -456,6 +458,8 @@ class _LandmarksConditional:
 
         # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
+        if residual.ndim > h.ndim:
+            h = h[..., None]
         corrected_r2 = residual**2 / (1 - h) ** 2
 
         # Fit second GP on landmarks to corrected_r2 with noise sigma.
@@ -675,6 +679,8 @@ class _LandmarksConditionalCholesky:
 
         # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
+        if residual.ndim > h.ndim:
+            h = h[..., None]
         corrected_r2 = residual**2 / (1 - h) ** 2
 
         # Fit second GP on landmarks to corrected_r2 with noise sigma.

@@ -247,6 +247,27 @@ def test_estimator_get_obs_variance(setup_data):
     )
 
 
+def test_obs_variance_multi_output():
+    """obs_variance should work with multi-output y of shape (n, p)."""
+    n, d, p = 80, 3, 4
+    key = jax.random.PRNGKey(42)
+    k1, k2 = jax.random.split(key)
+    X = jax.random.normal(k1, (n, d))
+    y = jax.random.normal(k2, (n, p))
+
+    # Full GP
+    est = mellon.FunctionEstimator(sigma=1.0, n_landmarks=0, obs_variance=True)
+    est.fit(X, y)
+    var = est.predict.obs_variance(X)
+    assert var.shape == (n, p), f"Full GP: expected ({n}, {p}), got {var.shape}"
+
+    # Sparse GP
+    est_s = mellon.FunctionEstimator(sigma=1.0, n_landmarks=20, obs_variance=True)
+    est_s.fit(X, y)
+    var_s = est_s.predict.obs_variance(X)
+    assert var_s.shape == (n, p), f"Sparse GP: expected ({n}, {p}), got {var_s.shape}"
+
+
 def test_fit_obs_variance_override(setup_data):
     """fit(x, y, obs_variance=True) should override constructor default."""
     X, y = setup_data
