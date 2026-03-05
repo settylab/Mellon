@@ -85,8 +85,10 @@ class FunctionEstimator(BaseEstimator):
         If None, the covariance function `cov_func` is automatically generated as `cov_func_curry(ls)`.
         Defaults to None.
 
-    sigma : float, optional
-        The standard deviation of the white noise. Defaults to 0.
+    sigma : float or array-like of shape (p,) or (1, p), optional
+        The standard deviation of the white noise. Can be a scalar (shared noise
+        across all output features) or a per-feature vector when y has shape (n, p),
+        giving each output column its own noise level. Defaults to 0.
 
     y_is_mean : bool
         Wether to consider y the GP mean or a noise measurment

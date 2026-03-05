@@ -1,6 +1,6 @@
 import logging
 from jax import vmap
-from jax.numpy import dot, square, isnan, any, eye, zeros, arange, ndim, isscalar
+from jax.numpy import dot, square, isnan, any, eye, zeros, arange, ndim, isscalar, squeeze
 from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
 from jax.numpy.linalg import cholesky, inv
@@ -8,6 +8,35 @@ from jax.scipy.linalg import solve_triangular, solve
 from .util import ensure_2d, stabilize, DEFAULT_JITTER, add_variance
 from .base_predictor import Predictor, ExpPredictor, PredictorTime
 from .decomposition import DEFAULT_SIGMA
+
+
+def _is_per_feature_sigma(sigma, y):
+    """Check if sigma is per-feature (one sigma per output column).
+
+    Returns True when sigma should be interpreted as a vector of per-feature
+    noise standard deviations for a multi-output y of shape (n, p).
+    """
+    if sigma is None or isscalar(sigma) or ndim(sigma) == 0:
+        return False
+    # Explicit (1, p) shape
+    if ndim(sigma) == 2 and sigma.shape[0] == 1 and ndim(y) == 2 and sigma.shape[1] == y.shape[1]:
+        return True
+    # 1D (p,) shape
+    if ndim(sigma) == 1 and ndim(y) == 2 and sigma.shape[0] == y.shape[1]:
+        if sigma.shape[0] == y.shape[0]:
+            logger.warning(
+                f"sigma length {sigma.shape[0]} matches both n_obs and n_features. "
+                "Interpreting as per-feature. Pass sigma with shape (n, 1) for per-observation."
+            )
+        return True
+    return False
+
+
+def _normalize_per_feature_sigma(sigma):
+    """Squeeze (1, p) sigma to (p,) for uniform internal handling."""
+    if ndim(sigma) == 2 and sigma.shape[0] == 1:
+        return squeeze(sigma, axis=0)
+    return sigma
 
 
 def _check_obs_variance(obj):
@@ -186,19 +215,32 @@ class _FullConditional:
         """
         x = ensure_2d(x)
         original_sigma = sigma
+        per_feature = _is_per_feature_sigma(sigma, y)
 
-        if L is None:
-            logger.info("Recomputing covariance decomposition for predictive function.")
-            if y_is_mean:
-                logger.debug("Assuming y is the mean of the GP.")
-                L = _get_L(x, cov_func, jitter)
-            else:
-                logger.debug("Assuming y is not the mean of the GP.")
-                y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
-                sigma = None
-                L = _get_L(x, cov_func, jitter, y_cov_factor)
-        r = y - mu
-        weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
+        if per_feature:
+            sigma_pf = _normalize_per_feature_sigma(sigma)
+            K = cov_func(x, x)
+            n = x.shape[0]
+            r = y - mu
+
+            def _solve_one(sigma_g, r_g):
+                L_g = cholesky(stabilize(K + sigma_g**2 * eye(n), jitter))
+                return solve_triangular(L_g.T, solve_triangular(L_g, r_g, lower=True))
+
+            weights = vmap(_solve_one, in_axes=(0, 1), out_axes=1)(sigma_pf, r)
+        else:
+            if L is None:
+                logger.info("Recomputing covariance decomposition for predictive function.")
+                if y_is_mean:
+                    logger.debug("Assuming y is the mean of the GP.")
+                    L = _get_L(x, cov_func, jitter)
+                else:
+                    logger.debug("Assuming y is not the mean of the GP.")
+                    y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
+                    sigma = None
+                    L = _get_L(x, cov_func, jitter, y_cov_factor)
+            r = y - mu
+            weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
 
         self.cov_func = cov_func
         self.x = x
@@ -216,6 +258,13 @@ class _FullConditional:
             )
 
         if not with_uncertainty:
+            return
+
+        if per_feature:
+            # Uncertainty not supported with per-feature sigma
+            logger.warning(
+                "with_uncertainty is not supported with per-feature sigma. Skipping."
+            )
             return
 
         self.L = L
@@ -246,12 +295,27 @@ class _FullConditional:
         # them with the same noise level as the original GP.
         n = x.shape[0]
         K = cov_func(x, x)
-        L_var = cholesky(stabilize(K + sigma**2 * eye(n), jitter))
         variance_mu = 0.0
-        variance_weights = solve_triangular(
-            L_var.T,
-            solve_triangular(L_var, corrected_r2 - variance_mu, lower=True),
-        )
+
+        if ndim(sigma) >= 1:
+            sigma_pf = _normalize_per_feature_sigma(sigma)
+
+            def _var_solve_one(sigma_g, cr2_g):
+                L_var = cholesky(stabilize(K + sigma_g**2 * eye(n), jitter))
+                return solve_triangular(
+                    L_var.T,
+                    solve_triangular(L_var, cr2_g - variance_mu, lower=True),
+                )
+
+            variance_weights = vmap(_var_solve_one, in_axes=(0, 1), out_axes=1)(
+                sigma_pf, corrected_r2
+            )
+        else:
+            L_var = cholesky(stabilize(K + sigma**2 * eye(n), jitter))
+            variance_weights = solve_triangular(
+                L_var.T,
+                solve_triangular(L_var, corrected_r2 - variance_mu, lower=True),
+            )
 
         self.variance_weights = variance_weights
         self.variance_mu = variance_mu
@@ -279,6 +343,17 @@ class _FullConditional:
         # With Cholesky L of (K + σ²I):
         #   diag((K + σ²I)^{-1}) = diag(L^{-T} L^{-1}) = sum(L^{-1}², axis=0)
         K_train = cov_func(x, x)
+
+        if ndim(sigma) >= 1:
+            sigma = _normalize_per_feature_sigma(sigma)
+
+            def _lev_one(sigma_g):
+                L = cholesky(stabilize(K_train + sigma_g**2 * eye(n), jitter))
+                Linv = solve_triangular(L, eye(n), lower=True)
+                return 1 - sigma_g**2 * arraysum(square(Linv), axis=0)
+
+            return vmap(_lev_one)(sigma).T  # (p, n) → (n, p)
+
         L = cholesky(stabilize(K_train + sigma**2 * eye(n), jitter))
         Linv = solve_triangular(L, eye(n), lower=True)
         return 1 - sigma**2 * arraysum(square(Linv), axis=0)
@@ -397,6 +472,7 @@ class _LandmarksConditional:
         x = ensure_2d(x)
         xu = ensure_2d(xu)
         Kuf = cov_func(xu, x)
+        per_feature = _is_per_feature_sigma(sigma, y)
 
         if Lp is None:
             Lp = _get_L(xu, cov_func, jitter)
@@ -404,15 +480,30 @@ class _LandmarksConditional:
         A = solve_triangular(Lp, Kuf, lower=True)
 
         r = y - mu
-        if y_is_mean:
-            r_l, A_l = r, A
-        else:
-            r_l, A_l = _process_sigma(sigma, r, A, jitter=jitter)
-        LBB = stabilize(dot(A_l, A.T), 1)
-        L_B = cholesky(LBB)
 
-        c = solve_triangular(L_B, dot(A, r_l), lower=True)
-        weights = solve_triangular(Lp.T, solve_triangular(L_B.T, c))
+        if per_feature:
+            sigma_pf = _normalize_per_feature_sigma(sigma)
+
+            def _solve_one(sigma_g, r_g):
+                sigma2 = square(sigma_g)
+                r_l = r_g / sigma2
+                A_l = A / sigma2
+                LBB = stabilize(dot(A_l, A.T), 1)
+                L_B = cholesky(LBB)
+                c = solve_triangular(L_B, dot(A, r_l), lower=True)
+                return solve_triangular(Lp.T, solve_triangular(L_B.T, c))
+
+            weights = vmap(_solve_one, in_axes=(0, 1), out_axes=1)(sigma_pf, r)
+        else:
+            if y_is_mean:
+                r_l, A_l = r, A
+            else:
+                r_l, A_l = _process_sigma(sigma, r, A, jitter=jitter)
+            LBB = stabilize(dot(A_l, A.T), 1)
+            L_B = cholesky(LBB)
+
+            c = solve_triangular(L_B, dot(A, r_l), lower=True)
+            weights = solve_triangular(Lp.T, solve_triangular(L_B.T, c))
 
         self.cov_func = cov_func
         self.landmarks = xu
@@ -428,6 +519,12 @@ class _LandmarksConditional:
             self._compute_obs_variance(x, y, xu, mu, cov_func, sigma, jitter, weights)
 
         if not with_uncertainty:
+            return
+
+        if per_feature:
+            logger.warning(
+                "with_uncertainty is not supported with per-feature sigma. Skipping."
+            )
             return
 
         self.L = Lp
@@ -468,14 +565,32 @@ class _LandmarksConditional:
         Kuf_var = cov_func(xu, x)
         A_var = solve_triangular(Lp_var, Kuf_var, lower=True)
         variance_mu = 0.0
-        r_var = corrected_r2 - variance_mu
-        r_l, A_l = _process_sigma(sigma, r_var, A_var, jitter=jitter)
-        LBB_var = stabilize(dot(A_l, A_var.T), 1)
-        L_B_var = cholesky(LBB_var)
-        c_var = solve_triangular(L_B_var, dot(A_var, r_l), lower=True)
-        variance_weights = solve_triangular(
-            Lp_var.T, solve_triangular(L_B_var.T, c_var)
-        )
+
+        if ndim(sigma) >= 1:
+            sigma_pf = _normalize_per_feature_sigma(sigma)
+            r_var = corrected_r2 - variance_mu
+
+            def _var_solve_one(sigma_g, r_var_g):
+                sigma2 = square(sigma_g)
+                r_l = r_var_g / sigma2
+                A_l = A_var / sigma2
+                LBB = stabilize(dot(A_l, A_var.T), 1)
+                L_B = cholesky(LBB)
+                c = solve_triangular(L_B, dot(A_var, r_l), lower=True)
+                return solve_triangular(Lp_var.T, solve_triangular(L_B.T, c))
+
+            variance_weights = vmap(
+                _var_solve_one, in_axes=(0, 1), out_axes=1
+            )(sigma_pf, r_var)
+        else:
+            r_var = corrected_r2 - variance_mu
+            r_l, A_l = _process_sigma(sigma, r_var, A_var, jitter=jitter)
+            LBB_var = stabilize(dot(A_l, A_var.T), 1)
+            L_B_var = cholesky(LBB_var)
+            c_var = solve_triangular(L_B_var, dot(A_var, r_l), lower=True)
+            variance_weights = solve_triangular(
+                Lp_var.T, solve_triangular(L_B_var.T, c_var)
+            )
 
         self.variance_weights = variance_weights
         self.variance_mu = variance_mu
@@ -501,6 +616,18 @@ class _LandmarksConditional:
             K_uu = self.L @ self.L.T
         else:
             K_uu = cov_func(xu, xu)
+
+        if ndim(sigma) >= 1:
+            sigma = _normalize_per_feature_sigma(sigma)
+
+            def _lev_one(sigma_g):
+                M = sigma_g**2 * K_uu + B.T @ B
+                M = stabilize(M, jitter)
+                BM = B @ inv(M)
+                return arraysum(BM * B, axis=1)
+
+            return vmap(_lev_one)(sigma).T  # (p, n) → (n, p)
+
         M = sigma**2 * K_uu + B.T @ B  # m x m
         M = stabilize(M, jitter)
         BM = B @ inv(M)  # n_new x m

@@ -31,6 +31,7 @@ from .validation import (
     validate_time_x,
     validate_float,
     validate_positive_float,
+    validate_float_or_iterable_numerical,
     validate_array,
     validate_bool,
 )
@@ -270,17 +271,18 @@ class Predictor(ABC):
         ----------
         x : array-like of shape (n, d)
             Points at which to evaluate leverage.
-        sigma : float
+        sigma : float or array-like of shape (p,) or (1, p)
             GP noise standard deviation used during fitting.
+            Can be a scalar (shared noise) or a per-feature vector.
 
         Returns
         -------
-        h : array of shape (n,)
+        h : array of shape (n,) or (n, p)
             Leverage values in [0, 1).
         """
         x = validate_array(x, "x")
         x = ensure_2d(x)
-        sigma = validate_positive_float(sigma, "sigma")
+        sigma = validate_float_or_iterable_numerical(sigma, "sigma", positive=True)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
                 f"The predictor was trained on data with {self.n_input_features} features. "
@@ -301,8 +303,9 @@ class Predictor(ABC):
             Points at which to evaluate the variance.
         y : array-like of shape (n,) or (n, p)
             Observed values.
-        sigma : float
+        sigma : float or array-like of shape (p,) or (1, p)
             GP noise standard deviation used during fitting.
+            Can be a scalar (shared noise) or a per-feature vector.
 
         Returns
         -------
@@ -312,7 +315,7 @@ class Predictor(ABC):
         x = validate_array(x, "x")
         y = validate_array(y, "y")
         x = ensure_2d(x)
-        sigma = validate_positive_float(sigma, "sigma")
+        sigma = validate_float_or_iterable_numerical(sigma, "sigma", positive=True)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
                 f"The predictor was trained on data with {self.n_input_features} features. "

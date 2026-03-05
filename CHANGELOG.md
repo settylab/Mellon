@@ -6,6 +6,7 @@
  - new `Predictor.empirical_variance(x, y, sigma)` returns leverage-corrected squared residuals
  - new convenience methods on `FunctionEstimator`: `leverage(X)`, `empirical_variance(X, y)`, `get_obs_variance(X)`
  - `obs_variance` weights are included in predictor serialization (`to_json`/`from_json`)
+ - `sigma` now accepts per-feature vectors of shape `(p,)` or `(1, p)` for multi-output GPs, giving each output column its own noise level
  - fix `requires-python` from `>=3.6` to `>=3.10`
 
 # v1.6.1
