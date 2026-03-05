@@ -7,6 +7,7 @@
  - new convenience methods on `FunctionEstimator`: `leverage(X)`, `empirical_variance(X, y)`, `get_obs_variance(X)`
  - `obs_variance` weights are included in predictor serialization (`to_json`/`from_json`)
  - `sigma` now accepts per-feature vectors of shape `(p,)` or `(1, p)` for multi-output GPs, giving each output column its own noise level
+ - replace deprecated `jaxopt` dependency with `optax` for L-BFGS optimization
  - fix `requires-python` from `>=3.6` to `>=3.10`
 
 # v1.6.1

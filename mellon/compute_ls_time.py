@@ -2,7 +2,6 @@ import logging
 from jax.numpy import exp, unique, corrcoef, zeros, abs, stack
 from jax.numpy import sum as arraysum
 from jax.numpy.linalg import norm
-from jaxopt import ScipyMinimize
 from .density_estimator import DensityEstimator
 from .validation import validate_time_x
 
@@ -95,8 +94,10 @@ def compute_ls_time(
         covs = cov_func_curry(ls)(delta_t, zeros((1, 1))).reshape((n_times, n_times))
         return norm(covs - corrs)
 
-    opt = ScipyMinimize(fun=ls_loss, method="L-BFGS-B", jit=False).run(0.0)
-    ls = exp(opt.params).item()
+    from .inference import minimize_lbfgsb
+
+    result = minimize_lbfgsb(ls_loss, 0.0, jit=False)
+    ls = exp(result.pre_transformation).item()
 
     if return_data:
         return ls, densities, predictors, unique_times
