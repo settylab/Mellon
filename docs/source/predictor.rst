@@ -61,13 +61,13 @@ second GP to produce a stable variance surface.
     # Leverage (hat matrix diagonal) at any locations
     h = est.predict.leverage(X, sigma=1.0)
 
-    # Raw leverage-corrected squared residuals (not smoothed)
-    raw_var = est.predict.empirical_variance(X, y, sigma=1.0)
+    # Squared leave-one-out residuals (not smoothed)
+    loo_r2 = est.predict.loo_residuals_squared(X, y, sigma=1.0)
 
 - Observation variance methods (requires ``obs_variance=True`` on :class:`~mellon.model.FunctionEstimator`):
     - :meth:`mellon.Predictor.obs_variance` -- smoothed observation noise estimate
     - :meth:`mellon.Predictor.leverage` -- GP hat matrix diagonal
-    - :meth:`mellon.Predictor.empirical_variance` -- raw leverage-corrected squared residuals
+    - :meth:`mellon.Predictor.loo_residuals_squared` -- squared leave-one-out residuals
 
 Sub-Classes
 -----------

@@ -117,7 +117,7 @@ def test_estimator_convenience(setup_data):
     assert jnp.allclose(h_convenience, h_direct), "Convenience method should match direct call."
 
 
-def test_empirical_variance(setup_data):
+def test_loo_residuals_squared(setup_data):
     """Empirical variance should be r^2 / (1 - h)^2."""
     X, y = setup_data
     sigma = 1.0
@@ -125,7 +125,7 @@ def test_empirical_variance(setup_data):
     est = mellon.FunctionEstimator(sigma=sigma, n_landmarks=0)
     est.fit(X, y)
 
-    var = est.predict.empirical_variance(X, y, sigma=sigma)
+    var = est.predict.loo_residuals_squared(X, y, sigma=sigma)
 
     prediction = est.predict(X)
     residual = y - prediction
@@ -135,7 +135,7 @@ def test_empirical_variance(setup_data):
     assert jnp.allclose(var, expected, atol=1e-6), "Empirical variance mismatch."
 
 
-def test_empirical_variance_multi_output():
+def test_loo_residuals_squared_multi_output():
     """Empirical variance should handle (n, p) multi-output observations."""
     n, d, p = 80, 3, 4
     key = jax.random.PRNGKey(42)
@@ -146,21 +146,21 @@ def test_empirical_variance_multi_output():
     est = mellon.FunctionEstimator(n_landmarks=20, sigma=1.0)
     est.fit(X, y)
 
-    var = est.predict.empirical_variance(X, y, sigma=1.0)
+    var = est.predict.loo_residuals_squared(X, y, sigma=1.0)
     assert var.shape == (n, p), f"Expected ({n}, {p}), got {var.shape}"
     assert jnp.all(var >= 0), "Variance should be non-negative."
 
 
-def test_estimator_empirical_variance(setup_data):
-    """estimator.empirical_variance should match predictor.empirical_variance."""
+def test_estimator_loo_residuals_squared(setup_data):
+    """estimator.loo_residuals_squared should match predictor.loo_residuals_squared."""
     X, y = setup_data
     sigma = 1.0
 
     est = mellon.FunctionEstimator(sigma=sigma, n_landmarks=0)
     est.fit(X, y)
 
-    var_convenience = est.empirical_variance(X, y)
-    var_direct = est.predict.empirical_variance(X, y, sigma=sigma)
+    var_convenience = est.loo_residuals_squared(X, y)
+    var_direct = est.predict.loo_residuals_squared(X, y, sigma=sigma)
 
     assert jnp.allclose(var_convenience, var_direct), "Convenience method should match direct call."
 

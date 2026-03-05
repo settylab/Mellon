@@ -291,16 +291,18 @@ class Predictor(ABC):
             )
         return self._leverage(x, sigma)
 
-    def empirical_variance(self, x, y, sigma=1.0):
-        """HC3 / leave-one-out-equivalent pointwise variance estimate.
+    def loo_residuals_squared(self, x, y, sigma=1.0):
+        """Squared leave-one-out residuals via the HC3 leverage shortcut.
 
-        Computes sigma_hat_i^2 = r_i^2 / (1 - h_i)^2, where r_i is the
-        residual y_i - f_hat(x_i) and h_i is the leverage.
+        Computes e_i^2 = r_i^2 / (1 - h_i)^2, where r_i is the raw
+        residual y_i - f_hat(x_i) and h_i is the leverage.  Each value
+        approximates the squared prediction error that would be obtained
+        by refitting the GP with observation i removed.
 
         Parameters
         ----------
         x : array-like of shape (n, d)
-            Points at which to evaluate the variance.
+            Points at which to evaluate.
         y : array-like of shape (n,) or (n, p)
             Observed values.
         sigma : float or array-like of shape (p,) or (1, p)
@@ -309,8 +311,8 @@ class Predictor(ABC):
 
         Returns
         -------
-        var : array of shape (n,) or (n, p)
-            Unbiased pointwise variance estimates.
+        loo_r2 : array of shape (n,) or (n, p)
+            Squared LOO residuals for each observation (and each output).
         """
         x = validate_array(x, "x")
         y = validate_array(y, "y")

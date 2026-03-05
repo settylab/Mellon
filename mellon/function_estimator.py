@@ -453,10 +453,10 @@ class FunctionEstimator(BaseEstimator):
             X = self.x
         return self.predict.leverage(X, sigma=self.sigma)
 
-    def empirical_variance(self, X=None, y=None):
-        """HC3 / leave-one-out-equivalent pointwise variance estimate.
+    def loo_residuals_squared(self, X=None, y=None):
+        """Squared leave-one-out residuals via the HC3 leverage shortcut.
 
-        Computes sigma_hat_i^2 = r_i^2 / (1 - h_i)^2.
+        Computes e_i^2 = r_i^2 / (1 - h_i)^2.
 
         Parameters
         ----------
@@ -467,12 +467,12 @@ class FunctionEstimator(BaseEstimator):
 
         Returns
         -------
-        var : array of shape (n,) or (n, p)
-            Unbiased pointwise variance estimates.
+        loo_r2 : array of shape (n,) or (n, p)
+            Squared LOO residuals for each observation (and each output).
         """
         if X is None:
             X = self.x
-        return self.predict.empirical_variance(X, y, sigma=self.sigma)
+        return self.predict.loo_residuals_squared(X, y, sigma=self.sigma)
 
     def get_obs_variance(self, X=None):
         """Smoothed observation variance from the fitted predictor.

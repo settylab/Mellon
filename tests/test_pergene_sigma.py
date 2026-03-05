@@ -101,20 +101,20 @@ def test_pergene_obs_variance_matches_per_column(multi_output_data, n_landmarks)
 
 
 @pytest.mark.parametrize("n_landmarks", [0, 15])
-def test_pergene_empirical_variance_matches_per_column(multi_output_data, n_landmarks):
-    """Per-gene empirical_variance matches per-column scalar computation."""
+def test_pergene_loo_residuals_squared_matches_per_column(multi_output_data, n_landmarks):
+    """Per-gene loo_residuals_squared matches per-column scalar computation."""
     X, y, sigma = multi_output_data
     n, p = y.shape
 
     est_pg = _fit_per_gene(X, y, sigma, n_landmarks)
-    var_pg = est_pg.predict.empirical_variance(X, y, sigma=sigma)
+    var_pg = est_pg.predict.loo_residuals_squared(X, y, sigma=sigma)
 
     assert var_pg.shape == (n, p), f"Expected ({n}, {p}), got {var_pg.shape}"
     assert jnp.all(var_pg >= 0), "Variance should be non-negative."
 
     for g in range(p):
         est_g = _fit_scalar(X, y[:, g], float(sigma[g]), n_landmarks)
-        var_g = est_g.predict.empirical_variance(X, y[:, g], sigma=float(sigma[g]))
+        var_g = est_g.predict.loo_residuals_squared(X, y[:, g], sigma=float(sigma[g]))
         assert jnp.allclose(var_pg[:, g], var_g, atol=1e-5), (
             f"Gene {g}: per-gene empvar != scalar empvar (n_landmarks={n_landmarks}), "
             f"max diff = {jnp.max(jnp.abs(var_pg[:, g] - var_g))}"
@@ -210,7 +210,7 @@ def test_n1_shape_not_per_feature():
 
 
 def test_estimator_convenience_with_pergene(multi_output_data):
-    """estimator.leverage() and estimator.empirical_variance() work with per-gene sigma."""
+    """estimator.leverage() and estimator.loo_residuals_squared() work with per-gene sigma."""
     X, y, sigma = multi_output_data
 
     est = mellon.FunctionEstimator(sigma=sigma, n_landmarks=0)
@@ -219,5 +219,5 @@ def test_estimator_convenience_with_pergene(multi_output_data):
     lev = est.leverage(X)
     assert lev.shape == (X.shape[0], y.shape[1])
 
-    var = est.empirical_variance(X, y)
+    var = est.loo_residuals_squared(X, y)
     assert var.shape == y.shape
