@@ -235,15 +235,20 @@ class _FullConditional:
         # Leverage at training points
         h = self._leverage(x, sigma)
 
-        # Corrected squared residuals
+        # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
         corrected_r2 = residual**2 / (1 - h) ** 2
 
-        # Fit second GP to corrected_r2 using y_is_mean=True (no noise)
-        L_var = _get_L(x, cov_func, jitter)
+        # Fit second GP to corrected_r2 with noise regularization sigma.
+        # The corrected r² are noisy (~chi²(1) scaled by σ²), so we smooth
+        # them with the same noise level as the original GP.
+        n = x.shape[0]
+        K = cov_func(x, x)
+        L_var = cholesky(stabilize(K + sigma**2 * eye(n), jitter))
         variance_mu = 0.0
         variance_weights = solve_triangular(
-            L_var.T, solve_triangular(L_var, corrected_r2 - variance_mu, lower=True)
+            L_var.T,
+            solve_triangular(L_var, corrected_r2 - variance_mu, lower=True),
         )
 
         self.variance_weights = variance_weights
@@ -449,19 +454,21 @@ class _LandmarksConditional:
         # Leverage at training points
         h = self._leverage(x, sigma)
 
-        # Corrected squared residuals
+        # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
         corrected_r2 = residual**2 / (1 - h) ** 2
 
-        # Fit second GP on landmarks to corrected_r2 using y_is_mean=True
+        # Fit second GP on landmarks to corrected_r2 with noise sigma.
+        # Uses the same regularization as the main GP for consistency.
         Lp_var = _get_L(xu, cov_func, jitter)
         Kuf_var = cov_func(xu, x)
         A_var = solve_triangular(Lp_var, Kuf_var, lower=True)
         variance_mu = 0.0
         r_var = corrected_r2 - variance_mu
-        LBB_var = stabilize(dot(A_var, A_var.T), 1)
+        r_l, A_l = _process_sigma(sigma, r_var, A_var, jitter=jitter)
+        LBB_var = stabilize(dot(A_l, A_var.T), 1)
         L_B_var = cholesky(LBB_var)
-        c_var = solve_triangular(L_B_var, dot(A_var, r_var), lower=True)
+        c_var = solve_triangular(L_B_var, dot(A_var, r_l), lower=True)
         variance_weights = solve_triangular(
             Lp_var.T, solve_triangular(L_B_var.T, c_var)
         )
@@ -606,6 +613,7 @@ class _LandmarksConditionalCholesky:
         :rtype: function
         """
         xu = ensure_2d(xu)
+        original_sigma = sigma
         if L is None:
             logger.info("Recomputing covariance decomposition for predictive function.")
             if y_is_mean:
@@ -636,7 +644,7 @@ class _LandmarksConditionalCholesky:
                     "for LandmarksConditionalCholesky."
                 )
             self._compute_obs_variance(
-                obs_x, obs_y, xu, mu, cov_func, sigma, jitter, weights
+                obs_x, obs_y, xu, mu, cov_func, original_sigma, jitter, weights
             )
 
         if not with_uncertainty:
@@ -665,19 +673,21 @@ class _LandmarksConditionalCholesky:
         # Leverage at training points
         h = self._leverage(x, sigma)
 
-        # Corrected squared residuals
+        # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
         corrected_r2 = residual**2 / (1 - h) ** 2
 
-        # Fit second GP on landmarks to corrected_r2 using y_is_mean=True
+        # Fit second GP on landmarks to corrected_r2 with noise sigma.
+        # Uses the same regularization as the main GP for consistency.
         Lp_var = _get_L(xu, cov_func, jitter)
         Kuf_var = cov_func(xu, x)
         A_var = solve_triangular(Lp_var, Kuf_var, lower=True)
         variance_mu = 0.0
         r_var = corrected_r2 - variance_mu
-        LBB_var = stabilize(dot(A_var, A_var.T), 1)
+        r_l, A_l = _process_sigma(sigma, r_var, A_var, jitter=jitter)
+        LBB_var = stabilize(dot(A_l, A_var.T), 1)
         L_B_var = cholesky(LBB_var)
-        c_var = solve_triangular(L_B_var, dot(A_var, r_var), lower=True)
+        c_var = solve_triangular(L_B_var, dot(A_var, r_l), lower=True)
         variance_weights = solve_triangular(
             Lp_var.T, solve_triangular(L_B_var.T, c_var)
         )
