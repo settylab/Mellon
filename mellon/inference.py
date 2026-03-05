@@ -7,8 +7,8 @@ from jax.numpy import sum as arraysum
 from jax.scipy.special import gammaln
 import jax.scipy.stats.norm as norm
 import jax
-import optax
 from jax.example_libraries.optimizers import adam
+from jaxopt import ScipyMinimize
 from .conditional import (
     FullConditional,
     ExpFullConditional,
@@ -269,50 +269,22 @@ def minimize_adam(
     return results
 
 
-def minimize_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT, maxiter=500, tol=1e-8):
+def minimize_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
     R"""
-    Minimizes function using L-BFGS via optax.
+    Minimizes function with a starting guess of initial_value.
 
     :param loss_func: Loss function to minimize.
     :type loss_func: function
     :param initial_value: Initial guess.
     :type initial_value: array-like
-    :param jit: Whether to JIT-compile the optimization step.
-    :type jit: bool
-    :param maxiter: Maximum number of iterations.
-    :type maxiter: int
-    :param tol: Gradient norm tolerance for convergence.
-    :type tol: float
     :return: Results - A named tuple containing pre_transformation, opt_state,
         loss: The optimized parameters, final state of the optimizer, and the
         final loss value,
     :rtype: array-like, array-like, Object
     """
-    solver = optax.lbfgs()
-
-    def step(x, opt_state):
-        value, grad = jax.value_and_grad(loss_func)(x)
-        updates, new_state = solver.update(
-            grad, opt_state, x,
-            value=value, grad=grad, value_fn=loss_func,
-        )
-        new_x = optax.apply_updates(x, updates)
-        return new_x, new_state, value, grad
-
-    if jit:
-        step = jax.jit(step)
-
-    x = jax.numpy.asarray(initial_value)
-    opt_state = solver.init(x)
-    loss_val = loss_func(x)
-
-    for _ in range(maxiter):
-        x, opt_state, loss_val, grad = step(x, opt_state)
-        if jax.numpy.linalg.norm(grad) < tol:
-            break
-
+    opt = ScipyMinimize(fun=loss_func, method="L-BFGS-B", jit=jit).run(initial_value)
     Results = namedtuple("Results", "pre_transformation opt_state loss")
-    results = Results(x, opt_state, float(loss_val))
+    results = Results(opt.params, opt.state, opt.state.fun_val.item())
     return results
 
 

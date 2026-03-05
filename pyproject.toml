@@ -22,7 +22,7 @@ dependencies = [
     # flexible foundations to avoid broken resolutions.
     # See: https://github.com/astral-sh/uv/issues/5161
     "jax",
-    "optax",
+    "jaxopt",
     "scikit-learn",
     "pynndescent",
 ]
