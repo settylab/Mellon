@@ -4,6 +4,14 @@ import jax.numpy as jnp
 import mellon
 
 
+def _spearman_correlation(a, b):
+    """Simple Spearman rank correlation without scipy."""
+    a, b = jnp.asarray(a).ravel(), jnp.asarray(b).ravel()
+    rank_a = jnp.argsort(jnp.argsort(a)).astype(float)
+    rank_b = jnp.argsort(jnp.argsort(b)).astype(float)
+    return jnp.corrcoef(rank_a, rank_b)[0, 1]
+
+
 @pytest.fixture
 def setup_data():
     n = 50
@@ -49,10 +57,7 @@ def test_sparse_gp_leverage_correlates_with_full(setup_data):
     est_sparse.fit(X, y)
     h_sparse = est_sparse.predict.leverage(X, sigma=sigma)
 
-    # Spearman correlation via ranks
-    from scipy.stats import spearmanr
-
-    corr, _ = spearmanr(h_full, h_sparse)
+    corr = _spearman_correlation(h_full, h_sparse)
     assert corr > 0.8, f"Spearman correlation {corr} too low between full and sparse leverage."
 
 
@@ -190,9 +195,7 @@ def test_obs_variance_correlates_with_true_noise():
 
     var = est.predict.obs_variance(X)
 
-    from scipy.stats import spearmanr
-
-    corr, _ = spearmanr(true_noise_std**2, var)
+    corr = _spearman_correlation(true_noise_std**2, var)
     assert corr > 0.3, (
         f"obs_variance should correlate with true noise variance, got Spearman={corr}"
     )
