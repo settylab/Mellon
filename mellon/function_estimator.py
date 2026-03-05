@@ -108,7 +108,7 @@ class FunctionEstimator(BaseEstimator):
 
     obs_variance : bool
         If set to True, computes the smoothed observation variance surface.
-        This estimates the spatially-varying observation noise (aleatoric uncertainty)
+        This estimates the input-dependent observation noise (aleatoric uncertainty)
         by smoothing leverage-corrected squared residuals with a second GP.
         Defaults to False.
 

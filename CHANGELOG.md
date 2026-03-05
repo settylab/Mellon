@@ -1,3 +1,13 @@
+# v1.7.0
+
+ - new `obs_variance` parameter on `FunctionEstimator` and `fit()` to estimate input-dependent observation noise
+ - new `Predictor.obs_variance(x)` returns a smoothed observation noise surface at any location
+ - new `Predictor.leverage(x, sigma)` returns the GP leverage (hat matrix diagonal) for each point
+ - new `Predictor.empirical_variance(x, y, sigma)` returns leverage-corrected squared residuals
+ - new convenience methods on `FunctionEstimator`: `leverage(X)`, `empirical_variance(X, y)`, `get_obs_variance(X)`
+ - `obs_variance` weights are included in predictor serialization (`to_json`/`from_json`)
+ - fix `requires-python` from `>=3.6` to `>=3.10`
+
 # v1.6.1
 
  - improve normalization warning to only show when appropriate

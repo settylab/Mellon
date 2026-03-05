@@ -332,7 +332,7 @@ class Predictor(ABC):
         """Smoothed observation noise variance estimate.
 
         Returns a GP-smoothed surface of corrected squared residuals
-        r_i^2 / (1 - h_i)^2, providing a spatially-varying estimate
+        r_i^2 / (1 - h_i)^2, providing an input-dependent estimate
         of the observation noise variance (aleatoric uncertainty).
 
         Parameters
