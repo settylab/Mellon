@@ -56,13 +56,13 @@ def test_pergene_leverage_matches_per_column(multi_output_data, n_landmarks):
     n = X.shape[0]
 
     est_pg = _fit_per_gene(X, y, sigma, n_landmarks)
-    lev_pg = est_pg.predict.leverage(X, sigma=sigma)
+    lev_pg = est_pg.predict.leverage(X)
 
     assert lev_pg.shape == (n, p), f"Expected ({n}, {p}), got {lev_pg.shape}"
 
     for g in range(p):
         est_g = _fit_scalar(X, y[:, g], float(sigma[g]), n_landmarks)
-        lev_g = est_g.predict.leverage(X, sigma=float(sigma[g]))
+        lev_g = est_g.predict.leverage(X)
         assert jnp.allclose(lev_pg[:, g], lev_g, atol=1e-5), (
             f"Gene {g}: per-gene lev != scalar lev (n_landmarks={n_landmarks}), "
             f"max diff = {jnp.max(jnp.abs(lev_pg[:, g] - lev_g))}"
@@ -107,14 +107,14 @@ def test_pergene_loo_residuals_squared_matches_per_column(multi_output_data, n_l
     n, p = y.shape
 
     est_pg = _fit_per_gene(X, y, sigma, n_landmarks)
-    var_pg = est_pg.predict.loo_residuals_squared(X, y, sigma=sigma)
+    var_pg = est_pg.predict.loo_residuals_squared(X, y)
 
     assert var_pg.shape == (n, p), f"Expected ({n}, {p}), got {var_pg.shape}"
     assert jnp.all(var_pg >= 0), "Variance should be non-negative."
 
     for g in range(p):
         est_g = _fit_scalar(X, y[:, g], float(sigma[g]), n_landmarks)
-        var_g = est_g.predict.loo_residuals_squared(X, y[:, g], sigma=float(sigma[g]))
+        var_g = est_g.predict.loo_residuals_squared(X, y[:, g])
         assert jnp.allclose(var_pg[:, g], var_g, atol=1e-5), (
             f"Gene {g}: per-gene empvar != scalar empvar (n_landmarks={n_landmarks}), "
             f"max diff = {jnp.max(jnp.abs(var_pg[:, g] - var_g))}"
@@ -127,7 +127,7 @@ def test_pergene_leverage_range(multi_output_data, n_landmarks):
     X, y, sigma = multi_output_data
 
     est = _fit_per_gene(X, y, sigma, n_landmarks)
-    lev = est.predict.leverage(X, sigma=sigma)
+    lev = est.predict.leverage(X)
 
     assert jnp.all(lev >= 0), "Negative leverage found with per-feature sigma."
     assert jnp.all(lev < 1), "Leverage >= 1 found with per-feature sigma."
@@ -146,7 +146,7 @@ def test_scalar_sigma_still_works():
     pred = est.predict(X)
     assert pred.shape == (30, 3)
 
-    lev = est.predict.leverage(X, sigma=1.0)
+    lev = est.predict.leverage(X)
     assert lev.shape == (30,)
 
     var = est.predict.obs_variance(X)
@@ -221,3 +221,18 @@ def test_estimator_convenience_with_pergene(multi_output_data):
 
     var = est.loo_residuals_squared(X, y)
     assert var.shape == y.shape
+
+
+def test_pergene_cached_loo_matches_explicit(multi_output_data):
+    """Per-feature sigma + obs_variance: cached loo matches explicit."""
+    X, y, sigma = multi_output_data
+
+    est = mellon.FunctionEstimator(sigma=sigma, n_landmarks=15, obs_variance=True)
+    est.fit(X, y)
+
+    var_cached = est.loo_residuals_squared()
+    var_explicit = est.predict.loo_residuals_squared(X, y)
+
+    assert jnp.allclose(var_cached, var_explicit, atol=1e-3), (
+        "Cached per-gene loo should match explicit computation."
+    )

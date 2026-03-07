@@ -411,6 +411,7 @@ class FunctionEstimator(BaseEstimator):
 
         self.prepare_inference(x)
         self.compute_conditional(x, y, obs_variance=obs_variance)
+        self.y = y
         return self
 
     @property
@@ -451,7 +452,7 @@ class FunctionEstimator(BaseEstimator):
         """
         if X is None:
             X = self.x
-        return self.predict.leverage(X, sigma=self.sigma)
+        return self.predict.leverage(X)
 
     def loo_residuals_squared(self, X=None, y=None):
         """Squared leave-one-out residuals via the HC3 leverage shortcut.
@@ -463,16 +464,23 @@ class FunctionEstimator(BaseEstimator):
         X : array-like of shape (n, d), optional
             Points at which to evaluate. If None, uses the training points.
         y : array-like of shape (n,) or (n, p), optional
-            Observed values. Required if X is not None.
+            Observed values. If None, uses the training values.
 
         Returns
         -------
         loo_r2 : array of shape (n,) or (n, p)
             Squared LOO residuals for each observation (and each output).
         """
-        if X is None:
-            X = self.x
-        return self.predict.loo_residuals_squared(X, y, sigma=self.sigma)
+        if X is None and y is None:
+            if hasattr(self.predict, '_corrected_r2'):
+                return self.predict._corrected_r2
+            X, y = self.x, self.y
+        else:
+            if X is None:
+                X = self.x
+            if y is None:
+                y = self.y
+        return self.predict.loo_residuals_squared(X, y)
 
     def get_obs_variance(self, X=None):
         """Smoothed observation variance from the fitted predictor.

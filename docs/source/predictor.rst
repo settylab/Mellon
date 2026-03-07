@@ -59,10 +59,10 @@ second GP to produce a stable variance surface.
     obs_var = est.predict.obs_variance(Xnew)
 
     # Leverage (hat matrix diagonal) at any locations
-    h = est.predict.leverage(X, sigma=1.0)
+    h = est.predict.leverage(X)
 
     # Squared leave-one-out residuals (not smoothed)
-    loo_r2 = est.predict.loo_residuals_squared(X, y, sigma=1.0)
+    loo_r2 = est.predict.loo_residuals_squared(X, y)
 
 - Observation variance methods (requires ``obs_variance=True`` on :class:`~mellon.model.FunctionEstimator`):
     - :meth:`mellon.Predictor.obs_variance` -- smoothed observation noise estimate

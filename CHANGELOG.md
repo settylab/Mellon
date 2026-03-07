@@ -3,11 +3,14 @@
  - bugfix: `FunctionEstimator` does not need `ls` if `cov_func` is given
  - new `obs_variance` parameter on `FunctionEstimator` and `fit()` to estimate input-dependent observation noise
  - new `Predictor.obs_variance(x)` returns a smoothed observation noise surface at any location
- - new `Predictor.leverage(x, sigma)` returns the GP leverage (hat matrix diagonal) for each point
- - new `Predictor.loo_residuals_squared(x, y, sigma)` returns squared leave-one-out residuals via HC3 leverage correction
+ - new `Predictor.leverage(x)` returns the GP leverage (hat matrix diagonal) for each point
+ - new `Predictor.loo_residuals_squared(x, y)` returns squared leave-one-out residuals via HC3 leverage correction
  - new convenience methods on `FunctionEstimator`: `leverage(X)`, `loo_residuals_squared(X, y)`, `get_obs_variance(X)`
+ - `FunctionEstimator.loo_residuals_squared()` defaults to training data and returns cached result when `obs_variance=True`
  - `obs_variance` weights are included in predictor serialization (`to_json`/`from_json`)
+ - `sigma` is stored on the predictor and included in serialization
  - `sigma` now accepts per-feature vectors of shape `(p,)` or `(1, p)` for multi-output GPs, giving each output column its own noise level
+ - performance: reduce redundant kernel computations when `obs_variance=True`
  - fix `requires-python` from `>=3.6` to `>=3.10`
 
 # v1.6.1

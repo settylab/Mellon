@@ -20,7 +20,7 @@ def test_full_gp_reference_results():
     est.fit(X, y)
 
     pred = est.predict(X_test)
-    lev = est.predict.leverage(X, sigma=sigma)
+    lev = est.predict.leverage(X)
     obsvar = est.predict.obs_variance(X_test)
 
     expected_pred = np.array([
@@ -87,7 +87,7 @@ def test_sparse_gp_reference_results():
     est.fit(X, y)
 
     pred = est.predict(X_test)
-    lev = est.predict.leverage(X, sigma=sigma)
+    lev = est.predict.leverage(X)
     obsvar = est.predict.obs_variance(X_test)
 
     expected_pred = np.array([

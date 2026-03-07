@@ -50,8 +50,21 @@ def _check_obs_variance(obj):
 logger = logging.getLogger("mellon")
 
 
-def _get_L(x, cov_func, jitter=DEFAULT_JITTER, y_cov_factor=None):
-    K = cov_func(x, x)
+def _sparse_solve(Lp, A, r_l, A_l):
+    """Sparse GP weight solve from sigma-adjusted inputs.
+
+    Returns (weights, L_B).
+    """
+    LBB = stabilize(dot(A_l, A.T), 1)
+    L_B = cholesky(LBB)
+    c = solve_triangular(L_B, dot(A, r_l), lower=True)
+    weights = solve_triangular(Lp.T, solve_triangular(L_B.T, c))
+    return weights, L_B
+
+
+def _get_L(x, cov_func, jitter=DEFAULT_JITTER, y_cov_factor=None, K=None):
+    if K is None:
+        K = cov_func(x, x)
     K = add_variance(K, y_cov_factor, jitter=jitter)
     L = cholesky(K)
     if any(isnan(L)):
@@ -217,9 +230,10 @@ class _FullConditional:
         original_sigma = sigma
         per_feature = _is_per_feature_sigma(sigma, y)
 
+        K = cov_func(x, x)
+
         if per_feature:
             sigma_pf = _normalize_per_feature_sigma(sigma)
-            K = cov_func(x, x)
             n = x.shape[0]
             r = y - mu
 
@@ -233,12 +247,12 @@ class _FullConditional:
                 logger.info("Recomputing covariance decomposition for predictive function.")
                 if y_is_mean:
                     logger.debug("Assuming y is the mean of the GP.")
-                    L = _get_L(x, cov_func, jitter)
+                    L = _get_L(x, cov_func, jitter, K=K)
                 else:
                     logger.debug("Assuming y is not the mean of the GP.")
                     y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
                     sigma = None
-                    L = _get_L(x, cov_func, jitter, y_cov_factor)
+                    L = _get_L(x, cov_func, jitter, y_cov_factor, K=K)
             r = y - mu
             weights = solve_triangular(L.T, solve_triangular(L, r, lower=True))
 
@@ -247,14 +261,15 @@ class _FullConditional:
         self.weights = weights
         self.mu = mu
         self.jitter = jitter
+        self.sigma = original_sigma
         self.n_input_features = x.shape[1]
         self.n_obs = x.shape[0]
 
-        self._state_variables = {"x", "weights", "mu", "jitter"}
+        self._state_variables = {"x", "weights", "mu", "jitter", "sigma"}
 
         if obs_variance:
             self._compute_obs_variance(
-                x, y, mu, cov_func, original_sigma, jitter, weights
+                x, y, mu, cov_func, original_sigma, jitter, weights, K
             )
 
         if not with_uncertainty:
@@ -276,13 +291,27 @@ class _FullConditional:
         self.W = W
         self._state_variables.add("W")
 
-    def _compute_obs_variance(self, x, y, mu, cov_func, sigma, jitter, weights):
+    def _compute_obs_variance(self, x, y, mu, cov_func, sigma, jitter, weights, K):
         """Compute smoothed observation variance using corrected residuals."""
-        # Prediction at training points
-        prediction = mu + dot(cov_func(x, x), weights)
+        n = x.shape[0]
 
-        # Leverage at training points
-        h = self._leverage(x, sigma)
+        # Prediction at training points (reuse K)
+        prediction = mu + dot(K, weights)
+
+        # Inline leverage computation (reuse K, avoid recomputing)
+        if ndim(sigma) >= 1:
+            sigma_pf = _normalize_per_feature_sigma(sigma)
+
+            def _lev_one(sigma_g):
+                L = cholesky(stabilize(K + sigma_g**2 * eye(n), jitter))
+                Linv = solve_triangular(L, eye(n), lower=True)
+                return 1 - sigma_g**2 * arraysum(square(Linv), axis=0)
+
+            h = vmap(_lev_one)(sigma_pf).T  # (p, n) → (n, p)
+        else:
+            L_lev = cholesky(stabilize(K + sigma**2 * eye(n), jitter))
+            Linv = solve_triangular(L_lev, eye(n), lower=True)
+            h = 1 - sigma**2 * arraysum(square(Linv), axis=0)
 
         # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
@@ -291,10 +320,6 @@ class _FullConditional:
         corrected_r2 = residual**2 / (1 - h) ** 2
 
         # Fit second GP to corrected_r2 with noise regularization sigma.
-        # The corrected r² are noisy (~chi²(1) scaled by σ²), so we smooth
-        # them with the same noise level as the original GP.
-        n = x.shape[0]
-        K = cov_func(x, x)
         variance_mu = 0.0
 
         if ndim(sigma) >= 1:
@@ -319,6 +344,7 @@ class _FullConditional:
 
         self.variance_weights = variance_weights
         self.variance_mu = variance_mu
+        self._corrected_r2 = corrected_r2
         self._state_variables.add("variance_weights")
         self._state_variables.add("variance_mu")
 
@@ -471,6 +497,7 @@ class _LandmarksConditional:
         """
         x = ensure_2d(x)
         xu = ensure_2d(xu)
+        original_sigma = sigma
         Kuf = cov_func(xu, x)
         per_feature = _is_per_feature_sigma(sigma, y)
 
@@ -488,10 +515,8 @@ class _LandmarksConditional:
                 sigma2 = square(sigma_g)
                 r_l = r_g / sigma2
                 A_l = A / sigma2
-                LBB = stabilize(dot(A_l, A.T), 1)
-                L_B = cholesky(LBB)
-                c = solve_triangular(L_B, dot(A, r_l), lower=True)
-                return solve_triangular(Lp.T, solve_triangular(L_B.T, c))
+                w, _ = _sparse_solve(Lp, A, r_l, A_l)
+                return w
 
             weights = vmap(_solve_one, in_axes=(0, 1), out_axes=1)(sigma_pf, r)
         else:
@@ -499,24 +524,23 @@ class _LandmarksConditional:
                 r_l, A_l = r, A
             else:
                 r_l, A_l = _process_sigma(sigma, r, A, jitter=jitter)
-            LBB = stabilize(dot(A_l, A.T), 1)
-            L_B = cholesky(LBB)
-
-            c = solve_triangular(L_B, dot(A, r_l), lower=True)
-            weights = solve_triangular(Lp.T, solve_triangular(L_B.T, c))
+            weights, L_B = _sparse_solve(Lp, A, r_l, A_l)
 
         self.cov_func = cov_func
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
         self.jitter = jitter
+        self.sigma = original_sigma
         self.n_input_features = xu.shape[1]
         self.n_obs = x.shape[0]
 
-        self._state_variables = {"landmarks", "weights", "mu", "jitter"}
+        self._state_variables = {"landmarks", "weights", "mu", "jitter", "sigma"}
 
         if obs_variance:
-            self._compute_obs_variance(x, y, xu, mu, cov_func, sigma, jitter, weights)
+            self._compute_obs_variance(
+                x, y, xu, mu, cov_func, sigma, jitter, weights, Lp, Kuf, A
+            )
 
         if not with_uncertainty:
             return
@@ -544,14 +568,31 @@ class _LandmarksConditional:
         self.W = W
         self._state_variables.add("W")
 
-    def _compute_obs_variance(self, x, y, xu, mu, cov_func, sigma, jitter, weights):
+    def _compute_obs_variance(self, x, y, xu, mu, cov_func, sigma, jitter, weights,
+                              Lp, Kuf, A):
         """Compute smoothed observation variance using corrected residuals."""
-        # Prediction at training points
-        Kxu = cov_func(x, xu)
-        prediction = mu + dot(Kxu, weights)
+        # Prediction at training points (reuse Kuf.T = cov_func(x, xu))
+        prediction = mu + dot(Kuf.T, weights)
 
-        # Leverage at training points
-        h = self._leverage(x, sigma)
+        # Leverage at training points (inline, reuse Lp)
+        B = Kuf.T  # n x m
+        K_uu = dot(Lp, Lp.T)
+
+        if ndim(sigma) >= 1:
+            sigma_pf = _normalize_per_feature_sigma(sigma)
+
+            def _lev_one(sigma_g):
+                M = sigma_g**2 * K_uu + B.T @ B
+                M = stabilize(M, jitter)
+                BM = B @ inv(M)
+                return arraysum(BM * B, axis=1)
+
+            h = vmap(_lev_one)(sigma_pf).T  # (p, n) → (n, p)
+        else:
+            M = sigma**2 * K_uu + B.T @ B
+            M = stabilize(M, jitter)
+            BM = B @ inv(M)
+            h = arraysum(BM * B, axis=1)
 
         # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
@@ -560,10 +601,7 @@ class _LandmarksConditional:
         corrected_r2 = residual**2 / (1 - h) ** 2
 
         # Fit second GP on landmarks to corrected_r2 with noise sigma.
-        # Uses the same regularization as the main GP for consistency.
-        Lp_var = _get_L(xu, cov_func, jitter)
-        Kuf_var = cov_func(xu, x)
-        A_var = solve_triangular(Lp_var, Kuf_var, lower=True)
+        # Reuse Lp and A from __init__.
         variance_mu = 0.0
 
         if ndim(sigma) >= 1:
@@ -573,27 +611,21 @@ class _LandmarksConditional:
             def _var_solve_one(sigma_g, r_var_g):
                 sigma2 = square(sigma_g)
                 r_l = r_var_g / sigma2
-                A_l = A_var / sigma2
-                LBB = stabilize(dot(A_l, A_var.T), 1)
-                L_B = cholesky(LBB)
-                c = solve_triangular(L_B, dot(A_var, r_l), lower=True)
-                return solve_triangular(Lp_var.T, solve_triangular(L_B.T, c))
+                A_l = A / sigma2
+                w, _ = _sparse_solve(Lp, A, r_l, A_l)
+                return w
 
             variance_weights = vmap(
                 _var_solve_one, in_axes=(0, 1), out_axes=1
             )(sigma_pf, r_var)
         else:
             r_var = corrected_r2 - variance_mu
-            r_l, A_l = _process_sigma(sigma, r_var, A_var, jitter=jitter)
-            LBB_var = stabilize(dot(A_l, A_var.T), 1)
-            L_B_var = cholesky(LBB_var)
-            c_var = solve_triangular(L_B_var, dot(A_var, r_l), lower=True)
-            variance_weights = solve_triangular(
-                Lp_var.T, solve_triangular(L_B_var.T, c_var)
-            )
+            r_l, A_l = _process_sigma(sigma, r_var, A, jitter=jitter)
+            variance_weights, _ = _sparse_solve(Lp, A, r_l, A_l)
 
         self.variance_weights = variance_weights
         self.variance_mu = variance_mu
+        self._corrected_r2 = corrected_r2
         self._state_variables.add("variance_weights")
         self._state_variables.add("variance_mu")
 
@@ -758,15 +790,25 @@ class _LandmarksConditionalCholesky:
 
         weights = solve_triangular(L.T, pre_transformation)
 
+        # Compute Lp (raw prior covariance Cholesky) for obs_variance
+        if obs_variance:
+            if y_is_mean:
+                Lp = L
+            else:
+                Lp = _get_L(xu, cov_func, jitter)
+        else:
+            Lp = None
+
         self.cov_func = cov_func
         self.landmarks = xu
         self.weights = weights
         self.mu = mu
         self.jitter = jitter
+        self.sigma = original_sigma
         self.n_input_features = xu.shape[1]
         self.n_obs = n_obs
 
-        self._state_variables = {"landmarks", "weights", "mu", "jitter"}
+        self._state_variables = {"landmarks", "weights", "mu", "jitter", "sigma"}
 
         if obs_variance:
             if obs_x is None or obs_y is None:
@@ -775,7 +817,7 @@ class _LandmarksConditionalCholesky:
                     "for LandmarksConditionalCholesky."
                 )
             self._compute_obs_variance(
-                obs_x, obs_y, xu, mu, cov_func, original_sigma, jitter, weights
+                obs_x, obs_y, xu, mu, cov_func, original_sigma, jitter, weights, Lp
             )
 
         if not with_uncertainty:
@@ -794,7 +836,7 @@ class _LandmarksConditionalCholesky:
         self.W = W
         self._state_variables.add("W")
 
-    def _compute_obs_variance(self, x, y, xu, mu, cov_func, sigma, jitter, weights):
+    def _compute_obs_variance(self, x, y, xu, mu, cov_func, sigma, jitter, weights, Lp):
         """Compute smoothed observation variance using corrected residuals."""
         x = ensure_2d(x)
         # Prediction at training points
@@ -811,22 +853,16 @@ class _LandmarksConditionalCholesky:
         corrected_r2 = residual**2 / (1 - h) ** 2
 
         # Fit second GP on landmarks to corrected_r2 with noise sigma.
-        # Uses the same regularization as the main GP for consistency.
-        Lp_var = _get_L(xu, cov_func, jitter)
         Kuf_var = cov_func(xu, x)
-        A_var = solve_triangular(Lp_var, Kuf_var, lower=True)
+        A_var = solve_triangular(Lp, Kuf_var, lower=True)
         variance_mu = 0.0
         r_var = corrected_r2 - variance_mu
         r_l, A_l = _process_sigma(sigma, r_var, A_var, jitter=jitter)
-        LBB_var = stabilize(dot(A_l, A_var.T), 1)
-        L_B_var = cholesky(LBB_var)
-        c_var = solve_triangular(L_B_var, dot(A_var, r_l), lower=True)
-        variance_weights = solve_triangular(
-            Lp_var.T, solve_triangular(L_B_var.T, c_var)
-        )
+        variance_weights, _ = _sparse_solve(Lp, A_var, r_l, A_l)
 
         self.variance_weights = variance_weights
         self.variance_mu = variance_mu
+        self._corrected_r2 = corrected_r2
         self._state_variables.add("variance_weights")
         self._state_variables.add("variance_mu")
 

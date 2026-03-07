@@ -260,7 +260,7 @@ class Predictor(ABC):
     def _leverage(self, Xnew, sigma):
         """Compute the leverage. Must be overridden by subclasses."""
 
-    def leverage(self, x, sigma=1.0):
+    def leverage(self, x):
         """Diagonal of the GP hat matrix H = K(K + sigma^2 I)^{-1}.
 
         The leverage h_i measures how much the observation y_i influences
@@ -271,9 +271,6 @@ class Predictor(ABC):
         ----------
         x : array-like of shape (n, d)
             Points at which to evaluate leverage.
-        sigma : float or array-like of shape (p,) or (1, p)
-            GP noise standard deviation used during fitting.
-            Can be a scalar (shared noise) or a per-feature vector.
 
         Returns
         -------
@@ -282,16 +279,15 @@ class Predictor(ABC):
         """
         x = validate_array(x, "x")
         x = ensure_2d(x)
-        sigma = validate_float_or_iterable_numerical(sigma, "sigma", positive=True)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
                 f"The predictor was trained on data with {self.n_input_features} features. "
                 f"However, the provided input data has {x.shape[1]} features. "
                 "Please ensure that the input data has the same number of features as the training data."
             )
-        return self._leverage(x, sigma)
+        return self._leverage(x, self.sigma)
 
-    def loo_residuals_squared(self, x, y, sigma=1.0):
+    def loo_residuals_squared(self, x, y):
         """Squared leave-one-out residuals via the HC3 leverage shortcut.
 
         Computes e_i^2 = r_i^2 / (1 - h_i)^2, where r_i is the raw
@@ -305,9 +301,6 @@ class Predictor(ABC):
             Points at which to evaluate.
         y : array-like of shape (n,) or (n, p)
             Observed values.
-        sigma : float or array-like of shape (p,) or (1, p)
-            GP noise standard deviation used during fitting.
-            Can be a scalar (shared noise) or a per-feature vector.
 
         Returns
         -------
@@ -317,7 +310,6 @@ class Predictor(ABC):
         x = validate_array(x, "x")
         y = validate_array(y, "y")
         x = ensure_2d(x)
-        sigma = validate_float_or_iterable_numerical(sigma, "sigma", positive=True)
         if x.shape[1] != self.n_input_features:
             raise ValueError(
                 f"The predictor was trained on data with {self.n_input_features} features. "
@@ -326,7 +318,7 @@ class Predictor(ABC):
             )
         prediction = self._mean(x)
         residual = y - prediction
-        h = self._leverage(x, sigma)
+        h = self._leverage(x, self.sigma)
         if residual.ndim > h.ndim:
             h = h[..., None]
         return residual**2 / (1 - h) ** 2
