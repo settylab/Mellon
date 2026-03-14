@@ -15,11 +15,15 @@ def _is_per_feature_sigma(sigma, y):
 
     Returns True when sigma should be interpreted as a vector of per-feature
     noise standard deviations for a multi-output y of shape (n, p).
+    Supports shapes (p,), (1, p), and (n, p).
     """
     if sigma is None or isscalar(sigma) or ndim(sigma) == 0:
         return False
     # Explicit (1, p) shape
     if ndim(sigma) == 2 and sigma.shape[0] == 1 and ndim(y) == 2 and sigma.shape[1] == y.shape[1]:
+        return True
+    # Per-observation-per-feature (n, p) shape
+    if ndim(sigma) == 2 and ndim(y) == 2 and sigma.shape == y.shape:
         return True
     # 1D (p,) shape
     if ndim(sigma) == 1 and ndim(y) == 2 and sigma.shape[0] == y.shape[1]:
@@ -241,7 +245,10 @@ class _FullConditional:
                 L_g = cholesky(stabilize(K + sigma_g**2 * eye(n), jitter))
                 return solve_triangular(L_g.T, solve_triangular(L_g, r_g, lower=True))
 
-            weights = vmap(_solve_one, in_axes=(0, 1), out_axes=1)(sigma_pf, r)
+            sigma_in_axis = 1 if ndim(sigma_pf) == 2 else 0
+            weights = vmap(_solve_one, in_axes=(sigma_in_axis, 1), out_axes=1)(
+                sigma_pf, r
+            )
         else:
             if L is None:
                 logger.info("Recomputing covariance decomposition for predictive function.")
@@ -307,7 +314,8 @@ class _FullConditional:
                 Linv = solve_triangular(L, eye(n), lower=True)
                 return 1 - sigma_g**2 * arraysum(square(Linv), axis=0)
 
-            h = vmap(_lev_one)(sigma_pf).T  # (p, n) → (n, p)
+            sigma_in_axis = 1 if ndim(sigma_pf) == 2 else 0
+            h = vmap(_lev_one, in_axes=sigma_in_axis, out_axes=1)(sigma_pf)  # → (n, p)
         else:
             L_lev = cholesky(stabilize(K + sigma**2 * eye(n), jitter))
             Linv = solve_triangular(L_lev, eye(n), lower=True)
@@ -518,7 +526,12 @@ class _LandmarksConditional:
                 w, _ = _sparse_solve(Lp, A, r_l, A_l)
                 return w
 
-            weights = vmap(_solve_one, in_axes=(0, 1), out_axes=1)(sigma_pf, r)
+            # (n, p) sigma: vmap slices along axis 1 for both sigma and r
+            # (p,) sigma: vmap slices along axis 0 for sigma, axis 1 for r
+            sigma_in_axis = 1 if ndim(sigma_pf) == 2 else 0
+            weights = vmap(
+                _solve_one, in_axes=(sigma_in_axis, 1), out_axes=1
+            )(sigma_pf, r)
         else:
             if y_is_mean:
                 r_l, A_l = r, A
@@ -545,16 +558,18 @@ class _LandmarksConditional:
         if not with_uncertainty:
             return
 
-        if per_feature:
-            logger.warning(
-                "with_uncertainty is not supported with per-feature sigma. Skipping."
-            )
-            return
-
         self.L = Lp
         self._state_variables.add("L")
 
-        Cs = dot(Lp, L_B)
+        if per_feature:
+            # The GP posterior covariance k_post(x, x') depends only on data
+            # point locations and the kernel, not on observation noise sigma.
+            # Observation noise is accounted for separately via obs_variance.
+            # Use noise-free L_B for the shared covariance structure.
+            _, L_B_noisefree = _sparse_solve(Lp, A, r, A)
+            Cs = dot(Lp, L_B_noisefree)
+        else:
+            Cs = dot(Lp, L_B)
         self.Cs = Cs
         self._state_variables.add("Cs")
 
@@ -587,7 +602,8 @@ class _LandmarksConditional:
                 BM = B @ inv(M)
                 return arraysum(BM * B, axis=1)
 
-            h = vmap(_lev_one)(sigma_pf).T  # (p, n) → (n, p)
+            sigma_in_axis = 1 if ndim(sigma_pf) == 2 else 0
+            h = vmap(_lev_one, in_axes=sigma_in_axis, out_axes=1)(sigma_pf)  # → (n, p)
         else:
             M = sigma**2 * K_uu + B.T @ B
             M = stabilize(M, jitter)
