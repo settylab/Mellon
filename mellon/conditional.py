@@ -269,10 +269,13 @@ class _FullConditional:
         self.mu = mu
         self.jitter = jitter
         self.sigma = original_sigma
+        self.per_feature_sigma = per_feature
         self.n_input_features = x.shape[1]
         self.n_obs = x.shape[0]
 
-        self._state_variables = {"x", "weights", "mu", "jitter", "sigma"}
+        self._state_variables = {
+            "x", "weights", "mu", "jitter", "sigma", "per_feature_sigma",
+        }
 
         if obs_variance:
             self._compute_obs_variance(
@@ -283,20 +286,24 @@ class _FullConditional:
             return
 
         if per_feature:
-            # Uncertainty not supported with per-feature sigma
-            logger.warning(
-                "with_uncertainty is not supported with per-feature sigma. Skipping."
-            )
-            return
+            # Per-feature sigma: use noise-free covariance (sigma=0).
+            # One Cholesky of K (already computed) instead of one per feature.
+            L = _get_L(x, cov_func, jitter, K=K)
+        elif L is None:
+            # Scalar sigma: L was already computed above in the else branch,
+            # but guard against the case where it wasn't.
+            y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
+            sigma = None
+            L = _get_L(x, cov_func, jitter, y_cov_factor, K=K)
 
         self.L = L
         self._state_variables.add("L")
 
-        y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
-
-        W = solve_triangular(L.T, solve_triangular(L, y_cov_factor, lower=True))
-        self.W = W
-        self._state_variables.add("W")
+        if not per_feature:
+            y_cov_factor = _sigma_to_y_cov_factor(sigma, y_cov_factor, x.shape[0])
+            W = solve_triangular(L.T, solve_triangular(L, y_cov_factor, lower=True))
+            self.W = W
+            self._state_variables.add("W")
 
     def _compute_obs_variance(self, x, y, mu, cov_func, sigma, jitter, weights, K):
         """Compute smoothed observation variance using corrected residuals."""
@@ -545,10 +552,13 @@ class _LandmarksConditional:
         self.mu = mu
         self.jitter = jitter
         self.sigma = original_sigma
+        self.per_feature_sigma = per_feature
         self.n_input_features = xu.shape[1]
         self.n_obs = x.shape[0]
 
-        self._state_variables = {"landmarks", "weights", "mu", "jitter", "sigma"}
+        self._state_variables = {
+            "landmarks", "weights", "mu", "jitter", "sigma", "per_feature_sigma",
+        }
 
         if obs_variance:
             self._compute_obs_variance(
@@ -561,17 +571,10 @@ class _LandmarksConditional:
         self.L = Lp
         self._state_variables.add("L")
 
-        if per_feature:
-            # The GP posterior covariance k_post(x, x') depends only on data
-            # point locations and the kernel, not on observation noise sigma.
-            # Observation noise is accounted for separately via obs_variance.
-            # Use noise-free L_B for the shared covariance structure.
-            _, L_B_noisefree = _sparse_solve(Lp, A, r, A)
-            Cs = dot(Lp, L_B_noisefree)
-        else:
+        if not per_feature:
             Cs = dot(Lp, L_B)
-        self.Cs = Cs
-        self._state_variables.add("Cs")
+            self.Cs = Cs
+            self._state_variables.add("Cs")
 
         if not y_is_mean:
             return
@@ -693,12 +696,20 @@ class _LandmarksConditional:
         cov_func = self.cov_func
         xu = self.landmarks
         L = self.L
-        Cs = self.Cs
 
         Kus = cov_func(xu, Xnew)
-        C = solve_triangular(Cs, Kus, lower=True)
         As = solve_triangular(L, Kus, lower=True)
 
+        if self.per_feature_sigma:
+            # Noise-free: k(x*,x*) - K_{x*,u} K_uu^{-1} K_{u,x*}
+            # The Nyström residual captures approximation uncertainty.
+            if diag:
+                return cov_func.diag(Xnew) - arraysum(square(As), axis=0)
+            else:
+                return cov_func(Xnew, Xnew) - dot(As.T, As)
+
+        Cs = self.Cs
+        C = solve_triangular(Cs, Kus, lower=True)
         if diag:
             Kss = cov_func.diag(Xnew)
             var = Kss - arraysum(square(As), axis=0) + arraysum(square(C), axis=0)
@@ -821,10 +832,13 @@ class _LandmarksConditionalCholesky:
         self.mu = mu
         self.jitter = jitter
         self.sigma = original_sigma
+        self.per_feature_sigma = False
         self.n_input_features = xu.shape[1]
         self.n_obs = n_obs
 
-        self._state_variables = {"landmarks", "weights", "mu", "jitter", "sigma"}
+        self._state_variables = {
+            "landmarks", "weights", "mu", "jitter", "sigma", "per_feature_sigma",
+        }
 
         if obs_variance:
             if obs_x is None or obs_y is None:

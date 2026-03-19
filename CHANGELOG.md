@@ -10,6 +10,7 @@
  - `obs_variance` weights are included in predictor serialization (`to_json`/`from_json`)
  - `sigma` is stored on the predictor and included in serialization
  - `sigma` now accepts per-feature vectors of shape `(p,)` or `(1, p)` for multi-output GPs, giving each output column its own noise level
+ - `Predictor.covariance()` accepts `noise_free=True` (required when fitted with per-feature sigma) and returns the noise-free posterior covariance
  - performance: reduce redundant kernel computations when `obs_variance=True`
  - fix `requires-python` from `>=3.6` to `>=3.10`
 

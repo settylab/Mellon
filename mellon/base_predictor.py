@@ -358,10 +358,21 @@ class Predictor(ABC):
     def _covariance(self, *args, **kwars):
         """Compute the covariance. Must be overridden by subclasses."""
 
-    def covariance(self, x, diag=True):
+    def _has_per_feature_sigma(self):
+        """Whether the predictor was fitted with per-feature sigma."""
+        return getattr(self, "per_feature_sigma", False)
+
+    def covariance(self, x, diag=True, noise_free=False):
         """
-        Computes the covariance of the Gaussian Process distribution of functions
+        Computes the covariance of the Gaussian Process posterior distribution
         over new data points or cell states.
+
+        When the estimator was fitted with per-feature sigma (shape ``(p,)``,
+        ``(1, p)``, or ``(n, p)``), the covariance is computed at ``sigma=0``
+        (noise-free) because a sigma-aware covariance would require a separate
+        decomposition per feature. Pass ``noise_free=True`` to acknowledge this.
+        Observation noise should be accounted for separately, e.g., via
+        :meth:`obs_variance`.
 
         Parameters
         ----------
@@ -369,6 +380,9 @@ class Predictor(ABC):
             The new data points for which to compute the covariance.
         diag : boolean, optional (default=True)
             Whether to return the variance (True) or the full covariance matrix (False).
+        noise_free : boolean, optional (default=False)
+            If True, return the noise-free posterior covariance (sigma=0).
+            Required when the estimator was fitted with per-feature sigma.
 
         Returns
         -------
@@ -376,7 +390,20 @@ class Predictor(ABC):
             If diag=True, returns the variances for each sample.
         cov : array-like, shape (n_samples, n_samples)
             If diag=False, returns the full covariance matrix between samples.
+
+        Raises
+        ------
+        ValueError
+            If per-feature sigma was used and ``noise_free`` is not True.
         """
+        if self._has_per_feature_sigma() and not noise_free:
+            raise ValueError(
+                "This predictor was fitted with per-feature sigma, so the "
+                "covariance is noise-free (sigma=0) and does not include "
+                "observation noise. Pass noise_free=True to acknowledge this "
+                "and obtain the noise-free covariance, then account for "
+                "observation noise separately (e.g., via obs_variance)."
+            )
         x = validate_array(x, "x")
         x = ensure_2d(x)
         if x.shape[1] != self.n_input_features:
