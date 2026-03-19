@@ -11,6 +11,7 @@
  - `sigma` is stored on the predictor and included in serialization
  - `sigma` now accepts per-feature vectors of shape `(p,)` or `(1, p)` for multi-output GPs, giving each output column its own noise level
  - performance: reduce redundant kernel computations when `obs_variance=True`
+ - **Laplace approximation for posterior uncertainty**: `predictor_with_uncertainty=True` now works with all optimizers, not just `optimizer="advi"`. When using `optimizer="L-BFGS-B"` or `optimizer="adam"`, a diagonal Laplace approximation is automatically computed at the MAP estimate to provide posterior uncertainty. This enables `.mean_covariance(X)` and `.uncertainty(X)` on the predictor without the runtime cost of ADVI.
  - fix `requires-python` from `>=3.6` to `>=3.10`
 
 # v1.6.1
@@ -68,7 +69,7 @@ Integrates a boolean parameter `with_uncertainty` across all estimators: [Densit
  - `.mean_covariance(X)`: Computes the (co-)variance through the uncertainty of the mean function's GP posterior.
    - Derived from Bayesian inference for latent density function representation.
    - Increases in low data or low-density areas.
-   - Only available with posterior uncertainty quantification, e.g., `optimizer='advi'` except for the `FunctionEstimator` where input uncertainty is specified through the `sigma` parameter.
+   - Available with any optimizer when `predictor_with_uncertainty=True`. Non-ADVI optimizers use a Laplace approximation (since v1.7.0). For the `FunctionEstimator`, input uncertainty is specified through the `sigma` parameter.
    - Defaults to `diag=True`, computing only the covariance matrix diagonal.
  - `.uncertainty(X)`: Combines `.covariance(X)` and `.mean_covariance(X)`.
    - Defaults to `diag=True`, computing only the covariance matrix diagonal.

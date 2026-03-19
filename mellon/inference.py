@@ -288,6 +288,56 @@ def minimize_lbfgsb(loss_func, initial_value, jit=DEFAULT_JIT):
     return results
 
 
+def compute_laplace_std(loss_func, pre_transformation, jit=DEFAULT_JIT):
+    R"""
+    Computes the diagonal Laplace approximation of the posterior standard
+    deviation at the MAP estimate. Uses forward-over-reverse mode automatic
+    differentiation to efficiently extract the diagonal of the Hessian.
+
+    The Laplace approximation models the posterior as a Gaussian centered at
+    the MAP point with covariance equal to the inverse Hessian of the negative
+    log-posterior. This function returns the diagonal standard deviations,
+    matching the mean-field assumption used by ADVI.
+
+    :param loss_func: The negative log-posterior (loss) function to minimize.
+    :type loss_func: function
+    :param pre_transformation: The MAP estimate (mode of the posterior).
+    :type pre_transformation: array-like
+    :param jit: Whether to JIT-compile the computation. Defaults to False.
+    :type jit: bool
+    :return: The diagonal posterior standard deviations.
+    :rtype: array-like
+    """
+    grad_f = jax.grad(loss_func)
+
+    def hessian_diagonal(z):
+        basis = jax.numpy.eye(z.shape[0])
+
+        def diag_element(e):
+            _, hvp = jax.jvp(grad_f, (z,), (e,))
+            return jax.numpy.dot(hvp, e)
+
+        return vmap(diag_element)(basis)
+
+    if jit:
+        hessian_diagonal = jax.jit(hessian_diagonal)
+
+    h_diag = hessian_diagonal(pre_transformation)
+    # Hessian of negative log-posterior = precision matrix diagonal.
+    # Clip to avoid sqrt of negative/zero values from numerical issues.
+    h_diag = jax.numpy.maximum(h_diag, 1e-8)
+    stds = 1.0 / jax.numpy.sqrt(h_diag)
+    logger.info(
+        "Laplace approximation: Hessian diagonal range [%.3e, %.3e], "
+        "std range [%.3e, %.3e].",
+        float(jax.numpy.min(h_diag)),
+        float(jax.numpy.max(h_diag)),
+        float(jax.numpy.min(stds)),
+        float(jax.numpy.max(stds)),
+    )
+    return stds
+
+
 def compute_log_density_x(pre_transformation, transform):
     R"""
     Computes the log density at the training points.

@@ -4,6 +4,7 @@ from .inference import (
     minimize_adam,
     run_advi,
     minimize_lbfgsb,
+    compute_laplace_std,
     DEFAULT_N_ITER,
     DEFAULT_INIT_LEARN_RATE,
     DEFAULT_OPTIMIZER,
@@ -404,6 +405,16 @@ class BaseEstimator:
             )
             logger.error(error)
             raise error
+
+        # Laplace approximation for non-ADVI optimizers
+        if optimizer != "advi" and self.predictor_with_uncertainty:
+            if self.pre_transformation_std is None:
+                logger.info(
+                    "Computing Laplace approximation for posterior uncertainty."
+                )
+                self.pre_transformation_std = compute_laplace_std(
+                    function, self.pre_transformation, jit=self.jit
+                )
 
     def _prepare_attribute(self, attribute):
         R"""

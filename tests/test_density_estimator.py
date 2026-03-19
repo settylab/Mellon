@@ -307,6 +307,7 @@ def test_density_estimator_errors(common_setup):
     est.predict.n_obs = None
     with pytest.raises(ValueError):
         est.predict(X, normalize=True)
+    # With Laplace approximation, L-BFGS-B now supports predictor_with_uncertainty
     est = mellon.DensityEstimator(predictor_with_uncertainty=True)
-    with pytest.raises(ValueError):
-        est.fit(X)
+    est.fit(X)
+    assert est.pre_transformation_std is not None
