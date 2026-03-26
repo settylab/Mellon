@@ -27,10 +27,17 @@ Uncertainty
 -----------
 
 If the predictor was generated with
-uncertainty estimates (typically by passing `predictor_with_uncertainty=True`
-and `optimizer="advi"` to the model class, e.g., :class:`mellon.model.DensityEstimator`)
+uncertainty estimates (by passing `predictor_with_uncertainty=True`
+to the model class, e.g., :class:`mellon.model.DensityEstimator`)
 then it provides methods for computing variance at these locations, and co-variance to any other
 location.
+
+With ``optimizer="advi"``, uncertainty is obtained by variationally optimizing
+the posterior over latent function representations.  Other optimizers
+(``"L-BFGS-B"``, ``"adam"``) find the MAP estimate and then apply a diagonal
+Laplace approximation to the posterior at that point, which is faster.
+Both approaches use a diagonal (mean-field) covariance and therefore tend to
+underestimate uncertainty by ignoring posterior correlations.
 
 - Epistemic uncertainty (what the model doesn't know about the function):
     - :meth:`mellon.Predictor.covariance`
