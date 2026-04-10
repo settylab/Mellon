@@ -15,6 +15,7 @@ from .parameters import (
     compute_distances,
     compute_mu,
     compute_initial_dimensionalities,
+    DEFAULT_RANDOM_SEED,
 )
 from .util import (
     DEFAULT_JITTER,
@@ -198,6 +199,7 @@ class DimensionalityEstimator(BaseEstimator):
         predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
         check_rank=None,
+        random_state=DEFAULT_RANDOM_SEED,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
@@ -221,6 +223,7 @@ class DimensionalityEstimator(BaseEstimator):
             predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
             check_rank=check_rank,
+            random_state=random_state,
         )
         self.k = validate_positive_int(k, "k")
         self.mu_dim = validate_float(mu_dim, "mu_dim")
@@ -373,7 +376,10 @@ class DimensionalityEstimator(BaseEstimator):
         x = self.x
         k = self.k
         logger.info("Computing distances.")
-        distances = compute_distances(x, k=k)
+        seed = (
+            self.random_state if self.random_state is not None else DEFAULT_RANDOM_SEED
+        )
+        distances = compute_distances(x, k=k, seed=seed)
         return distances
 
     def _compute_nn_distances(self):

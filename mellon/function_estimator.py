@@ -1,5 +1,6 @@
 import logging
 from .base_model import BaseEstimator, DEFAULT_COV_FUNC
+from .parameters import DEFAULT_RANDOM_SEED
 from .inference import (
     compute_conditional,
     DEFAULT_N_ITER,
@@ -142,6 +143,7 @@ class FunctionEstimator(BaseEstimator):
         predictor_with_uncertainty=False,
         obs_variance=False,
         jit=True,
+        random_state=DEFAULT_RANDOM_SEED,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
@@ -157,6 +159,7 @@ class FunctionEstimator(BaseEstimator):
             cov_func=cov_func,
             predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
+            random_state=random_state,
         )
         self.y_is_mean = validate_bool(y_is_mean, "y_is_mean")
         self.mu = validate_float(mu, "mu")
@@ -216,6 +219,7 @@ class FunctionEstimator(BaseEstimator):
             f"\n    nn_distances={nn_distances},"
             f"\n    optimizer={self.optimizer},"
             f"\n    predictor_with_uncertainty={self.predictor_with_uncertainty},"
+            f"\n    random_state={self.random_state},"
             f"\n    rank={self.rank},"
             f"\n    sigma={self.sigma},"
             f"\n    y_is_mean={self.y_is_mean},"

@@ -20,6 +20,7 @@ from .parameters import (
     compute_mu,
     compute_initial_value,
     compute_average_cell_count,
+    DEFAULT_RANDOM_SEED,
 )
 from .compute_ls_time import compute_ls_time
 from .util import (
@@ -261,6 +262,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         _save_intermediate_ls_times=False,
         jit=DEFAULT_JIT,
         check_rank=None,
+        random_state=DEFAULT_RANDOM_SEED,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
@@ -284,6 +286,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
             predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
             check_rank=check_rank,
+            random_state=random_state,
         )
         if not isinstance(density_estimator_kwargs, dict):
             raise ValueError("density_estimator_kwargs needs to be a dictionary.")
@@ -545,8 +548,11 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
                 "computing k-means on a subset of cells and passing "
                 "the results as 'landmarks' to speed up the process."
             )
+        random_state = (
+            self.random_state if self.random_state is not None else DEFAULT_RANDOM_SEED
+        )
         landmarks = compute_landmarks_rescale_time(
-            x, ls, ls_time, n_landmarks=n_landmarks
+            x, ls, ls_time, n_landmarks=n_landmarks, random_state=random_state
         )
         return landmarks
 

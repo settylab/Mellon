@@ -1,3 +1,7 @@
+# Unreleased
+
+ - new `random_state` parameter on all estimators (`FunctionEstimator`, `DensityEstimator`, `DimensionalityEstimator`, `TimeSensitiveDensityEstimator`) — controls the seed used for k-means landmark selection and PyNNDescent nearest-neighbor index initialization. Defaults to `42`, preserving prior behavior. Previously, only the module-level `compute_landmarks` / `compute_nn_distances` functions exposed the seed; estimators silently used the hardcoded default.
+
 # v1.7.0
 
  - bugfix: `FunctionEstimator` does not need `ls` if `cov_func` is given

@@ -15,6 +15,7 @@ from .parameters import (
     compute_d_factal,
     compute_mu,
     compute_initial_value,
+    DEFAULT_RANDOM_SEED,
 )
 from .util import (
     DEFAULT_JITTER,
@@ -200,6 +201,7 @@ class DensityEstimator(BaseEstimator):
         predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
         check_rank=None,
+        random_state=DEFAULT_RANDOM_SEED,
     ):
         super().__init__(
             cov_func_curry=cov_func_curry,
@@ -223,6 +225,7 @@ class DensityEstimator(BaseEstimator):
             predictor_with_uncertainty=predictor_with_uncertainty,
             jit=jit,
             check_rank=check_rank,
+            random_state=random_state,
         )
         # If d is explicitly provided, set d_method to "manual"
         if d is not None:

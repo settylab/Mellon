@@ -20,6 +20,7 @@ from .parameters import (
     compute_cov_func,
     compute_Lp,
     compute_L,
+    DEFAULT_RANDOM_SEED,
 )
 from .util import (
     test_rank,
@@ -80,12 +81,16 @@ class BaseEstimator:
         predictor_with_uncertainty=False,
         jit=DEFAULT_JIT,
         check_rank=None,
+        random_state=DEFAULT_RANDOM_SEED,
     ):
         self.cov_func_curry = validate_cov_func_curry(
             cov_func_curry, cov_func, "cov_func_curry"
         )
         self.n_landmarks = validate_positive_int(
             n_landmarks, "n_landmarks", optional=True
+        )
+        self.random_state = validate_positive_int(
+            random_state, "random_state", optional=True
         )
         self.rank = validate_float_or_int(rank, "rank", optional=True)
         self.jitter = validate_positive_float(jitter, "jitter")
@@ -151,6 +156,7 @@ class BaseEstimator:
             f"\n    nn_distances={nn_distances},"
             f"\n    optimizer={self.optimizer},"
             f"\n    predictor_with_uncertainty={self.predictor_with_uncertainty},"
+            f"\n    random_state={self.random_state},"
             f"\n    rank={self.rank},"
             "\n)"
         )
@@ -225,7 +231,12 @@ class BaseEstimator:
                 "computing k-means on a subset of cells and passing "
                 "the results as 'landmarks' to speed up the process."
             )
-        landmarks = compute_landmarks(x, gp_type, n_landmarks=n_landmarks)
+        random_state = (
+            self.random_state if self.random_state is not None else DEFAULT_RANDOM_SEED
+        )
+        landmarks = compute_landmarks(
+            x, gp_type, n_landmarks=n_landmarks, random_state=random_state
+        )
         return landmarks
 
     def _compute_rank(self):
@@ -243,7 +254,10 @@ class BaseEstimator:
     def _compute_nn_distances(self):
         x = self.x
         logger.info("Computing nearest neighbor distances.")
-        nn_distances = compute_nn_distances(x)
+        seed = (
+            self.random_state if self.random_state is not None else DEFAULT_RANDOM_SEED
+        )
+        nn_distances = compute_nn_distances(x, seed=seed)
         nn_distances = validate_nn_distances(nn_distances)
         return nn_distances
 
