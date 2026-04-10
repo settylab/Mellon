@@ -586,15 +586,18 @@ def set_jax_config(enable_x64=True, platform_name="cpu"):
     jaxconfig.update("jax_platform_name", platform_name)
 
 
-class GaussianProcessType(Enum):
+class GaussianProcessType(str, Enum):
     """
     Defines types of Gaussian Process (GP) computations for various estimators within the mellon library:
     :class:`mellon.model.DensityEstimator`, :class:`mellon.model.FunctionEstimator`,
     :class:`mellon.model.DimensionalityEstimator`, :class:`mellon.model.TimeSensitiveDensityEstimator`.
 
     This enum can be passed through the `gp_type` attribute to the mentioned estimators.
-    If a string representing one of these values is passed alternatively, the
-    :func:`from_string` method is called to convert it to a `GaussianProcessType`.
+    Members inherit from ``str``, so passing the corresponding string literal
+    (e.g. ``"fixed"``) is interchangeable with the enum member
+    (``GaussianProcessType.FIXED``) — equality, hashing, and dict lookup all
+    work in both directions. The :func:`from_string` method is still available
+    for explicit normalization.
 
     Options are 'full', 'full_nystroem', 'sparse_cholesky', 'sparse_nystroem', 'fixed'.
     """

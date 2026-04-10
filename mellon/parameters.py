@@ -280,11 +280,11 @@ def compute_landmarks(x, gp_type=None, n_landmarks=DEFAULT_N_LANDMARKS, random_s
     if n_landmarks >= n:
         if gp_type == GaussianProcessType.FIXED:
             message = (
-                f"Gaussin process type is {gp_type} and n_landmarks={n_landmarks:,} "
-                f"are requested while only {n:,} datapoints are available. "
-                f"Using all datapoints for {n:,} landmarks instead."
+                f"Gaussian process type is {gp_type} and n_landmarks={n_landmarks:,} "
+                f"requested while only {n:,} datapoints are available. "
+                f"Using all {n:,} datapoints as landmarks."
             )
-            logger.warning(message)
+            logger.info(message)
             return x
         return None
     logger.info(f"Computing {n_landmarks:,} landmarks with k-means clustering (random_state={random_state}).")
