@@ -1,4 +1,4 @@
-# Unreleased
+# v1.7.1
 
  - new `random_state` parameter on all estimators (`FunctionEstimator`, `DensityEstimator`, `DimensionalityEstimator`, `TimeSensitiveDensityEstimator`) — controls the seed used for k-means landmark selection and PyNNDescent nearest-neighbor index initialization. Defaults to `42`, preserving prior behavior. Previously, only the module-level `compute_landmarks` / `compute_nn_distances` functions exposed the seed; estimators silently used the hardcoded default.
  - **bugfix**: `GaussianProcessType` now inherits from `(str, Enum)` so string literals (e.g. `"fixed"`) compare equal to enum members (`GaussianProcessType.FIXED`). Previously, public functions like `compute_landmarks` checked `gp_type == GaussianProcessType.FIXED` directly, which silently returned `None` when callers passed the documented string literal — bypassing the intended fall-through behavior (returning all datapoints as landmarks when `n_landmarks >= n_samples`). Affected any caller using `compute_landmarks(..., gp_type="fixed")` directly without going through an estimator.
