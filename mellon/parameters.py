@@ -542,7 +542,7 @@ def compute_d(x):
     return x.shape[1]
 
 
-def compute_d_factal(x, k=10, n=500, seed=432):
+def compute_d_fractal(x, k=10, n=500, seed=432):
     """
     Computes the dimensionality of the data based on the average fractal
     dimension around `n` randomly selected cells.
@@ -581,6 +581,17 @@ def compute_d_factal(x, k=10, n=500, seed=432):
         x_query = x
     local_dims = local_dimensionality(x, k=k, x_query=x_query)
     return local_dims.mean().item()
+
+
+def compute_d_factal(x, k=10, n=500, seed=432):
+    """
+    Backwards-compatible alias for :func:`compute_d_fractal`.
+
+    The function was renamed from ``compute_d_factal`` to ``compute_d_fractal``
+    to fix the spelling of "fractal". This alias is retained so existing
+    downstream callers keep working and is kept warning-free by default.
+    """
+    return compute_d_fractal(x, k=k, n=n, seed=seed)
 
 
 def compute_mu(nn_distances, d):

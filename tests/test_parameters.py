@@ -12,6 +12,7 @@ from mellon.parameters import (
     compute_landmarks_rescale_time,
     compute_nn_distances_within_time_points,
     compute_d,
+    compute_d_fractal,
     compute_d_factal,
     compute_Lp,
     compute_L,
@@ -91,6 +92,32 @@ def test_compute_d_factal(caplog):
     # Test with invalid input (negative k)
     with pytest.raises(ValueError):
         compute_d_factal(x_2d, k=-5)
+
+
+def test_compute_d_fractal_alias_equivalence():
+    # The canonical name is compute_d_fractal; compute_d_factal is a
+    # backwards-compatible alias. Both must import and return identical
+    # values for the same input and seed.
+    key = random.PRNGKey(0)
+    x = random.normal(key, shape=(200, 8))
+
+    result_new = compute_d_fractal(x, seed=432)
+    result_old = compute_d_factal(x, seed=432)
+    assert isinstance(result_new, float)
+    assert result_new == result_old, (
+        "compute_d_factal alias must return the same value as compute_d_fractal"
+    )
+
+
+def test_density_estimator_d_method_fractal_end_to_end():
+    # DensityEstimator(d_method="fractal") must work end-to-end after the rename.
+    key = random.PRNGKey(0)
+    x = random.normal(key, shape=(50, 3))
+
+    est = mellon.DensityEstimator(d_method="fractal")
+    est.fit(x)
+    log_density = est.predict(x)
+    assert log_density.shape == (x.shape[0],)
 
 
 def test_compute_Lp():
