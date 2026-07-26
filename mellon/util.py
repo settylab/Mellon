@@ -6,6 +6,7 @@ from typing import List
 from inspect import Parameter
 from enum import Enum
 from itertools import islice
+from importlib import import_module
 
 from jax import config as jaxconfig
 from jax.numpy import (
@@ -130,6 +131,83 @@ def deserialize(serializable_x):
             return {deserialize(v) for v in serializable_x["data"]}
     else:
         return _str_to_None(serializable_x)
+
+
+def _resolve_class(cls):
+    """
+    Look the class up by name in its own defining module.
+
+    Returns the object the module exposes under ``cls.__name__``, or ``None``
+    if the module cannot be imported or has no such attribute. This mirrors how
+    deserialization recovers a class, so ``_resolve_class(cls) is cls`` is
+    exactly the condition under which a serialized reference to ``cls`` can be
+    resolved again.
+    """
+    try:
+        module = import_module(cls.__module__)
+    except Exception:
+        return None
+    return getattr(module, cls.__name__, None)
+
+
+def assert_serializable_class(obj, kind="covariance function", hint=None):
+    """
+    Fail fast if the class of ``obj`` could not be recovered on deserialization.
+
+    Mellon serializes classes by name: the state carries ``classname`` and
+    ``module_name``, and loading resolves the class with
+    ``getattr(import_module(module_name), classname)``. A class that is not
+    bound at the top level of its module -- most commonly one defined inside a
+    factory function, whose ``__qualname__`` then contains ``<locals>`` -- keeps
+    a plausible-looking ``__name__`` and ``__module__``, so serialization used to
+    succeed while the resulting file was structurally unloadable. Refusing to
+    write such a file turns a failure that surfaced at load time, possibly long
+    after the expensive fit was discarded, into one that surfaces immediately.
+
+    Parameters
+    ----------
+    obj : object or type
+        The instance (or class) whose class reference will be serialized.
+    kind : str, optional
+        Human-readable description of the object used in the error message.
+    hint : str, optional
+        Additional, caller-specific advice appended to the error message.
+
+    Raises
+    ------
+    TypeError
+        If the class cannot be resolved by name from its defining module.
+    """
+    cls = obj if isinstance(obj, type) else type(obj)
+    name = cls.__name__
+    qualname = getattr(cls, "__qualname__", name)
+    module_name = cls.__module__
+
+    if _resolve_class(cls) is cls:
+        return
+
+    if "<locals>" in qualname:
+        reason = (
+            f"it is defined inside a function or method (qualified name "
+            f'"{qualname}") and therefore is not accessible at the top level '
+            f'of the module "{module_name}"'
+        )
+    else:
+        reason = (
+            f'it can not be recovered with getattr(import_module("{module_name}"), '
+            f'"{name}") -- that name is missing from the module or bound to a '
+            f'different object (qualified name "{qualname}")'
+        )
+    msg = (
+        f'The {kind} "{name}" can not be serialized because {reason}. '
+        f"Deserialization resolves the class by name from its module, so the "
+        f"written state would not be loadable. Define the class at the top "
+        f"level of an importable module and serialize again."
+    )
+    if hint:
+        msg += " " + hint
+    logger.error(msg)
+    raise TypeError(msg)
 
 
 def ensure_2d(X):

@@ -17,6 +17,7 @@ from .base_cov import Covariance
 from .util import (
     make_serializable,
     deserialize,
+    assert_serializable_class,
     ensure_2d,
     make_multi_time_argument,
     object_str,
@@ -646,9 +647,17 @@ class Predictor(ABC):
     def to_dict(self):
         """Serialize the predictor to a python dictionary.
 
+        Raises a :class:`TypeError` if the predictor class or its covariance
+        function class could not be resolved again on deserialization, e.g.
+        because it is defined inside a function instead of at module level.
+        The check is done here rather than in ``__getstate__`` so that
+        :meth:`copy`, which never resolves the predictor class by name, keeps
+        working.
+
         :return: A python dictionary with the predictor data.
         :rtype: dict
         """
+        assert_serializable_class(self, kind="predictor")
         return self.__getstate__()
 
     @classmethod

@@ -1,3 +1,8 @@
+# Unreleased
+
+ - **bugfix**: serialization now fails fast when a covariance function (or a predictor) belongs to a class that could not be resolved again on loading. Mellon stores classes by name and recovers them with `getattr(import_module(module_name), classname)`, so a class that is not bound at the top level of its module — most commonly one defined inside a factory function — produced a file that `Covariance.from_dict` / `Predictor.from_json` could not load. Previously `to_json()` wrote that file without complaint and the `AttributeError` surfaced only at load time, potentially long after the fit it was meant to preserve. `to_json()` / `to_dict()` now raise a `TypeError` naming the offending qualified name and asking for a module-level definition. Module-level covariance functions, including user-defined ones, are unaffected and still round-trip exactly; existing serialized files still load. `Predictor.copy()` is deliberately not affected, as it never resolves the predictor class by name.
+ - composite covariance functions (`+`, `*`, `**`) now record the full module of their class instead of only the top-level package, so a user-defined `CovariancePair` subclass living in a subpackage can be resolved on loading. Files written by earlier versions continue to load unchanged.
+
 # v1.7.1
 
  - new `random_state` parameter on all estimators (`FunctionEstimator`, `DensityEstimator`, `DimensionalityEstimator`, `TimeSensitiveDensityEstimator`) — controls the seed used for k-means landmark selection and PyNNDescent nearest-neighbor index initialization. Defaults to `42`, preserving prior behavior. Previously, only the module-level `compute_landmarks` / `compute_nn_distances` functions exposed the seed; estimators silently used the hardcoded default.
