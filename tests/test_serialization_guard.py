@@ -9,6 +9,9 @@ only the much later load failed. These tests pin the fail-fast behaviour and,
 just as importantly, that nothing which used to round-trip stopped doing so.
 """
 
+import copy
+import pickle
+
 import pytest
 import numpy as np
 import jax.numpy as jnp
@@ -200,6 +203,39 @@ def test_legacy_composite_state_still_loads():
     revalues = mellon.cov.Covariance.from_dict(legacy_state)(x, 2 * x)
 
     assert jnp.max(jnp.abs(values - revalues)) == 0.0
+
+
+def test_deepcopy_and_pickle_of_resolvable_covariance_are_unaffected():
+    cov = ModuleLevelCov(ls=1.7)
+    x = jnp.asarray(np.random.default_rng(3).normal(size=(4, 3)))
+    values = cov(x, 2 * x)
+
+    for clone in (copy.deepcopy(cov), pickle.loads(pickle.dumps(cov))):
+        assert jnp.max(jnp.abs(clone(x, 2 * x) - values)) == 0.0
+
+
+def test_deepcopy_of_closure_local_covariance_now_raises():
+    """``__getstate__`` is also the copy/pickle hook -- documented, not incidental.
+
+    ``deepcopy`` used to succeed here because it carries the class by reference
+    instead of resolving it by name; ``pickle`` already failed on its own. Both
+    now raise the same ``TypeError``, and only for classes that were never
+    serializable to begin with.
+    """
+    cov = build_closure_local_cov()(ls=1.3)
+
+    with pytest.raises(TypeError):
+        copy.deepcopy(cov)
+    with pytest.raises(TypeError):
+        pickle.dumps(cov)
+
+
+def test_predictor_copy_with_closure_local_cov_func_raises_early():
+    """It never worked; it now fails at copy() rather than inside from_dict."""
+    est, _ = _fit_estimator(build_closure_local_cov())
+
+    with pytest.raises(TypeError):
+        est.predict.copy()
 
 
 def test_copy_is_unaffected_for_resolvable_classes():

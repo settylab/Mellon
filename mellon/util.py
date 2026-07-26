@@ -138,10 +138,13 @@ def _resolve_class(cls):
     Look the class up by name in its own defining module.
 
     Returns the object the module exposes under ``cls.__name__``, or ``None``
-    if the module cannot be imported or has no such attribute. This mirrors how
-    deserialization recovers a class, so ``_resolve_class(cls) is cls`` is
-    exactly the condition under which a serialized reference to ``cls`` can be
-    resolved again.
+    if the module cannot be imported or has no such attribute. This mirrors the
+    lookup deserialization performs, so ``_resolve_class(cls) is cls`` is the
+    condition under which a serialized reference to ``cls`` can be resolved
+    again. It is exact for :meth:`Predictor.from_dict`; for
+    :meth:`Covariance.from_dict`, which consults the module globals of
+    ``mellon.base_cov`` before the recorded module, a name colliding with a
+    symbol defined there is resolved by that shortcut instead.
     """
     try:
         module = import_module(cls.__module__)
