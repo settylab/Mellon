@@ -12,7 +12,7 @@ from .inference import (
 )
 from .parameters import (
     compute_d,
-    compute_d_factal,
+    compute_d_fractal,
     compute_mu,
     compute_initial_value,
     DEFAULT_RANDOM_SEED,
@@ -311,7 +311,7 @@ class DensityEstimator(BaseEstimator):
     def _compute_d(self):
         x = self.x
         if self.d_method == "fractal":
-            d = compute_d_factal(x)
+            d = compute_d_fractal(x)
             logger.info(f"Using d={d}.")
         elif self.d_method == "manual":
             # For manual method, d is already set, so we don't need to compute it
