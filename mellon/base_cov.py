@@ -7,11 +7,22 @@ from importlib import import_module
 from datetime import datetime
 import json
 
-from .util import make_serializable, deserialize, select_active_dims, expand_to_inactive
+from .util import (
+    make_serializable,
+    deserialize,
+    select_active_dims,
+    expand_to_inactive,
+    assert_serializable_class,
+)
 
 MELLON_NAME = __name__.split(".")[0]
 
 logger = logging.getLogger("mellon")
+
+COV_SERIALIZATION_HINT = (
+    "For a custom kernel, define the Covariance subclass at module level and "
+    "pass it as cov_func or cov_func_curry."
+)
 
 
 class Covariance(ABC):
@@ -121,6 +132,9 @@ class Covariance(ABC):
         :return: A dictionary representing the state of the predictor.
         :rtype: dict
         """
+        assert_serializable_class(
+            self, kind="covariance function", hint=COV_SERIALIZATION_HINT
+        )
         module_name = self.__class__.__module__
         clsname = self.__class__.__name__
         if module_name == "__main__":
@@ -251,9 +265,14 @@ class CovariancePair(Covariance):
         :return: A dictionary representing the state of the covariance function.
         :rtype: dict
         """
-        module_name = self.__class__.__module__.split(".")[0]
+        assert_serializable_class(
+            self, kind="covariance function", hint=COV_SERIALIZATION_HINT
+        )
+        module_name = self.__class__.__module__
+        metamodule = import_module(module_name.split(".")[0])
         module = import_module(module_name)
-        version = getattr(module, "__version__", "NA")
+        metaversion = getattr(metamodule, "__version__", "NA")
+        version = getattr(module, "__version__", metaversion)
         if callable(self.right):
             right_data = self.right.__getstate__()
         else:
