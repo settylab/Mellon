@@ -1,3 +1,5 @@
+import importlib
+
 import pytest
 from enum import Enum
 import jax.numpy as jnp
@@ -94,19 +96,57 @@ def test_compute_d_factal(caplog):
         compute_d_factal(x_2d, k=-5)
 
 
-def test_compute_d_fractal_alias_equivalence():
-    # The canonical name is compute_d_fractal; compute_d_factal is a
-    # backwards-compatible alias. Both must import and return identical
-    # values for the same input and seed.
-    key = random.PRNGKey(0)
-    x = random.normal(key, shape=(200, 8))
-
-    result_new = compute_d_fractal(x, seed=432)
-    result_old = compute_d_factal(x, seed=432)
-    assert isinstance(result_new, float)
-    assert result_new == result_old, (
-        "compute_d_factal alias must return the same value as compute_d_fractal"
+def test_compute_d_fractal_names_are_both_importable():
+    # Both names must resolve from both the implementation module and the
+    # public re-export, and both must be advertised in __all__. This is the
+    # whole contract of the rename: downstream code importing either spelling,
+    # from either module, keeps working.
+    from mellon.parameters import (
+        compute_d_factal as factal_impl,
+        compute_d_fractal as fractal_impl,
     )
+    from mellon._parameters import (
+        compute_d_factal as factal_pub,
+        compute_d_fractal as fractal_pub,
+    )
+    import mellon._parameters as public
+
+    assert callable(factal_impl) and callable(fractal_impl)
+    assert factal_pub is factal_impl and fractal_pub is fractal_impl
+    assert "compute_d_fractal" in public.__all__
+    assert "compute_d_factal" in public.__all__
+
+
+def test_compute_d_factal_delegates_to_compute_d_fractal(monkeypatch):
+    # compute_d_factal is an alias, not a reimplementation, so it is enough to
+    # show it forwards every argument and returns the result unchanged. Done by
+    # substitution rather than by recomputing: the fractal estimate is
+    # expensive, and running it twice would only re-test compute_d_fractal.
+    #
+    # Patch the *defining* module. `import mellon.parameters as params` would
+    # bind mellon._parameters instead, because mellon/__init__.py rebinds the
+    # `parameters` attribute to the public shim -- patching that object would
+    # leave the alias calling the real implementation.
+    params = importlib.import_module("mellon.parameters")
+    assert params.__name__ == "mellon.parameters"
+    assert params.compute_d_factal.__module__ == "mellon.parameters"
+
+    seen = {}
+
+    def fake_compute_d_fractal(x, k=10, n=500, seed=432):
+        seen.update(x=x, k=k, n=n, seed=seed)
+        return 1.2345
+
+    monkeypatch.setattr(params, "compute_d_fractal", fake_compute_d_fractal)
+
+    result = params.compute_d_factal("sentinel", k=3, n=7, seed=11)
+
+    assert result == 1.2345
+    assert seen == {"x": "sentinel", "k": 3, "n": 7, "seed": 11}
+
+    # Defaults must match the canonical function, not be re-declared loosely.
+    params.compute_d_factal("sentinel")
+    assert seen == {"x": "sentinel", "k": 10, "n": 500, "seed": 432}
 
 
 def test_density_estimator_d_method_fractal_end_to_end():
