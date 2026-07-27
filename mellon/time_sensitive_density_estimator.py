@@ -16,7 +16,7 @@ from .parameters import (
     compute_cov_func,
     compute_d,
     compute_ls,
-    compute_d_factal,
+    compute_d_fractal,
     compute_mu,
     compute_initial_value,
     compute_average_cell_count,
@@ -424,7 +424,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         x = self.x[:, :-1]
         if self.d_method == "fractal":
             logger.warning("Using EXPERIMENTAL fractal dimensionality selection.")
-            d = compute_d_factal(x)
+            d = compute_d_fractal(x)
             logger.info(f"Using d={d}.")
         elif self.d_method == "manual":
             # For manual method, d is already set, so we don't need to compute it
