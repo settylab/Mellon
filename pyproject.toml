@@ -25,6 +25,9 @@ dependencies = [
     "jaxopt",
     "scikit-learn",
     "pynndescent",
+    # Imported at module scope by mellon.base_predictor; no dependencies of
+    # its own, so it goes last per the ordering note above.
+    "packaging",
 ]
 
 [project.urls]
