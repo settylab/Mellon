@@ -62,9 +62,6 @@ docs = [
     "IPython",
 ]
 
-[project.scripts]
-mellon-test = "pytest:main"
-
 [tool.pytest]
 testpaths = ["tests"]
 
