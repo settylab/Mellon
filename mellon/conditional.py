@@ -857,7 +857,8 @@ class _LandmarksConditionalCholesky:
         self._state_variables.add("L")
 
         try:
-            Stds = diagonal(sigma)
+            # a 2-D sigma is a factor of the full parameter covariance
+            Stds = sigma if ndim(sigma) == 2 else diagonal(sigma)
         except ValueError:
             # sigma seems to be scalar
             Stds = eye(xu.shape[0]) * sigma

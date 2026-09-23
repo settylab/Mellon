@@ -309,6 +309,7 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         self.losses = None
         self.pre_transformation = None
         self.pre_transformation_std = None
+        self.pre_transformation_cov_factor = None
         self.log_density_x = None
         self.log_density_func = None
 
@@ -575,6 +576,8 @@ class TimeSensitiveDensityEstimator(BaseEstimator):
         landmarks = self.landmarks
         pre_transformation = self.pre_transformation
         pre_transformation_std = self.pre_transformation_std
+        if getattr(self, "pre_transformation_cov_factor", None) is not None:
+            pre_transformation_std = self.pre_transformation_cov_factor
         log_density_x = self.log_density_x
         mu = self.mu
         cov_func = self.cov_func

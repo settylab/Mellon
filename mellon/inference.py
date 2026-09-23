@@ -20,6 +20,7 @@ from .conditional import (
     ExpLandmarksConditionalCholesky,
     LandmarksConditionalCholeskyTime,
 )
+from jax.scipy.linalg import cholesky as _cholesky, solve_triangular as _solve_triangular
 from .util import ensure_2d, DEFAULT_JITTER
 
 logger = logging.getLogger("mellon")
@@ -338,6 +339,55 @@ def compute_laplace_std(loss_func, pre_transformation, jit=DEFAULT_JIT):
     return stds
 
 
+def compute_laplace_cov_factor(loss_func, pre_transformation, jit=DEFAULT_JIT):
+    R"""
+    Computes a factor :math:`F` of the full Laplace posterior covariance of the
+    parameters at the MAP estimate, :math:`F F^\top = H^{-1}`, where :math:`H`
+    is the Hessian of the negative log-posterior.
+
+    Unlike the diagonal of :math:`H` used by :func:`compute_laplace_std`, the
+    full covariance is equivariant under the reparameterisation
+    :math:`f = L z`, so the resulting predictive uncertainty does not depend on
+    the row order of the landmarks. :math:`H^{-1}` is never formed: with the
+    Cholesky factorisation :math:`H = R R^\top`, :math:`F = R^{-\top}` is
+    obtained by a triangular solve.
+
+    :param loss_func: The negative log-posterior (loss) function.
+    :type loss_func: function
+    :param pre_transformation: The MAP estimate (mode of the posterior), 1-D.
+    :type pre_transformation: array-like
+    :param jit: Whether to JIT-compile the Hessian. Defaults to False.
+    :type jit: bool
+    :return: stds, F - The marginal posterior standard deviations
+        :math:`\sqrt{\operatorname{diag}(H^{-1})}` and the factor :math:`F`.
+    :rtype: array-like, array-like
+    """
+    hess = jax.hessian(loss_func)
+    if jit:
+        hess = jax.jit(hess)
+    H = hess(pre_transformation)
+    H = 0.5 * (H + H.T)
+    R = _cholesky(H, lower=True)
+    if jax.numpy.any(jax.numpy.isnan(R)):
+        message = (
+            "Laplace approximation: the Hessian of the loss at the optimum is "
+            "not positive definite. The optimizer may not have converged."
+        )
+        logger.error(message)
+        raise ValueError(message)
+    F = _solve_triangular(R.T, jax.numpy.eye(H.shape[0]), lower=False)
+    stds = jax.numpy.sqrt(arraysum(F * F, axis=1))
+    logger.info(
+        "Laplace approximation (full covariance): Hessian diagonal range "
+        "[%.3e, %.3e], marginal std range [%.3e, %.3e].",
+        float(jax.numpy.min(jax.numpy.diag(H))),
+        float(jax.numpy.max(jax.numpy.diag(H))),
+        float(jax.numpy.min(stds)),
+        float(jax.numpy.max(stds)),
+    )
+    return stds, F
+
+
 def compute_log_density_x(pre_transformation, transform):
     R"""
     Computes the log density at the training points.
@@ -362,13 +412,17 @@ def compute_parameter_cov_factor(pre_transformation_std, L):
     the uncertainty of the inferred model parameters quantified by
     `pre_transformation_std`.
 
-    :param pre_transformation_std: Standard deviation of the parameters, e.g., as inferred by ADVI.
+    :param pre_transformation_std: Standard deviation of the parameters, e.g., as inferred by ADVI,
+        or a 2-D factor :math:`F` of their full covariance :math:`F F^\top`
+        (see :func:`compute_laplace_cov_factor`).
     :type pre_transformation_std: array-like
     :param L: A matrix such that :math:`L L^\top \approx K`, where :math:`K` is the
         covariance matrix of the Gaussian Process.
     :type L: array-like
     :return: sigma_L - The left factor of the covariance matrix of the transformed parameters.
     """
+    if pre_transformation_std.ndim == 2:
+        return L @ pre_transformation_std
     return L * pre_transformation_std[None, :]
 
 

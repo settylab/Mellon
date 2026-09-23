@@ -206,3 +206,41 @@ class TestDensityEstimatorLaplace:
         unc = est.predict.uncertainty(X_test)
         assert jnp.all(jnp.isfinite(unc))
         assert jnp.all(unc >= 0)
+
+
+class TestLaplaceFullCovariance:
+    """The full-covariance Laplace factor (settylab/Mellon#22)."""
+
+    def test_factor_reproduces_inverse_hessian(self):
+        from mellon.inference import compute_laplace_cov_factor
+
+        A = jnp.array([[4.0, 1.0, 0.5], [1.0, 3.0, 0.2], [0.5, 0.2, 2.0]])
+
+        def loss_func(z):
+            return 0.5 * z @ A @ z
+
+        stds, F = compute_laplace_cov_factor(loss_func, jnp.zeros(3))
+        Hinv = jnp.linalg.inv(A)
+        assert jnp.allclose(F @ F.T, Hinv, atol=1e-10)
+        assert jnp.allclose(stds, jnp.sqrt(jnp.diag(Hinv)), atol=1e-10)
+
+    def test_uncertainty_invariant_to_landmark_row_order(self):
+        import numpy as np
+
+        rng = np.random.default_rng(0)
+        X1 = rng.normal([-2.5, 0], 0.45, (100, 2))
+        X2 = rng.normal([+2.5, 0], 0.45, (100, 2))
+        Q = np.vstack([X1, X2])
+
+        def fit(landmarks):
+            est = mellon.DensityEstimator(
+                predictor_with_uncertainty=True, random_state=0, gp_type="fixed",
+                landmarks=landmarks, ls_factor=10.0, d_method="fractal",
+            )
+            est.fit(X1)
+            return np.asarray(est.predict.uncertainty(Q))
+
+        a = fit(np.vstack([X1, X2]))
+        b = fit(np.vstack([X2, X1]))
+        rel = np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
+        assert rel.max() < 1e-6, rel.max()
