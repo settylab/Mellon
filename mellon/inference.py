@@ -526,6 +526,12 @@ def compute_conditional(
     ):
         logger.debug("Using LandmarksConditionalCholesky GP.")
         landmarks = ensure_2d(landmarks)
+        sigma_factor = None
+        if pre_transformation_std is not None and pre_transformation_std.ndim == 2:
+            # full covariance factor F: only W needs it, the predictor keeps the
+            # marginal standard deviations
+            sigma_factor = pre_transformation_std
+            pre_transformation_std = jax.numpy.sqrt(arraysum(sigma_factor**2, axis=1))
         if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
                 "One can specify either `sigma` or `pre_transformation_std` "
@@ -548,6 +554,7 @@ def compute_conditional(
             obs_variance=obs_variance,
             obs_x=x if obs_variance else None,
             obs_y=y if obs_variance else None,
+            sigma_factor=sigma_factor,
         )
     else:
         logger.debug("Using LandmarksConditional GP.")
@@ -659,6 +666,12 @@ def compute_conditional_times(
     ):
         logger.debug("Using LandmarksConditionalCholesky GP.")
         landmarks = ensure_2d(landmarks)
+        sigma_factor = None
+        if pre_transformation_std is not None and pre_transformation_std.ndim == 2:
+            # full covariance factor F: only W needs it, the predictor keeps the
+            # marginal standard deviations
+            sigma_factor = pre_transformation_std
+            pre_transformation_std = jax.numpy.sqrt(arraysum(sigma_factor**2, axis=1))
         if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
                 "One can specify either `sigma` or `pre_transformation_std` "
@@ -678,6 +691,7 @@ def compute_conditional_times(
             jitter=jitter,
             y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
+            sigma_factor=sigma_factor,
         )
     else:
         logger.debug("Using LandmarksConditional GP.")
@@ -787,6 +801,12 @@ def compute_conditional_explog(
     ):
         logger.debug("Using LandmarksConditionalCholesky GP.")
         landmarks = ensure_2d(landmarks)
+        sigma_factor = None
+        if pre_transformation_std is not None and pre_transformation_std.ndim == 2:
+            # full covariance factor F: only W needs it, the predictor keeps the
+            # marginal standard deviations
+            sigma_factor = pre_transformation_std
+            pre_transformation_std = jax.numpy.sqrt(arraysum(sigma_factor**2, axis=1))
         if pre_transformation_std is not None and sigma is not None and any(sigma > 0):
             raise ValueError(
                 "One can specify either `sigma` or `pre_transformation_std` "
@@ -806,6 +826,7 @@ def compute_conditional_explog(
             jitter=jitter,
             y_is_mean=y_is_mean,
             with_uncertainty=with_uncertainty,
+            sigma_factor=sigma_factor,
         )
     else:
         logger.debug("Using LandmarksConditional GP.")

@@ -763,6 +763,7 @@ class _LandmarksConditionalCholesky:
         obs_variance=False,
         obs_x=None,
         obs_y=None,
+        sigma_factor=None,
     ):
         """
         The mean function of the conditioned low rank gp, where rank
@@ -799,6 +800,11 @@ class _LandmarksConditionalCholesky:
         :type obs_x: array-like or None
         :param obs_y: Training values, only needed when obs_variance=True.
         :type obs_y: array-like or None
+        :param sigma_factor: A factor :math:`F` of the full covariance
+            :math:`F F^\top` of `pre_transformation`. If given, it replaces
+            `diag(sigma)` in the uncertainty, and `sigma` is kept only as the
+            marginal standard deviation. Defaults to None.
+        :type sigma_factor: array-like or None
         :return: conditional_mean - The conditioned Gaussian process mean function.
         :rtype: function
         """
@@ -856,12 +862,14 @@ class _LandmarksConditionalCholesky:
         self.L = L
         self._state_variables.add("L")
 
-        try:
-            # a 2-D sigma is a factor of the full parameter covariance
-            Stds = sigma if ndim(sigma) == 2 else diagonal(sigma)
-        except ValueError:
-            # sigma seems to be scalar
-            Stds = eye(xu.shape[0]) * sigma
+        if sigma_factor is not None:
+            Stds = sigma_factor
+        else:
+            try:
+                Stds = diagonal(sigma)
+            except ValueError:
+                # sigma seems to be scalar
+                Stds = eye(xu.shape[0]) * sigma
 
         W = solve_triangular(L.T, Stds)
         self.W = W

@@ -244,3 +244,22 @@ class TestLaplaceFullCovariance:
         b = fit(np.vstack([X2, X1]))
         rel = np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
         assert rel.max() < 1e-6, rel.max()
+
+    def test_predictor_stores_marginal_std_and_roundtrips(self):
+        import pickle
+        import numpy as np
+
+        rng = np.random.default_rng(0)
+        X = rng.normal(0, 1, (120, 2))
+        est = mellon.DensityEstimator(
+            predictor_with_uncertainty=True, random_state=0, gp_type="fixed",
+            landmarks=X[:60], d_method="fractal",
+        )
+        est.fit(X)
+        pred = est.predict
+        # the p x p factor is folded into W and not kept on the predictor
+        assert jnp.ndim(pred.sigma) == 1
+        assert jnp.allclose(pred.sigma, est.pre_transformation_std)
+        u = np.asarray(pred.uncertainty(X))
+        u2 = np.asarray(pickle.loads(pickle.dumps(pred)).uncertainty(X))
+        assert np.allclose(u, u2, rtol=1e-12, atol=0)
