@@ -206,3 +206,86 @@ class TestDensityEstimatorLaplace:
         unc = est.predict.uncertainty(X_test)
         assert jnp.all(jnp.isfinite(unc))
         assert jnp.all(unc >= 0)
+
+
+class TestLaplaceFullCovariance:
+    """The full-covariance Laplace factor (settylab/Mellon#22)."""
+
+    def test_factor_reproduces_inverse_hessian(self):
+        from mellon.inference import compute_laplace_cov_factor
+
+        A = jnp.array([[4.0, 1.0, 0.5], [1.0, 3.0, 0.2], [0.5, 0.2, 2.0]])
+
+        def loss_func(z):
+            return 0.5 * z @ A @ z
+
+        stds, F = compute_laplace_cov_factor(loss_func, jnp.zeros(3))
+        Hinv = jnp.linalg.inv(A)
+        assert jnp.allclose(F @ F.T, Hinv, atol=1e-10)
+        assert jnp.allclose(stds, jnp.sqrt(jnp.diag(Hinv)), atol=1e-10)
+
+    def test_uncertainty_invariant_to_landmark_row_order(self):
+        import numpy as np
+
+        rng = np.random.default_rng(0)
+        X1 = rng.normal([-2.5, 0], 0.45, (100, 2))
+        X2 = rng.normal([+2.5, 0], 0.45, (100, 2))
+        Q = np.vstack([X1, X2])
+
+        def fit(landmarks):
+            est = mellon.DensityEstimator(
+                predictor_with_uncertainty=True, random_state=0, gp_type="fixed",
+                landmarks=landmarks, ls_factor=10.0, d_method="fractal",
+            )
+            est.fit(X1)
+            return np.asarray(est.predict.uncertainty(Q))
+
+        a = fit(np.vstack([X1, X2]))
+        b = fit(np.vstack([X2, X1]))
+        rel = np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
+        assert rel.max() < 1e-6, rel.max()
+
+    def test_full_gp_uncertainty_invariant_to_cell_order(self):
+        # gp_type="full" goes through FullConditional, whose parameter uncertainty
+        # is L @ F (compute_parameter_cov_factor with a 2-D factor). The
+        # hyperparameters are fixed so that only the order of the cells differs;
+        # otherwise the nearest-neighbor distances, and with them the fit itself,
+        # move with the order.
+        import numpy as np
+
+        rng = np.random.default_rng(0)
+        X = np.vstack([
+            rng.normal([-2.5, 0], 0.45, (60, 2)),
+            rng.normal([+2.5, 0], 0.45, (60, 2)),
+        ])
+        perm = np.random.default_rng(1).permutation(X.shape[0])
+        kw = dict(predictor_with_uncertainty=True, random_state=0, gp_type="full",
+                  ls_factor=10.0, d_method="fractal")
+        a = mellon.DensityEstimator(**kw).fit(X)
+        b = mellon.DensityEstimator(
+            **kw, d=a.d, mu=a.mu, ls=a.ls, nn_distances=np.asarray(a.nn_distances)[perm],
+        ).fit(X[perm])
+
+        assert np.abs(np.asarray(a.predict(X)) - np.asarray(b.predict(X))).max() < 1e-5
+        ua, ub = np.asarray(a.predict.uncertainty(X)), np.asarray(b.predict.uncertainty(X))
+        rel = np.abs(ua - ub) / np.maximum(np.abs(ua), np.abs(ub))
+        assert rel.max() < 1e-6, rel.max()
+
+    def test_predictor_stores_marginal_std_and_roundtrips(self):
+        import pickle
+        import numpy as np
+
+        rng = np.random.default_rng(0)
+        X = rng.normal(0, 1, (120, 2))
+        est = mellon.DensityEstimator(
+            predictor_with_uncertainty=True, random_state=0, gp_type="fixed",
+            landmarks=X[:60], d_method="fractal",
+        )
+        est.fit(X)
+        pred = est.predict
+        # the p x p factor is folded into W and not kept on the predictor
+        assert jnp.ndim(pred.sigma) == 1
+        assert jnp.allclose(pred.sigma, est.pre_transformation_std)
+        u = np.asarray(pred.uncertainty(X))
+        u2 = np.asarray(pickle.loads(pickle.dumps(pred)).uncertainty(X))
+        assert np.allclose(u, u2, rtol=1e-12, atol=0)
