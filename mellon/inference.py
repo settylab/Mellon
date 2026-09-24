@@ -362,10 +362,20 @@ def compute_laplace_cov_factor(loss_func, pre_transformation, jit=DEFAULT_JIT):
         :math:`\sqrt{\operatorname{diag}(H^{-1})}` and the factor :math:`F`.
     :rtype: array-like, array-like
     """
-    hess = jax.hessian(loss_func)
+    grad_f = jax.grad(loss_func)
+
+    def hessian(z):
+        # the rows compute_laplace_std already evaluates, kept whole
+        def row(e):
+            _, hvp = jax.jvp(grad_f, (z,), (e,))
+            return hvp
+
+        return vmap(row)(jax.numpy.eye(z.shape[0]))
+
     if jit:
-        hess = jax.jit(hess)
-    H = hess(pre_transformation)
+        hessian = jax.jit(hessian)
+
+    H = hessian(pre_transformation)
     H = 0.5 * (H + H.T)
     R = _cholesky(H, lower=True)
     if jax.numpy.any(jax.numpy.isnan(R)):
