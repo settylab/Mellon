@@ -245,6 +245,32 @@ class TestLaplaceFullCovariance:
         rel = np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
         assert rel.max() < 1e-6, rel.max()
 
+    def test_full_gp_uncertainty_invariant_to_cell_order(self):
+        # gp_type="full" goes through FullConditional, whose parameter uncertainty
+        # is L @ F (compute_parameter_cov_factor with a 2-D factor). The
+        # hyperparameters are fixed so that only the order of the cells differs;
+        # otherwise the nearest-neighbor distances, and with them the fit itself,
+        # move with the order.
+        import numpy as np
+
+        rng = np.random.default_rng(0)
+        X = np.vstack([
+            rng.normal([-2.5, 0], 0.45, (60, 2)),
+            rng.normal([+2.5, 0], 0.45, (60, 2)),
+        ])
+        perm = np.random.default_rng(1).permutation(X.shape[0])
+        kw = dict(predictor_with_uncertainty=True, random_state=0, gp_type="full",
+                  ls_factor=10.0, d_method="fractal")
+        a = mellon.DensityEstimator(**kw).fit(X)
+        b = mellon.DensityEstimator(
+            **kw, d=a.d, mu=a.mu, ls=a.ls, nn_distances=np.asarray(a.nn_distances)[perm],
+        ).fit(X[perm])
+
+        assert np.abs(np.asarray(a.predict(X)) - np.asarray(b.predict(X))).max() < 1e-5
+        ua, ub = np.asarray(a.predict.uncertainty(X)), np.asarray(b.predict.uncertainty(X))
+        rel = np.abs(ua - ub) / np.maximum(np.abs(ua), np.abs(ub))
+        assert rel.max() < 1e-6, rel.max()
+
     def test_predictor_stores_marginal_std_and_roundtrips(self):
         import pickle
         import numpy as np
