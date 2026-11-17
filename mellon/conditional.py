@@ -3,7 +3,7 @@ from jax import vmap
 from jax.numpy import dot, square, isnan, any, eye, zeros, arange, ndim, isscalar, squeeze
 from jax.numpy import sum as arraysum
 from jax.numpy import diag as diagonal
-from jax.numpy.linalg import cholesky, inv
+from jax.numpy.linalg import cholesky
 from jax.scipy.linalg import solve_triangular, solve
 from .util import ensure_2d, stabilize, DEFAULT_JITTER, add_variance
 from .base_predictor import Predictor, ExpPredictor, PredictorTime
@@ -52,6 +52,24 @@ def _check_obs_variance(obj):
 
 
 logger = logging.getLogger("mellon")
+
+
+def _leverage_diag(B, M):
+    """Return ``diag(B M^-1 B^T)`` via a Cholesky solve.
+
+    ``M = sigma^2 K_uu + B^T B`` (plus jitter) is symmetric positive definite by
+    construction, so the explicit inverse this replaced was unnecessary: with
+    ``M = L L^T`` and ``Z = L^-1 B^T``, ``diag(B M^-1 B^T) = sum(Z * Z, axis=0)``.
+
+    This also keeps the computation on Cholesky (``potrf``) instead of LU
+    (``getrf``). ``getrf`` dispatches to the installed BLAS, and OpenBLAS's
+    threaded ``dgetrf_parallel`` has been observed to overflow the stack of the
+    thread JAX calls it on, segfaulting for large ``M`` when OpenBLAS is allowed
+    more than one thread. See the pull request for the measurements.
+    """
+    L_M = cholesky(M)
+    Z = solve_triangular(L_M, B.T, lower=True)  # m x n
+    return arraysum(square(Z), axis=0)  # n
 
 
 def _sparse_solve(Lp, A, r_l, A_l):
@@ -602,16 +620,14 @@ class _LandmarksConditional:
             def _lev_one(sigma_g):
                 M = sigma_g**2 * K_uu + B.T @ B
                 M = stabilize(M, jitter)
-                BM = B @ inv(M)
-                return arraysum(BM * B, axis=1)
+                return _leverage_diag(B, M)
 
             sigma_in_axis = 1 if ndim(sigma_pf) == 2 else 0
             h = vmap(_lev_one, in_axes=sigma_in_axis, out_axes=1)(sigma_pf)  # → (n, p)
         else:
             M = sigma**2 * K_uu + B.T @ B
             M = stabilize(M, jitter)
-            BM = B @ inv(M)
-            h = arraysum(BM * B, axis=1)
+            h = _leverage_diag(B, M)
 
         # Corrected squared residuals (HC3 estimator)
         residual = y - prediction
@@ -674,15 +690,13 @@ class _LandmarksConditional:
             def _lev_one(sigma_g):
                 M = sigma_g**2 * K_uu + B.T @ B
                 M = stabilize(M, jitter)
-                BM = B @ inv(M)
-                return arraysum(BM * B, axis=1)
+                return _leverage_diag(B, M)
 
             return vmap(_lev_one)(sigma).T  # (p, n) → (n, p)
 
         M = sigma**2 * K_uu + B.T @ B  # m x m
         M = stabilize(M, jitter)
-        BM = B @ inv(M)  # n_new x m
-        return arraysum(BM * B, axis=1)  # n_new
+        return _leverage_diag(B, M)  # n_new
 
     def _obs_variance(self, Xnew):
         _check_obs_variance(self)
@@ -917,8 +931,7 @@ class _LandmarksConditionalCholesky:
             K_uu = cov_func(xu, xu)
         M = sigma**2 * K_uu + B.T @ B  # m x m
         M = stabilize(M, jitter)
-        BM = B @ inv(M)  # n_new x m
-        return arraysum(BM * B, axis=1)  # n_new
+        return _leverage_diag(B, M)  # n_new
 
     def _obs_variance(self, Xnew):
         _check_obs_variance(self)
